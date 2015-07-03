@@ -62,6 +62,7 @@ Modules required:
 - netCDF4
 - geographiclib
 - pandas
+- scipy
 
 The script is being developed in a Linux (Ubuntu and RedHat 6) environment so Windows/OSX tests are necessary.
 
