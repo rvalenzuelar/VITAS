@@ -5,7 +5,6 @@
 # July 2015
 
 from os import getcwd
-from os.path import dirname,basename,expanduser,isfile,isdir
 import sys
 import AircraftPlot as ap
 
