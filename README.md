@@ -13,11 +13,6 @@ Help about how to use the script can be obtained by:
 ```code
 $./plot_synth2.py -h
 ```
-which prints the following screen:
-
-```code
-
-```
 
 Modules required:
 
