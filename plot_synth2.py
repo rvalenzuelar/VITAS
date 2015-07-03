@@ -35,6 +35,11 @@ def main( args ):
 	print_axis = args.print_axis
 	swd=args.set_working_directory
 
+
+	gwd=args.get_working_directory # <-----LEFT HERE
+
+
+
 	""" retrieves synthesis and flight level objects """
 	S,T,DTM=set_working_files(cedfile=cedfile,stdfile=stdfile,swd=swd)
 
@@ -66,7 +71,7 @@ def main( args ):
 
 	""" make plots """
 	for f in plotFields:
-		plot_synth(S,F,dtm,
+		plot_synth(S,F,DTM,
 					var=f,
 					windb=args.windv,
 					panel=args.panel,
@@ -155,11 +160,13 @@ if __name__ == "__main__":
 							help=" print axis values (X,Y,Z)")	
 
 	""" Working directory Options """
-	print_options=parser.add_argument_group('Working directory')
-	print_options.add_argument('--set_working_directory','-swd',
+	working_options=parser.add_argument_group('Working directory')
+	working_options.add_argument('--set_working_directory','-swd',
 							action='store_true',
 							help="set working directory")
-
+	working_options.add_argument('--get_working_directory','-gwd',
+							action='store_true',
+							help="get working directory")
 
 	""" Slice options """
 	slice_options=parser.add_argument_group('Slice options')
