@@ -13,7 +13,7 @@ the future the code will become an installable python module.
 Help about how to use the script can be obteined by calling:
 
 ```code
-$./plot_synth2.oy
+$./plot_synth2.py -h
 ```
 
 
