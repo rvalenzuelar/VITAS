@@ -8,11 +8,12 @@
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import ImageGrid
 from os.path import expanduser,isfile
+from Terrain import make_terrain_array
 import os
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-import scipy.ndimage
+import scipy.ndimage as scipy
 import itertools as it
 import gdal
 
@@ -53,6 +54,7 @@ class SynthPlot(object):
 		self.u_array=[]
 		self.v_array=[]
 		self.w_array=[]
+		self.terrain=None
 
 	def set_geographic(self,synth):
 
@@ -380,103 +382,6 @@ class SynthPlot(object):
 		b= all(x == array[0] for x in array)
 		return b
 
-	def make_terrain_mask(self):
-
-		''' working folders '''
-		home = expanduser("~")
-		dem_file=home+'/Github/RadarQC/merged_dem_38-39_123-124_extended.tif'
-		temp_file=home+'/Github/pythonx/temp.tif'
-		out_file=home+'/Github/pythonx/temp_resamp.tif'
-
-		''' same boundaries as synthesis'''
-		ulx = min(self.lons)
-		uly = max(self.lats)		
-		lrx = max(self.lons)
-		lry = min(self.lats)
-
-		''' number of verical gates '''
-		zvalues=self.axesval['z']		
-		levels=len(zvalues)
-
-		''' vertical gate resolution'''
-		res=(zvalues[1]-zvalues[0])*1000 # [m] 
-		
-		''' downsample DTM using synthesis axes '''
-		xvalues=self.axesval['x']
-		yvalues=self.axesval['y']
-		resampx_to=len(xvalues)
-		resampy_to=len(yvalues)
-
-		if isfile(temp_file):
-			os.remove(temp_file)
-
-		if isfile(out_file):
-			os.remove(out_file)
-
-		''' shrink original dtm '''
-		input_param = (ulx, uly, lrx, lry, dem_file, temp_file)
-		run_gdal = 'gdal_translate -projwin %s %s %s %s %s %s' % input_param
-		os.system(run_gdal)
-
-		''' resample shrinked dtm '''
-		input_param = (resampy_to,resampx_to,temp_file, out_file)
-		run_gdal = 'gdalwarp -ts %s %s -r near -co "TFW=YES" %s %s' % input_param
-		os.system(run_gdal)
-
-		''' store dtm in data '''
-		datafile = gdal.Open(out_file)
-		geotransform=datafile.GetGeoTransform()
-		cols=datafile.RasterXSize
-		rows=datafile.RasterYSize
-		band=datafile.GetRasterBand(1)		
-		data=band.ReadAsArray(0,0,cols,rows)
-		datafile=None
-
-		# ''' creates 3D terrain mask array '''
-		# mask=np.zeros((rows,cols,levels))
-
-		# '''Loop through each pixel of DTM and 
-		# corresponding vertical column of mask'''
-		# for ij in np.ndindex(mask.shape[:2]):
-
-		# 	'''indices'''
-		# 	i,j=ij
-			
-		# 	'''index of maximum vertical gate to
-		# 	filled with ones (e.g. presence of terrain);
-		# 	works like floor function; altitude of mask 
-		# 	is zlevel[n-1] for n>0'''
-		# 	n = int(np.ceil(data[i,j]/float(res)))
-			
-		# 	''' fills verical levels '''
-		# 	mask[i,j,0:n] = 1
-
-		mask=[]
-
-		''' geographic axes '''
-		originX=geotransform[0]
-		originY=geotransform[3]
-		pixelW=geotransform[1]
-		pixelH=geotransform[5]
-
-		# print originX,originY,pixelW,pixelH
-
-		endingX=originX+cols*pixelW
-		endingY=originY+rows*pixelH
-
-		# print endingX, endingY
-
-		xg=np.linspace(originX,endingX,cols)
-		yg=np.linspace(originY,endingY,rows)
-
-		dtm={	'data':data,
-				'mask':mask,
-				'extent':[ulx, lrx, lry,uly],
-				'xg':xg,
-				'yg':yg,}
-
-		return dtm
-
 	def horizontal_plane(self ,**kwargs):
 
 		field_array=kwargs['field']
@@ -508,9 +413,6 @@ class SynthPlot(object):
 								cbar_location = "top",
 								cbar_mode="single")
 	
-		dtm=self.make_terrain_mask()
-		dtm_data=dtm['data'] # 2D
-		# dtm_array=dtm['mask'] # 3D
 
 		extent1=self.get_extent()
 		if self.zoomOpt:
@@ -518,6 +420,12 @@ class SynthPlot(object):
 
 		extent2=self.get_extent()
 
+		print_terrain=False
+		if self.terrain.file:
+			dtm=make_terrain_array()
+			dtm_data=dtm['data'] # 2D
+			print_terrain=True
+			# dtm_array=dtm['mask'] # 3D
 
 		field_group = self.get_slices(field_array)
 		ucomp = self.get_slices(u_array)
@@ -526,14 +434,15 @@ class SynthPlot(object):
 		# creates iterator group
 		group=zip(plot_grids,self.zlevels,field_group,ucomp,vcomp)
 
-		plt.figure()
-		plt.plot(self.coast['lon'], self.coast['lat'], color='r')
-		plt.plot(self.flight_lon, self.flight_lat,color='r')		
-		plt.imshow(dtm_data,interpolation='none',cmap='terrain_r',vmin=500,vmax=501,extent=dtm['extent'])
-		plt.colorbar()
-		plt.xlim(extent2[0], extent2[1])
-		plt.ylim(extent2[2], extent2[3])				
-		plt.draw()
+		if print_terrain:
+			plt.figure()
+			plt.plot(self.coast['lon'], self.coast['lat'], color='r')
+			plt.plot(self.flight_lon, self.flight_lat,color='r')		
+			plt.imshow(dtm_data,interpolation='none',cmap='terrain_r',vmin=500,vmax=501,extent=dtm['extent'])
+			plt.colorbar()
+			plt.xlim(extent2[0], extent2[1])
+			plt.ylim(extent2[2], extent2[3])				
+			plt.draw()
 
 		# make gridded plot
 		for g,k,field,u,v in group:
@@ -549,7 +458,14 @@ class SynthPlot(object):
 							vmax=self.cmap_value[1],
 							cmap=self.cmap_name)
 
-			g.contour(dtm['xg'],dtm['yg'],dtm_data)
+			if print_terrain:
+				dtm_smooth=scipy.zoom(dtm_data,3)
+				print dtm_data.shape
+				print dtm_smooth.shape
+				sys.exit()
+				cont=g.contour(dtm['xg'],dtm['yg'],dtm_smooth,colors='k')
+				g.clabel(cont,fontsize=9)
+
 
 			if self.windb:
 				self.add_windvector(g,u.T,v.T)

@@ -8,7 +8,8 @@
 # July, 2015
 
 
-from Plotter import plot_synth, set_working_files
+from Filehandler import set_working_files
+from Plotter import plot_synth
 import sys
 import matplotlib.pyplot as plt
 import argparse
@@ -35,7 +36,7 @@ def main( args ):
 	swd=args.set_working_directory
 
 	""" retrieves synthesis and flight level objects """
-	S,T=set_working_files(cedfile=cedfile,stdfile=stdfile,swd=swd)
+	S,T,DTM=set_working_files(cedfile=cedfile,stdfile=stdfile,swd=swd)
 
 	""" creates a flightpath """
 	F=T.Flightpath(S.start, S.end)
@@ -65,7 +66,7 @@ def main( args ):
 
 	""" make plots """
 	for f in plotFields:
-		plot_synth(S,F,
+		plot_synth(S,F,dtm,
 					var=f,
 					windb=args.windv,
 					panel=args.panel,

@@ -7,74 +7,10 @@
 from os import getcwd
 from os.path import dirname,basename,expanduser,isfile,isdir
 import sys
-import tempfile
 import AircraftPlot as ap
-import AircraftAnalysis as aa 
 
 
-def print_set_working_msg(tmpfile):
-
-	print 'Please set working directories\n'
-	synthpath = raw_input("Enter synthesis path: ")
-	stdpath = raw_input("Enter stdtape path: ")
-
-	if synthpath == '.':
-		synthpath = getcwd()
-
-	if stdpath == '.':
-		stdpath = getcwd()
-
-	home = expanduser("~")
-	synthpath=synthpath.replace('~',home)
-	stdpath=stdpath.replace('~',home)
-
-	if isdir(synthpath) and isdir(stdpath):
-		f = open(tmpfile,'w')
-		f.write(synthpath+'\n')
-		f.write(stdpath)
-		f.close()
-	else:
-		print '\nPlease try again\n'
-		sys.exit()
-
-def set_working_files(**kwargs):
-
-	cedfile=kwargs['cedfile']
-	stdfile=kwargs['stdfile']
-	swd=kwargs['swd']
-
-	tmp='vitas_swd.tmp'
-	tmpfile=tempfile.gettempdir()+'/'+tmp
-
-	if not isfile(tmpfile) or swd:
-		print_set_working_msg(tmpfile=tmpfile)
-
-	with open(tmpfile, 'r') as f:
-		synthpath = f.readline().rstrip('\n')
-		stdpath = f.readline().rstrip('\n')
-	
-	synthfile = synthpath+'/'+cedfile
-	flightfile = stdpath+'/'+stdfile
-
-
-	""" creates a synthesis """
-	try:
-		S=aa.Synthesis(synthfile)
-	except RuntimeError:
-		print "Input Synth Error: check path or file name\n"
-		sys.exit()
-
-	""" creates a std tape """
-	try:
-		T=aa.Stdtape(flightfile)
-	except RuntimeError:
-		print "Input Flight Error: check path or file name\n"
-		sys.exit()
-
-	return S,T
-
-
-def plot_synth(S , F, **kwargs):
+def plot_synth(S , F, dtm,**kwargs):
 
 	"""creates synthesis plot instance """
 	P=ap.SynthPlot()
@@ -85,6 +21,7 @@ def plot_synth(S , F, **kwargs):
 	P.panel = kwargs['panel']
 	P.zoomOpt = kwargs['zoomIn']
 	P.mask = kwargs['mask']
+	P.terrain = dtm
 
 	try:
 		P.slicem=sorted(kwargs['slicem'],reverse=True)
