@@ -13,6 +13,45 @@ Help about how to use the script can be obtained by:
 ```code
 $./plot_synth2.py -h
 ```
+which prints
+```code
+usage: plot_synth2.py [--help] --ced file --std file [--panel num]
+                      [--zoomin str] [--windv] [--mask]
+                      [--all | --field STR [STR ...]] [--print_shapes]
+                      [--print_global_atts] [--print_axis STR [STR ...]]
+                      [--slicez lat float) [lat (float) ...]]
+                      [--slicem lon (float) [lon (float ...]]
+
+Help::
+  --help, -h            shows this help message and exit
+
+Needed:
+  --ced file, -c file   netCDF CEDRIC synthesis with format CaseName/LegName.
+                        Example: c03/leg01.cdf
+  --std file, -s file   netCDF NOAA-P3 standard tape file using RAF format.
+                        Example: 010123I.nc
+
+Plot options:
+  --panel num, -p num   choose a panel (1-6); otherwise plots a figure with 6 panles
+  --zoomin str, -z str  zoom-in over a offshore|onshore flight leg
+  --windv, -w           include wind vectors
+  --mask, -m            mask pixels with NaN vertical velocity 
+  --all, -a             [default] plot all fields (DBZ,SPD,CON,VOR)
+  --field STR [STR ...], -f STR [STR ...]
+                        specify radar field(s) to be plotted
+
+Print options:
+  --print_shapes        print field variables and arrays with their shapes and exit
+  --print_global_atts   print CEDRIC file global attributes and exit
+  --print_axis STR [STR ...], -pa STR [STR ...]
+                         print axis values (X,Y,Z)
+
+Slice options:
+  --slicez lat (float) [lat (float) ...], -slz lat (float) [lat (float) ...]
+                        latitude coordinates for zonal slices
+  --slicem lon (float) [lon (float) ...], -slm lon (float) [lon (float) ...]
+                        longitude coordinates for zonal slices
+```
 
 Modules required:
 
