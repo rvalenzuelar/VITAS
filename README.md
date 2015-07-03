@@ -19,6 +19,7 @@ usage: plot_synth2.py [--help] --ced file --std file [--panel num]
                       [--zoomin str] [--windv] [--mask]
                       [--all | --field STR [STR ...]] [--print_shapes]
                       [--print_global_atts] [--print_axis STR [STR ...]]
+                      [--set_working_directory]
                       [--slicez lat float) [lat (float) ...]]
                       [--slicem lon (float) [lon (float ...]]
 
@@ -46,11 +47,16 @@ Print options:
   --print_axis STR [STR ...], -pa STR [STR ...]
                          print axis values (X,Y,Z)
 
+Working directory:
+  --set_working_directory, -swd
+                        set working directory
+
 Slice options:
   --slicez lat (float) [lat (float) ...], -slz lat (float) [lat (float) ...]
                         latitude coordinates for zonal slices
   --slicem lon (float) [lon (float) ...], -slm lon (float) [lon (float) ...]
                         longitude coordinates for zonal slices
+
 ```
 
 Modules required:
