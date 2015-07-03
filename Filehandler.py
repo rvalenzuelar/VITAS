@@ -4,6 +4,8 @@
 # Raul Valenzuela
 # July 2015
 
+
+from os.path import dirname,basename,expanduser,isfile,isdir
 import Terrain as tr
 import AircraftAnalysis as aa 
 import tempfile 
@@ -42,7 +44,7 @@ def set_working_files(**kwargs):
 	""" Set working folders/files and
 		retrieves object instances
 	"""
-	
+
 	cedfile=kwargs['cedfile']
 	stdfile=kwargs['stdfile']
 	swd=kwargs['swd']
@@ -84,3 +86,20 @@ def set_working_files(**kwargs):
 		sys.exit()	
 
 	return SY,ST,TR
+
+def get_working_files():
+
+	tmp='vitas_swd.tmp'
+	tmpfile=tempfile.gettempdir()+'/'+tmp
+
+	if not isfile(tmpfile) or swd:
+		print_set_working_msg(tmpfile=tmpfile)
+
+	with open(tmpfile, 'r') as f:
+		synthpath = f.readline().rstrip('\n')
+		stdpath = f.readline().rstrip('\n')
+		dtmfile = f.readline().rstrip('\n')	
+
+	print "Synthesis path: "+synthpath
+	print "Flight path: "+stdpath
+	print "DTM file: "+dtmfile
