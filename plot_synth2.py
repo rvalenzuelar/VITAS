@@ -190,7 +190,7 @@ if __name__ == "__main__":
 							help='shows this help message and exit')
 
 	""" Mandatory Arguments """
-	group_mandatory=parser.add_argument_group('Needed')
+	group_mandatory=parser.add_argument_group('Input files')
 	group_mandatory.add_argument('--ced','-c',
 							metavar='file',
 							required=True,

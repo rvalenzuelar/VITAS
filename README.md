@@ -25,7 +25,7 @@ usage: plot_synth2.py [--help] --ced file --std file [--panel num]
 Help:
   --help, -h            shows this help message and exit
 
-Needed:
+Input files:
   --ced file, -c file   netCDF CEDRIC synthesis with format CaseName/LegName.
                         Example: c03/leg01.cdf
   --std file, -s file   netCDF NOAA-P3 standard tape file using RAF format.
