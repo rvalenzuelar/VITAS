@@ -4,7 +4,57 @@
 # Raul Valenzuela
 # July 2015
 
+from os import getcwd
+from os.path import dirname, basename, expanduser
+import sys
+import tempfile
 import AircraftPlot as ap
+import AircraftAnalysis as aa 
+
+
+
+def set_working_files(**kwargs):
+
+	cedfile=kwargs['cedfile']
+	stdfile=kwargs['stdfile']
+
+	home = expanduser("~")
+
+	"""base directory """
+	# basedirectory = home+"/P3_v2/synth_test/"
+	# stdtapedir = home+"/Github/correct_dorade_metadata/"
+	basedirectory = home+"/P3/synth/"
+	stdtapedir = home+"/Github/correct_dorade_metadata/"
+
+	"""input folder """
+	mypath=dirname(cedfile)
+	myfile=basename(cedfile)
+
+	
+	if mypath ==".":
+		mypath=getcwd()
+		cedfile=mypath+cedfile
+	else:
+		mypath=basedirectory
+		cedfile=mypath+cedfile
+
+	if not myfile:
+		print "Please include filename in path"
+		sys.exit()
+
+	""" creates a synthesis """
+	print cedfile
+	try:
+		S=aa.Synthesis(cedfile)
+	except RuntimeError:
+		print "Input Error: check file names\n"
+		sys.exit()
+
+	""" creates a std tape """
+	T=aa.Stdtape(stdtapedir+stdfile)
+
+	return S,T
+
 
 def plot_synth(S , F, **kwargs):
 

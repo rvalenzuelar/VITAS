@@ -7,14 +7,11 @@
 # Raul Valenzuela
 # July, 2015
 
-from os import getcwd
-from os.path import dirname, basename, expanduser
-from Plotter import plot_synth
+
+from Plotter import plot_synth, set_working_files
 import sys
-import tempfile
 import matplotlib.pyplot as plt
 import argparse
-import AircraftAnalysis as aa 
 
 
 def usage():
@@ -29,47 +26,14 @@ from CEDRIC.
 
 def main( args ):
 	
-	filepath = args.ced
+	cedfile = args.ced
 	stdfile = args.std
 	plotFields = args.field 
 	print_shapes = args.print_shapes
 	print_global_atts = args.print_global_atts
 	print_axis = args.print_axis
 
-	home = expanduser("~")
-
-	"""base directory """
-	# basedirectory = home+"/P3_v2/synth_test/"
-	# stdtapedir = home+"/Github/correct_dorade_metadata/"
-	basedirectory = home+"/P3/synth/"
-	stdtapedir = home+"/Github/correct_dorade_metadata/"
-
-	"""input folder """
-	mypath=dirname(filepath)
-	myfile=basename(filepath)
-
-	
-	if mypath ==".":
-		mypath=getcwd()
-		filepath=mypath+filepath
-	else:
-		mypath=basedirectory
-		filepath=mypath+filepath
-
-	if not myfile:
-		print "Please include filename in path"
-		sys.exit()
-
-	""" creates a synthesis """
-	print filepath
-	try:
-		S=aa.Synthesis(filepath)
-	except RuntimeError:
-		print "Input Error: check file names\n"
-		sys.exit()
-
-	""" creates a std tape """
-	T=aa.Stdtape(stdtapedir+stdfile)
+	S,T=set_working_files(cedfile=cedfile,stdfile=stdfile)
 
 	""" creates a flightpath """
 	F=T.Flightpath(S.start, S.end)
