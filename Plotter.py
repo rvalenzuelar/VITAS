@@ -5,53 +5,71 @@
 # July 2015
 
 from os import getcwd
-from os.path import dirname, basename, expanduser
+from os.path import dirname,basename,expanduser,isfile,isdir
 import sys
 import tempfile
 import AircraftPlot as ap
 import AircraftAnalysis as aa 
 
 
+def print_set_working_msg(tmpfile):
+
+	print 'Please set working directories\n'
+	synthpath = raw_input("Enter synthesis path: ")
+	stdpath = raw_input("Enter stdtape path: ")
+
+	if synthpath == '.':
+		synthpath = getcwd()
+
+	if stdpath == '.':
+		stdpath = getcwd()
+
+	home = expanduser("~")
+	synthpath=synthpath.replace('~',home)
+	stdpath=stdpath.replace('~',home)
+
+	if isdir(synthpath) and isdir(stdpath):
+		f = open(tmpfile,'w')
+		f.write(synthpath+'\n')
+		f.write(stdpath)
+		f.close()
+	else:
+		print '\nPlease try again\n'
+		sys.exit()
 
 def set_working_files(**kwargs):
 
 	cedfile=kwargs['cedfile']
 	stdfile=kwargs['stdfile']
+	swd=kwargs['swd']
 
-	home = expanduser("~")
+	tmp='vitas_swd.tmp'
+	tmpfile=tempfile.gettempdir()+'/'+tmp
 
-	"""base directory """
-	# basedirectory = home+"/P3_v2/synth_test/"
-	# stdtapedir = home+"/Github/correct_dorade_metadata/"
-	basedirectory = home+"/P3/synth/"
-	stdtapedir = home+"/Github/correct_dorade_metadata/"
+	if not isfile(tmpfile) or swd:
+		print_set_working_msg(tmpfile=tmpfile)
 
-	"""input folder """
-	mypath=dirname(cedfile)
-	myfile=basename(cedfile)
-
+	with open(tmpfile, 'r') as f:
+		synthpath = f.readline().rstrip('\n')
+		stdpath = f.readline().rstrip('\n')
 	
-	if mypath ==".":
-		mypath=getcwd()
-		cedfile=mypath+cedfile
-	else:
-		mypath=basedirectory
-		cedfile=mypath+cedfile
+	synthfile = synthpath+'/'+cedfile
+	flightfile = stdpath+'/'+stdfile
 
-	if not myfile:
-		print "Please include filename in path"
-		sys.exit()
 
 	""" creates a synthesis """
-	print cedfile
 	try:
-		S=aa.Synthesis(cedfile)
+		S=aa.Synthesis(synthfile)
 	except RuntimeError:
-		print "Input Error: check file names\n"
+		print "Input Synth Error: check path or file name\n"
 		sys.exit()
 
 	""" creates a std tape """
-	T=aa.Stdtape(stdtapedir+stdfile)
+	try:
+		T=aa.Stdtape(flightfile)
+	except RuntimeError:
+		print "Input Flight Error: check path or file name\n"
+		sys.exit()
 
 	return S,T
 

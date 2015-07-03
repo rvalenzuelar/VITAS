@@ -32,8 +32,10 @@ def main( args ):
 	print_shapes = args.print_shapes
 	print_global_atts = args.print_global_atts
 	print_axis = args.print_axis
+	swd=args.set_working_directory
 
-	S,T=set_working_files(cedfile=cedfile,stdfile=stdfile)
+	""" retrieves synthesis and flight level objects """
+	S,T=set_working_files(cedfile=cedfile,stdfile=stdfile,swd=swd)
 
 	""" creates a flightpath """
 	F=T.Flightpath(S.start, S.end)
@@ -150,6 +152,12 @@ if __name__ == "__main__":
 							nargs='+',
 							choices=['X','x','Y','y','Z','z'],
 							help=" print axis values (X,Y,Z)")	
+
+	""" Working directory Options """
+	print_options=parser.add_argument_group('Working directory')
+	print_options.add_argument('--set_working_directory','-swd',
+							action='store_true',
+							help="set working directory")
 
 
 	""" Slice options """
