@@ -22,7 +22,7 @@ usage: plot_synth2.py [--help] --ced file --std file [--panel num]
                       [--slicez lat float) [lat (float) ...]]
                       [--slicem lon (float) [lon (float ...]]
 
-Help::
+Help:
   --help, -h            shows this help message and exit
 
 Needed:

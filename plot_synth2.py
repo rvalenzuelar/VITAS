@@ -1,4 +1,4 @@
-#!//home/rvalenzuela/miniconda/bin/python
+#!//home/raul/miniconda/bin/python
 
 # Read netCDF file with pseudo-dual Doppler 
 # synthesis and plot variables
@@ -8,7 +8,7 @@
 # http://stackoverflow.com/questions/7878398/how-to-extract-an-arbitrary-line-of-values-from-a-numpy-array
 #
 # Raul Valenzuela
-# June, 2015
+# July, 2015
 
 from os import getcwd
 from os.path import dirname, basename, expanduser
@@ -184,7 +184,7 @@ if __name__ == "__main__":
 											formatter_class=argparse.RawTextHelpFormatter,
 											add_help=False)
 
-	help_option=parser.add_argument_group('Help:')
+	help_option=parser.add_argument_group('Help')
 	help_option.add_argument('--help', '-h',
 							action='help',
 							help='shows this help message and exit')
