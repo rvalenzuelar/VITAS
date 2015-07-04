@@ -10,7 +10,7 @@ import Terrain as tr
 import AircraftAnalysis as aa 
 import tempfile 
 import sys
-
+import readline
 
 pr1="Enter synthesis path: "
 pr2="Enter stdtape path: "
@@ -90,7 +90,6 @@ def set_working_files(**kwargs):
 
 	""" creates terrain object """
 	try:
-		print dtmfile
 		TR=tr.Terrain(dtmfile)
 	except RuntimeError:
 		print "Input Flight Error: check path or file name\n"
