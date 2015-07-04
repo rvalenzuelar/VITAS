@@ -4,6 +4,14 @@
 # Raul Valenzuela
 # July 2015
 
+
+from os.path import isfile
+import tempfile
+import os
+import gdal
+import numpy as np
+
+
 class Terrain(object):
 	def __init__(self,filepath):
 		if filepath:
@@ -16,30 +24,35 @@ class Terrain(object):
 # def plot_profile():
 
 
-def make_terrain_array(Terrain):
+def make_terrain_array(Terrain, Plot):
 
-		''' working folders '''
-		home = expanduser("~")
-		dem_file=home+'/Github/RadarQC/merged_dem_38-39_123-124_extended.tif'
-		temp_file=home+'/Github/pythonx/temp.tif'
-		out_file=home+'/Github/pythonx/temp_resamp.tif'
+		dem_file=Terrain.file
+
+		tmp1='terrain1.tmp'
+		tmp2='terrain2.tmp'
+		temp_file=tempfile.gettempdir()+'/'+tmp1
+		out_file=tempfile.gettempdir()+'/'+tmp2
+
+
+		# temp_file=home+'/Github/pythonx/temp.tif'
+		# out_file=home+'/Github/pythonx/temp_resamp.tif'
 
 		''' same boundaries as synthesis'''
-		ulx = min(self.lons)
-		uly = max(self.lats)		
-		lrx = max(self.lons)
-		lry = min(self.lats)
+		ulx = min(Plot.lons)
+		uly = max(Plot.lats)		
+		lrx = max(Plot.lons)
+		lry = min(Plot.lats)
 
 		''' number of verical gates '''
-		zvalues=self.axesval['z']		
+		zvalues=Plot.axesval['z']		
 		levels=len(zvalues)
 
 		''' vertical gate resolution'''
 		res=(zvalues[1]-zvalues[0])*1000 # [m] 
 		
 		''' downsample DTM using synthesis axes '''
-		xvalues=self.axesval['x']
-		yvalues=self.axesval['y']
+		xvalues=Plot.axesval['x']
+		yvalues=Plot.axesval['y']
 		resampx_to=len(xvalues)
 		resampy_to=len(yvalues)
 

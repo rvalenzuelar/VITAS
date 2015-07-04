@@ -9,7 +9,7 @@ import sys
 import AircraftPlot as ap
 
 
-def plot_synth(S , F, dtm,**kwargs):
+def plot_synth(S , F, DTM,**kwargs):
 
 	"""creates synthesis plot instance """
 	P=ap.SynthPlot()
@@ -20,7 +20,7 @@ def plot_synth(S , F, dtm,**kwargs):
 	P.panel = kwargs['panel']
 	P.zoomOpt = kwargs['zoomIn']
 	P.mask = kwargs['mask']
-	P.terrain = dtm
+	P.terrain = DTM
 
 	try:
 		P.slicem=sorted(kwargs['slicem'],reverse=True)

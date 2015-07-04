@@ -7,15 +7,12 @@
 
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import ImageGrid
-from os.path import expanduser,isfile
 from Terrain import make_terrain_array
-import os
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import scipy.ndimage as scipy
 import itertools as it
-import gdal
 
 class SynthPlot(object):
 
@@ -420,11 +417,11 @@ class SynthPlot(object):
 
 		extent2=self.get_extent()
 
-		print_terrain=False
+		plot_terrain=False
 		if self.terrain.file:
-			dtm=make_terrain_array()
+			dtm=make_terrain_array(self.terrain, self)
 			dtm_data=dtm['data'] # 2D
-			print_terrain=True
+			plot_terrain=True
 			# dtm_array=dtm['mask'] # 3D
 
 		field_group = self.get_slices(field_array)
@@ -434,7 +431,7 @@ class SynthPlot(object):
 		# creates iterator group
 		group=zip(plot_grids,self.zlevels,field_group,ucomp,vcomp)
 
-		if print_terrain:
+		if plot_terrain:
 			plt.figure()
 			plt.plot(self.coast['lon'], self.coast['lat'], color='r')
 			plt.plot(self.flight_lon, self.flight_lat,color='r')		
@@ -458,13 +455,13 @@ class SynthPlot(object):
 							vmax=self.cmap_value[1],
 							cmap=self.cmap_name)
 
-			if print_terrain:
+			if plot_terrain:
 				dtm_smooth=scipy.zoom(dtm_data,3)
 				print dtm_data.shape
 				print dtm_smooth.shape
-				sys.exit()
-				cont=g.contour(dtm['xg'],dtm['yg'],dtm_smooth,colors='k')
-				g.clabel(cont,fontsize=9)
+				# sys.exit()
+				# cont=g.contour(dtm['xg'],dtm['yg'],dtm_smooth,colors='k')
+				# g.clabel(cont,fontsize=9)
 
 
 			if self.windb:
