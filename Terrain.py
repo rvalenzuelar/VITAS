@@ -118,6 +118,8 @@ def make_terrain_array(Terrain, Plot):
 		xg=np.linspace(originX,endingX,cols)
 		yg=np.linspace(originY,endingY,rows)
 
+
+		''' return dictionary '''
 		dtm={	'data':data,
 				'mask':mask,
 				'extent':[ulx, lrx, lry,uly],
