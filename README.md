@@ -15,13 +15,14 @@ $./plot_synth2.py -h
 ```
 which prints
 ```code
-usage: plot_synth2.py [--help] [--ced file] [--std file] [--panel num]
-                      [--zoomin str] [--windv] [--mask]
-                      [--all | --field STR [STR ...]] [--print_shapes]
-                      [--print_global_atts] [--print_axis STR [STR ...]]
-                      [--set_working_directory | --get_working_directory]
-                      [--slicez lat float) [lat (float) ...]]
-                      [--slicem lon (float) [lon (float ...]]
+usage: start_plotting.py [--help] [--ced file] [--std file] [--panel num]
+                         [--zoomin str] [--wind] [--mask]
+                         [--all | --field STR [STR ...]] [--print_shapes]
+                         [--print_global_atts] [--print_axis STR [STR ...]]
+                         [--set_working_directory | --get_working_directory]
+                         [--slicez lat float) [lat (float) ...]]
+                         [--slicem lon (float) [lon (float ...]] [--terrain]
+                         [--slope] [--meteo]
 
 Help:
   --help, -h            shows this help message and exit
@@ -35,7 +36,7 @@ Input files:
 Plot options:
   --panel num, -p num   choose a panel (1-6); otherwise plots a figure with 6 panles
   --zoomin str, -z str  zoom-in over a offshore|onshore flight leg
-  --windv, -w           include wind vectors
+  --wind, -w            include wind vectors
   --mask, -m            mask pixels with NaN vertical velocity 
   --all, -a             [default] plot all fields (DBZ,SPD,CON,VOR)
   --field STR [STR ...], -f STR [STR ...]
@@ -58,6 +59,13 @@ Slice options:
                         latitude coordinates for zonal slices
   --slicem lon (float) [lon (float) ...], -slm lon (float) [lon (float) ...]
                         longitude coordinates for zonal slices
+
+Terrain options:
+  --terrain             plot a terrain map
+  --slope               plot a slope map
+
+Flight level options:
+  --meteo               plot meteo data from flight level
 ```
 
 Modules required:
