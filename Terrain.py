@@ -39,22 +39,67 @@ def plot_altitude_mask(axis,S,dtm):
 	axis.figure()
 	axis.plot(S.coast['lon'], S.coast['lat'], color='r')
 	axis.plot(S.flight_lon, S.flight_lat,color='r')		
-	axis.imshow(dtm['data'],interpolation='none',cmap='terrain_r',vmin=500,vmax=501,extent=dtm['extent'])
+	axis.imshow(dtm['data'],
+					interpolation='none',
+					cmap='terrain_r',
+					vmin=500,
+					vmax=501,
+					extent=dtm['extent'])
 	axis.colorbar()
 	axis.xlim(extent[0], extent[1])
 	axis.ylim(extent[2], extent[3])				
 	axis.draw()
 
-def plot_slope_map(axis):
+def plot_slope_map(axis,S):
+
+	extent=S.get_extent()
 
 	dem_file=tempfile.gettempdir()+'/terrain2.tmp'
 	out_file=tempfile.gettempdir()+'/terrain3.tmp'
 	input_param = (dem_file, out_file)
-	run_gdal = 'gdaldem slope %s %s' % input_param
+	run_gdal = 'gdaldem slope %s %s -p -s 111120' % input_param
 	os.system(run_gdal)
 
 	data=get_data(out_file)
 
+	axis.figure()
+	axis.plot(S.coast['lon'], S.coast['lat'], color='r')
+	axis.plot(S.flight_lon, S.flight_lat,color='r')		
+	axis.imshow(data['array'],
+					interpolation='none',
+					vmin=0,
+					vmax=20,
+					extent=data['extent'])
+	axis.colorbar()	
+	axis.xlim(extent[0], extent[1])
+	axis.ylim(extent[2], extent[3])		
+	axis.draw()
+
+def plot_terrain_map(axis,S):
+
+	extent=S.get_extent()
+
+	dem_file=tempfile.gettempdir()+'/terrain2.tmp'
+	# out_file=tempfile.gettempdir()+'/terrain3.tmp'
+	# input_param = (dem_file, out_file)
+	# run_gdal = 'gdaldem slope %s %s -p -s 111120' % input_param
+	# os.system(run_gdal)
+
+	data=get_data(dem_file)
+
+	axis.figure()
+	axis.plot(S.coast['lon'], S.coast['lat'], color='r')
+	axis.plot(S.flight_lon, S.flight_lat,color='r')		
+	axis.imshow(data['array'],
+					interpolation='none',
+					vmin=0,
+					vmax=600,
+					cmap='terrain',
+					extent=data['extent'])
+	axis.colorbar()	
+	axis.xlim(extent[0], extent[1])
+	axis.ylim(extent[2], extent[3])		
+	axis.draw()
 
 def get_data(dtmfile):
 
@@ -67,13 +112,59 @@ def get_data(dtmfile):
 	array=band.ReadAsArray(0,0,cols,rows)
 	datafile=None
 
+	''' geographic axes '''
+	originX=geotransform[0]
+	originY=geotransform[3]
+	pixelW=geotransform[1]
+	pixelH=geotransform[5]
+	
+	endingX=originX+cols*pixelW
+	endingY=originY+rows*pixelH
+
+	xg=np.linspace(originX,endingX,cols)
+	yg=np.linspace(originY,endingY,rows)
+
+	''' data extent '''
+	ulx=min(xg)
+	lrx=max(xg)
+	lry=min(yg)
+	uly=max(yg)
+
+	''' return dictionary '''
 	data={}
 	data['array']=array
-	data['geotransform']=geotransform
-	data['cols']=cols
-	data['rows']=rows
+	data['extent']=[ulx,lrx,lry,uly]
+	data['xg']=xg
+	data['yg']=yg
 
 	return data
+
+def make_3d_mask(data,levels,res):
+
+	rows=data['rows']
+	cols=data['cols']
+	array=data['array']
+
+	''' creates 3D terrain mask array '''
+	mask=np.zeros((rows,cols,levels))
+
+	'''Loop through each pixel of DTM and 
+	corresponding vertical column of mask'''
+	for ij in np.ndindex(mask.shape[:2]):
+
+		'''indices'''
+		i,j=ij
+
+		'''index of maximum vertical gate to
+		filled with ones (e.g. presence of terrain);
+		works like floor function; altitude of mask 
+		is zlevel[n-1] for n>0'''
+		n = int(np.ceil(array[i,j]/float(res)))
+
+		''' fills verical levels '''
+		mask[i,j,0:n] = 1
+
+	return mask
 
 def make_array(Terrain, Plot):
 
@@ -120,50 +211,16 @@ def make_array(Terrain, Plot):
 
 	data=get_data(out_file)
 
-	# ''' creates 3D terrain mask array '''
-	# mask=np.zeros((rows,cols,levels))
-
-	# '''Loop through each pixel of DTM and 
-	# corresponding vertical column of mask'''
-	# for ij in np.ndindex(mask.shape[:2]):
-
-	# 	'''indices'''
-	# 	i,j=ij
-
-	# 	'''index of maximum vertical gate to
-	# 	filled with ones (e.g. presence of terrain);
-	# 	works like floor function; altitude of mask 
-	# 	is zlevel[n-1] for n>0'''
-	# 	n = int(np.ceil(data[i,j]/float(res)))
-
-	# 	''' fills verical levels '''
-	# 	mask[i,j,0:n] = 1
-
+	# mask=make_3d_mask(data,levels,res)
 	mask=[]
 
-	''' geographic axes '''
-	originX=data['geotransform'][0]
-	originY=data['geotransform'][3]
-	pixelW=data['geotransform'][1]
-	pixelH=data['geotransform'][5]
-	cols=data['cols']
-	rows=data['rows']
 	
-
-	endingX=originX+cols*pixelW
-	endingY=originY+rows*pixelH
-
-	# print endingX, endingY
-
-	xg=np.linspace(originX,endingX,cols)
-	yg=np.linspace(originY,endingY,rows)
-
-
 	''' return dictionary '''
-	dtm={	'data':data['array'],
-		'mask':mask,
-		'extent':[ulx, lrx, lry,uly],
-		'xg':xg,
-		'yg':yg,}
+	dtm={}
+	dtm['data']=data['array']
+	dtm['mask']=mask
+	dtm['extent']=data['extent']
+	dtm['xg']=data['xg']
+	dtm['yg']=data['yg']
 
 	return dtm

@@ -16,10 +16,12 @@ def plot_synth(S , F, DTM,**kwargs):
 
 	"""set variables """
 	P.var = kwargs['var']
-	P.windb = kwargs['windb']
+	P.wind = kwargs['wind']
 	P.panel = kwargs['panel']
 	P.zoomOpt = kwargs['zoomIn']
 	P.mask = kwargs['mask']
+	P.plot_terrain = kwargs['plot_terrain']
+	P.plot_slope = kwargs['plot_slope']	
 	P.terrain = DTM
 
 	try:

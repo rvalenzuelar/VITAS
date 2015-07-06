@@ -66,12 +66,14 @@ def main( args ):
 	for f in plotFields:
 		plot_synth(S,F,DTM,
 					var=f,
-					windb=args.windv,
+					wind=args.wind,
 					panel=args.panel,
 					slicem = args.slicem,
 					slicez = args.slicez,
 					zoomIn=args.zoomin,
-					mask = args.mask)
+					mask = args.mask,
+					plot_terrain=args.terrain,
+					plot_slope=args.slope)
 	
 	# plt.show(block=False)	
 	plt.show()

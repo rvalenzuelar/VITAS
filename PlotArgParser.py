@@ -57,7 +57,7 @@ def start():
 							default=None,
 							choices=['offshore','onshore'],
 							help="zoom-in over a offshore|onshore flight leg")	
-	plot_options.add_argument('--windv', '-w',
+	plot_options.add_argument('--wind', '-w',
 							action='store_true',
 							help="include wind vectors")	
 
@@ -115,5 +115,14 @@ def start():
 							nargs='+',
 							required=False,
 							help="longitude coordinates for zonal slices")
+
+	""" Terrain options """
+	terrain_options=parser.add_argument_group('Terrain options')
+	terrain_options.add_argument('--terrain',
+							action='store_true',
+							help="plot a terrain map")
+	terrain_options.add_argument('--slope',
+							action='store_true',
+							help="plot a slope map")
 
 	return parser.parse_args()	

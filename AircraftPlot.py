@@ -52,6 +52,8 @@ class SynthPlot(object):
 		self.v_array=[]
 		self.w_array=[]
 		self.terrain=None
+		self.plot_terrain=None
+		self.plot_slope=None
 
 	def set_geographic(self,synth):
 
@@ -413,10 +415,14 @@ class SynthPlot(object):
 			self.zoom_in(self.zoomOpt[0])
 		extent2=self.get_extent()
 
-		plot_terrain=False
 		if self.terrain.file:
 			dtm=Terrain.make_array(self.terrain, self)
-			plot_terrain=True
+
+		if self.plot_terrain:
+			Terrain.plot_terrain_map(plt,self)
+
+		if self.plot_slope:
+			Terrain.plot_slope_map(plt,self)
 
 		field_group = self.get_slices(field_array)
 		ucomp = self.get_slices(u_array)
@@ -424,7 +430,6 @@ class SynthPlot(object):
 
 		# creates iterator group
 		group=zip(plot_grids,self.zlevels,field_group,ucomp,vcomp)
-
 
 		# make gridded plot
 		for g,k,field,u,v in group:
@@ -440,10 +445,10 @@ class SynthPlot(object):
 							vmax=self.cmap_value[1],
 							cmap=self.cmap_name)
 
-			if plot_terrain:
+			if self.terrain.file:
 				Terrain.add_contour(g,dtm)
 
-			if self.windb:
+			if self.wind:
 				self.add_windvector(g,u.T,v.T)
 
 			# if self.slicem or self.slicez:
@@ -558,7 +563,7 @@ class SynthPlot(object):
 							vmax=self.cmap_value[1],
 							cmap=self.cmap_name)
 			
-			if self.windb:
+			if self.wind:
 				self.add_windvector(g,h_comp.T,w_comp.T)
 
 			self.add_slice_line(g)
