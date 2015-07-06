@@ -34,14 +34,14 @@ class Stdtape(object):
 		self.PALT = self.read_stdtape('PRES_ALT')
 		self.DATETIME = self.read_stdtape('DATETIME')
 
-		# creates dictionary
-		dict_stdtape ={	'lats':self.LAT,
-						'lons':self.LON,
-						'galt': self.GALT,
-						'palt': self.PALT
-						}
+		'''creates dictionary '''
+		dict_stdtape={}
+		dict_stdtape['lats']=self.LAT
+		dict_stdtape['lons']=self.LON
+		dict_stdtape['galt']=self.GALT
+		dict_stdtape['palt']=self.PALT						}
 
-		# pandas dataframe for standar tape		
+		''' pandas dataframe for standar tape '''
 		self.df=pd.DataFrame(data=dict_stdtape,index=self.DATETIME)
 
 	def read_stdtape(self,var):
@@ -61,7 +61,7 @@ class Stdtape(object):
 
 		return array
 
-	def Flightpath(self,start_time, end_time):
+	def get_path(self,start_time, end_time):
 
 		start = self.df.index.searchsorted(start_time)
 		end = self.df.index.searchsorted(end_time)

@@ -7,9 +7,27 @@
 from os import getcwd
 import sys
 import AircraftPlot as ap
+import Terrain
 
+def plot_terrain(SynthPlot,**kwargs):
+	terrain=kwargs['terrain']
+	slope=kwargs['slope']
 
-def plot_synth(S , F, DTM,**kwargs):
+	if terrain:
+	 	Terrain.plot_terrain_map(SynthPlot)
+
+	if slope:
+	 	Terrain.plot_slope_map(SynthPlot)
+
+def plot_flight_meteo(SynthPlot, **kwargs):
+
+	meteo=kwargs['meteo']
+
+	if meteo:
+		print 'hola'
+	
+
+def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 
 	"""creates synthesis plot instance """
 	P=ap.SynthPlot()
@@ -20,8 +38,6 @@ def plot_synth(S , F, DTM,**kwargs):
 	P.panel = kwargs['panel']
 	P.zoomOpt = kwargs['zoomIn']
 	P.mask = kwargs['mask']
-	P.plot_terrain = kwargs['plot_terrain']
-	P.plot_slope = kwargs['plot_slope']	
 	P.terrain = DTM
 
 	try:
@@ -36,22 +52,23 @@ def plot_synth(S , F, DTM,**kwargs):
 	""" get array """
 	if P.var == 'SPD':
 		P.var = 'SPH' # horizontal proyection
-	array=getattr(S , P.var)		
+	array=getattr(SYNTH , P.var)		
 
 	""" set common variables """
-	P.axesval['x']=S.X
-	P.axesval['y']=S.Y
-	P.axesval['z']=S.Z
-	P.u_array=S.U
-	P.v_array=S.V
-	P.w_array=S.WVA
-	# P.w_array=S.WUP
+	P.axesval['x']=SYNTH.X
+	P.axesval['y']=SYNTH.Y
+	P.axesval['z']=SYNTH.Z
+	P.u_array=SYNTH.U
+	P.v_array=SYNTH.V
+	P.w_array=SYNTH.WVA
+	# P.w_array=SYNTH.WUP
 
 	""" general  geographic domain boundaries """
-	P.set_geographic(S)
+	P.set_geographic(SYNTH)
 
 	""" flight path from standard tape """
-	P.set_flight_level(F)
+	fpath=FLIGHT.get_path(SYNTH.start, SYNTH.end)	
+	P.set_flight_path(fpath)
 
 	""" coast line """
 	P.set_coastline()
@@ -62,20 +79,19 @@ def plot_synth(S , F, DTM,**kwargs):
 	""" make vertical plane plots """		
 	if P.slicem:
 		if P.var == 'SPH' :
-			P.vertical_plane_velocity(	fieldM=S.SPM, # meridional component
-										fieldZ=S.SPZ,
+			P.vertical_plane_velocity(	fieldM=SYNTH.SPM, # meridional component
+										fieldZ=SYNTH.SPZ,
 										sliceo='meridional') # zonal component)
 		else:
 			P.vertical_plane(field=array,sliceo='meridional')	
 
 	if P.slicez:
 		if P.var == 'SPH' :
-			P.vertical_plane_velocity(	fieldM=S.SPM, # meridional component
-										fieldZ=S.SPZ,
+			P.vertical_plane_velocity(	fieldM=SYNTH.SPM, # meridional component
+										fieldZ=SYNTH.SPZ,
 										sliceo='zonal') # zonal component)
 		else:
 			P.vertical_plane(field=array,sliceo='zonal')	
 
 
-	# if P.dtm:
-	# 	P.dtm_with_flightpath()
+	return P

@@ -10,7 +10,7 @@ import tempfile
 import os
 import gdal
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 class Terrain(object):
 	def __init__(self,filepath):
@@ -19,12 +19,20 @@ class Terrain(object):
 		else:
 			self.file=None
 
+		self.array=None
 
 # def plot_level():
 
 # def plot_profile():
 
-def add_contour(axis,dtm):
+def add_contour(axis,Plot):
+
+	if not Plot.terrain.array:
+		dtm=make_array(Plot.terrain.file,Plot)
+		Plot.terrain.array=dtm
+	else:
+		dtm=Plot.terrain.array
+
 	cont=axis.contour(dtm['xg'],dtm['yg'],dtm['data'],
 					levels=[200,600],
 					colors=( (0,0,0) , (0.4,0.4,0.4) ),
@@ -50,9 +58,9 @@ def plot_altitude_mask(axis,S,dtm):
 	axis.ylim(extent[2], extent[3])				
 	axis.draw()
 
-def plot_slope_map(axis,S):
+def plot_slope_map(SynthPlot):
 
-	extent=S.get_extent()
+	extent=SynthPlot.get_extent()
 
 	dem_file=tempfile.gettempdir()+'/terrain2.tmp'
 	out_file=tempfile.gettempdir()+'/terrain3.tmp'
@@ -62,44 +70,39 @@ def plot_slope_map(axis,S):
 
 	data=get_data(out_file)
 
-	axis.figure()
-	axis.plot(S.coast['lon'], S.coast['lat'], color='r')
-	axis.plot(S.flight_lon, S.flight_lat,color='r')		
-	axis.imshow(data['array'],
+	plt.figure()
+	plt.plot(SynthPlot.coast['lon'], SynthPlot.coast['lat'], color='r')
+	plt.plot(SynthPlot.flight_lon, SynthPlot.flight_lat,color='r')		
+	plt.imshow(data['array'],
 					interpolation='none',
 					vmin=0,
 					vmax=20,
 					extent=data['extent'])
-	axis.colorbar()	
-	axis.xlim(extent[0], extent[1])
-	axis.ylim(extent[2], extent[3])		
-	axis.draw()
+	plt.colorbar()	
+	plt.xlim(extent[0], extent[1])
+	plt.ylim(extent[2], extent[3])		
+	plt.draw()
 
-def plot_terrain_map(axis,S):
+def plot_terrain_map(SynthPlot):
 
-	extent=S.get_extent()
+	extent=SynthPlot.get_extent()
 
 	dem_file=tempfile.gettempdir()+'/terrain2.tmp'
-	# out_file=tempfile.gettempdir()+'/terrain3.tmp'
-	# input_param = (dem_file, out_file)
-	# run_gdal = 'gdaldem slope %s %s -p -s 111120' % input_param
-	# os.system(run_gdal)
-
 	data=get_data(dem_file)
 
-	axis.figure()
-	axis.plot(S.coast['lon'], S.coast['lat'], color='r')
-	axis.plot(S.flight_lon, S.flight_lat,color='r')		
-	axis.imshow(data['array'],
+	plt.figure()
+	plt.plot(SynthPlot.coast['lon'], SynthPlot.coast['lat'], color='r')
+	plt.plot(SynthPlot.flight_lon, SynthPlot.flight_lat,color='r')		
+	plt.imshow(data['array'],
 					interpolation='none',
 					vmin=0,
 					vmax=600,
 					cmap='terrain',
 					extent=data['extent'])
-	axis.colorbar()	
-	axis.xlim(extent[0], extent[1])
-	axis.ylim(extent[2], extent[3])		
-	axis.draw()
+	plt.colorbar()	
+	plt.xlim(extent[0], extent[1])
+	plt.ylim(extent[2], extent[3])		
+	plt.draw()
 
 def get_data(dtmfile):
 
@@ -166,9 +169,7 @@ def make_3d_mask(data,levels,res):
 
 	return mask
 
-def make_array(Terrain, Plot):
-
-	dem_file=Terrain.file
+def make_array(dem_file, Plot):
 
 	temp_file=tempfile.gettempdir()+'/terrain1.tmp'
 	out_file=tempfile.gettempdir()+'/terrain2.tmp'
@@ -207,7 +208,6 @@ def make_array(Terrain, Plot):
 	input_param = (resampy_to,resampx_to,temp_file, out_file)
 	run_gdal = 'gdalwarp -ts %s %s -r near -co "TFW=YES" %s %s' % input_param
 	os.system(run_gdal)
-
 
 	data=get_data(out_file)
 

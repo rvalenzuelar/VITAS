@@ -52,8 +52,6 @@ class SynthPlot(object):
 		self.v_array=[]
 		self.w_array=[]
 		self.terrain=None
-		self.plot_terrain=None
-		self.plot_slope=None
 
 	def set_geographic(self,synth):
 
@@ -78,7 +76,7 @@ class SynthPlot(object):
 		self.coast['lon']= coastline[1][0][13:-1]
 		self.coast['lat']= coastline[1][1][13:-1]
 	
-	def set_flight_level(self,stdtape):
+	def set_flight_path(self,stdtape):
 
 		jmp=5
 		fp = zip(*stdtape[::jmp])
@@ -415,15 +413,6 @@ class SynthPlot(object):
 			self.zoom_in(self.zoomOpt[0])
 		extent2=self.get_extent()
 
-		if self.terrain.file:
-			dtm=Terrain.make_array(self.terrain, self)
-
-		if self.plot_terrain:
-			Terrain.plot_terrain_map(plt,self)
-
-		if self.plot_slope:
-			Terrain.plot_slope_map(plt,self)
-
 		field_group = self.get_slices(field_array)
 		ucomp = self.get_slices(u_array)
 		vcomp = self.get_slices(v_array)		
@@ -446,7 +435,7 @@ class SynthPlot(object):
 							cmap=self.cmap_name)
 
 			if self.terrain.file:
-				Terrain.add_contour(g,dtm)
+				Terrain.add_contour(g,self)
 
 			if self.wind:
 				self.add_windvector(g,u.T,v.T)
