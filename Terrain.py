@@ -81,6 +81,7 @@ def plot_slope_map(SynthPlot):
 	plt.colorbar()	
 	plt.xlim(extent[0], extent[1])
 	plt.ylim(extent[2], extent[3])		
+	plt.title('Slope [%]')	
 	plt.draw()
 
 def plot_terrain_map(SynthPlot):
@@ -101,7 +102,8 @@ def plot_terrain_map(SynthPlot):
 					extent=data['extent'])
 	plt.colorbar()	
 	plt.xlim(extent[0], extent[1])
-	plt.ylim(extent[2], extent[3])		
+	plt.ylim(extent[2], extent[3])	
+	plt.title('Terrain altitude [m]')	
 	plt.draw()
 
 def get_data(dtmfile):
