@@ -7,7 +7,7 @@
 
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import ImageGrid
-from Terrain import make_terrain_array
+import Terrain 
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
@@ -269,11 +269,8 @@ class SynthPlot(object):
 			xjump=self.windb_jump
 			yjump=self.windb_jump
 
-			lons=self.shrink(self.lons,mask=self.maskLon)
-			x=self.resample(lons,res=xjump)
-
-			lats=self.shrink(self.lats,mask=self.maskLat)
-			y=self.resample(lats,res=yjump)
+			x=self.resample(self.lons,res=xjump)
+			y=self.resample(self.lats,res=yjump)
 
 			uu=self.resample(comp1,xres=xjump,yres=yjump)
 			vv=self.resample(comp2,xres=xjump,yres=yjump)
@@ -414,15 +411,12 @@ class SynthPlot(object):
 		extent1=self.get_extent()
 		if self.zoomOpt:
 			self.zoom_in(self.zoomOpt[0])
-
 		extent2=self.get_extent()
 
 		plot_terrain=False
 		if self.terrain.file:
-			dtm=make_terrain_array(self.terrain, self)
-			dtm_data=dtm['data'] # 2D
+			dtm=Terrain.make_array(self.terrain, self)
 			plot_terrain=True
-			# dtm_array=dtm['mask'] # 3D
 
 		field_group = self.get_slices(field_array)
 		ucomp = self.get_slices(u_array)
@@ -431,15 +425,6 @@ class SynthPlot(object):
 		# creates iterator group
 		group=zip(plot_grids,self.zlevels,field_group,ucomp,vcomp)
 
-		if plot_terrain:
-			plt.figure()
-			plt.plot(self.coast['lon'], self.coast['lat'], color='r')
-			plt.plot(self.flight_lon, self.flight_lat,color='r')		
-			plt.imshow(dtm_data,interpolation='none',cmap='terrain_r',vmin=500,vmax=501,extent=dtm['extent'])
-			plt.colorbar()
-			plt.xlim(extent2[0], extent2[1])
-			plt.ylim(extent2[2], extent2[3])				
-			plt.draw()
 
 		# make gridded plot
 		for g,k,field,u,v in group:
@@ -456,16 +441,7 @@ class SynthPlot(object):
 							cmap=self.cmap_name)
 
 			if plot_terrain:
-				# dtm_smooth=scipy.zoom(dtm_data,3)
-				# print dtm_data.shape
-				# print dtm_smooth.shape
-				# sys.exit()
-				# cont=g.contour(dtm['xg'],dtm['yg'],dtm_smooth,colors='k')
-				# g.clabel(cont,fontsize=9)
-				cont=g.contour(dtm['xg'],dtm['yg'],dtm_data,colors='k')
-				cont.levels=[100,200]
-				g.clabel(cont,cont.levels,fontsize=9)
-
+				Terrain.add_contour(g,dtm)
 
 			if self.windb:
 				self.add_windvector(g,u.T,v.T)

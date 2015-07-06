@@ -19,107 +19,151 @@ class Terrain(object):
 		else:
 			self.file=None
 
+
 # def plot_level():
 
 # def plot_profile():
 
+def add_contour(axis,dtm):
+	cont=axis.contour(dtm['xg'],dtm['yg'],dtm['data'],
+					levels=[200,600],
+					colors=( (0,0,0) , (0.4,0.4,0.4) ),
+					linewidths=2)
+	
+	axis.clabel(cont,[200,600],fmt='%.0f',fontsize=12,inline_spacing=2)	
 
-def make_terrain_array(Terrain, Plot):
+def plot_altitude_mask(axis,S,dtm):
 
-		dem_file=Terrain.file
+	extent=S.get_extent()
 
-		tmp1='terrain1.tmp'
-		tmp2='terrain2.tmp'
-		temp_file=tempfile.gettempdir()+'/'+tmp1
-		out_file=tempfile.gettempdir()+'/'+tmp2
+	axis.figure()
+	axis.plot(S.coast['lon'], S.coast['lat'], color='r')
+	axis.plot(S.flight_lon, S.flight_lat,color='r')		
+	axis.imshow(dtm['data'],interpolation='none',cmap='terrain_r',vmin=500,vmax=501,extent=dtm['extent'])
+	axis.colorbar()
+	axis.xlim(extent[0], extent[1])
+	axis.ylim(extent[2], extent[3])				
+	axis.draw()
 
-		''' same boundaries as synthesis'''
-		ulx = min(Plot.lons)
-		uly = max(Plot.lats)		
-		lrx = max(Plot.lons)
-		lry = min(Plot.lats)
+def plot_slope_map(axis):
 
-		''' number of verical gates '''
-		zvalues=Plot.axesval['z']		
-		levels=len(zvalues)
+	dem_file=tempfile.gettempdir()+'/terrain2.tmp'
+	out_file=tempfile.gettempdir()+'/terrain3.tmp'
+	input_param = (dem_file, out_file)
+	run_gdal = 'gdaldem slope %s %s' % input_param
+	os.system(run_gdal)
 
-		''' vertical gate resolution'''
-		res=(zvalues[1]-zvalues[0])*1000 # [m] 
-		
-		''' downsample DTM using synthesis axes '''
-		xvalues=Plot.axesval['x']
-		yvalues=Plot.axesval['y']
-		resampx_to=len(xvalues)
-		resampy_to=len(yvalues)
-
-		if isfile(temp_file):
-			os.remove(temp_file)
-
-		if isfile(out_file):
-			os.remove(out_file)
-
-		''' shrink original dtm '''
-		input_param = (ulx, uly, lrx, lry, dem_file, temp_file)
-		run_gdal = 'gdal_translate -projwin %s %s %s %s %s %s' % input_param
-		os.system(run_gdal)
-
-		''' resample shrinked dtm '''
-		input_param = (resampy_to,resampx_to,temp_file, out_file)
-		run_gdal = 'gdalwarp -ts %s %s -r near -co "TFW=YES" %s %s' % input_param
-		os.system(run_gdal)
-
-		''' store dtm in data '''
-		datafile = gdal.Open(out_file)
-		geotransform=datafile.GetGeoTransform()
-		cols=datafile.RasterXSize
-		rows=datafile.RasterYSize
-		band=datafile.GetRasterBand(1)		
-		data=band.ReadAsArray(0,0,cols,rows)
-		datafile=None
-
-		# ''' creates 3D terrain mask array '''
-		# mask=np.zeros((rows,cols,levels))
-
-		# '''Loop through each pixel of DTM and 
-		# corresponding vertical column of mask'''
-		# for ij in np.ndindex(mask.shape[:2]):
-
-		# 	'''indices'''
-		# 	i,j=ij
-			
-		# 	'''index of maximum vertical gate to
-		# 	filled with ones (e.g. presence of terrain);
-		# 	works like floor function; altitude of mask 
-		# 	is zlevel[n-1] for n>0'''
-		# 	n = int(np.ceil(data[i,j]/float(res)))
-			
-		# 	''' fills verical levels '''
-		# 	mask[i,j,0:n] = 1
-
-		mask=[]
-
-		''' geographic axes '''
-		originX=geotransform[0]
-		originY=geotransform[3]
-		pixelW=geotransform[1]
-		pixelH=geotransform[5]
-
-		# print originX,originY,pixelW,pixelH
-
-		endingX=originX+cols*pixelW
-		endingY=originY+rows*pixelH
-
-		# print endingX, endingY
-
-		xg=np.linspace(originX,endingX,cols)
-		yg=np.linspace(originY,endingY,rows)
+	data=get_data(out_file)
 
 
-		''' return dictionary '''
-		dtm={	'data':data,
-				'mask':mask,
-				'extent':[ulx, lrx, lry,uly],
-				'xg':xg,
-				'yg':yg,}
+def get_data(dtmfile):
 
-		return dtm
+	''' store dtm in data '''
+	datafile = gdal.Open(dtmfile)
+	geotransform=datafile.GetGeoTransform()
+	cols=datafile.RasterXSize
+	rows=datafile.RasterYSize
+	band=datafile.GetRasterBand(1)		
+	array=band.ReadAsArray(0,0,cols,rows)
+	datafile=None
+
+	data={}
+	data['array']=array
+	data['geotransform']=geotransform
+	data['cols']=cols
+	data['rows']=rows
+
+	return data
+
+def make_array(Terrain, Plot):
+
+	dem_file=Terrain.file
+
+	temp_file=tempfile.gettempdir()+'/terrain1.tmp'
+	out_file=tempfile.gettempdir()+'/terrain2.tmp'
+
+	''' same boundaries as synthesis'''
+	ulx = min(Plot.lons)
+	uly = max(Plot.lats)		
+	lrx = max(Plot.lons)
+	lry = min(Plot.lats)
+
+	''' number of verical gates '''
+	zvalues=Plot.axesval['z']		
+	levels=len(zvalues)
+
+	''' vertical gate resolution'''
+	res=(zvalues[1]-zvalues[0])*1000 # [m] 
+
+	''' downsample DTM using synthesis axes '''
+	xvalues=Plot.axesval['x']
+	yvalues=Plot.axesval['y']
+	resampx_to=len(xvalues)*1
+	resampy_to=len(yvalues)*1
+
+	if isfile(temp_file):
+		os.remove(temp_file)
+
+	if isfile(out_file):
+		os.remove(out_file)
+
+	''' shrink original dtm '''
+	input_param = (ulx, uly, lrx, lry, dem_file, temp_file)
+	run_gdal = 'gdal_translate -projwin %s %s %s %s %s %s' % input_param
+	os.system(run_gdal)
+
+	''' resample shrinked dtm '''
+	input_param = (resampy_to,resampx_to,temp_file, out_file)
+	run_gdal = 'gdalwarp -ts %s %s -r near -co "TFW=YES" %s %s' % input_param
+	os.system(run_gdal)
+
+
+	data=get_data(out_file)
+
+	# ''' creates 3D terrain mask array '''
+	# mask=np.zeros((rows,cols,levels))
+
+	# '''Loop through each pixel of DTM and 
+	# corresponding vertical column of mask'''
+	# for ij in np.ndindex(mask.shape[:2]):
+
+	# 	'''indices'''
+	# 	i,j=ij
+
+	# 	'''index of maximum vertical gate to
+	# 	filled with ones (e.g. presence of terrain);
+	# 	works like floor function; altitude of mask 
+	# 	is zlevel[n-1] for n>0'''
+	# 	n = int(np.ceil(data[i,j]/float(res)))
+
+	# 	''' fills verical levels '''
+	# 	mask[i,j,0:n] = 1
+
+	mask=[]
+
+	''' geographic axes '''
+	originX=data['geotransform'][0]
+	originY=data['geotransform'][3]
+	pixelW=data['geotransform'][1]
+	pixelH=data['geotransform'][5]
+	cols=data['cols']
+	rows=data['rows']
+	
+
+	endingX=originX+cols*pixelW
+	endingY=originY+rows*pixelH
+
+	# print endingX, endingY
+
+	xg=np.linspace(originX,endingX,cols)
+	yg=np.linspace(originY,endingY,rows)
+
+
+	''' return dictionary '''
+	dtm={	'data':data['array'],
+		'mask':mask,
+		'extent':[ulx, lrx, lry,uly],
+		'xg':xg,
+		'yg':yg,}
+
+	return dtm
