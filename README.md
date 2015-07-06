@@ -5,13 +5,43 @@ VIsualization Tool for Aircraft Synthesis
 VITAS is build to create plots that support the analysis
 of dual-Doppler radar synthesis derived from airborne platforms. The code is being developed and therefore is changing constantly. 
 
-The current version is limited to a python script. Hopefully, in 
+The current version is a python script working as command line tool. Hopefully, in 
 the future the code will become an installable python module. Also, it is limited to ingest a CEDRIC netCDF synthesis and flight level data in RAF netCDF format. 
+
+Installation
+----------------
+
+Copy the repository to your local computer (for example to your home folder). Then, within the vitas folder call ./start_plotting with the options described in the help menu.
+
+There are several python modules that are required:
+
+- Basemap
+- gdal
+- matplotlib
+- numpy
+- netCDF4
+- geographiclib
+- pandas
+- scipy
+
+Installation of [miniconda](1) (python package manager) is highly recommended. Once miniconda is installed, modules can be installed by using:
+
+```code
+$ conda install [name of the module]
+```
+
+Modules that are not located in the conda database can be installed with binstar.
+
+VITAS is being developed in a Linux (Ubuntu and RedHat 6) environment so Windows/OSX tests are necessary.
+
+
+Help Menu
+-----------------
 
 Help about how to use the script can be obtained by:
 
 ```code
-$./plot_synth2.py -h
+$./start_plotting.py -h
 ```
 which prints
 ```code
@@ -68,19 +98,6 @@ Flight level options:
   --meteo               plot meteo data from flight level
 ```
 
-Modules required:
 
-- basemap
-- gdal
-- matplotlib
-- numpy
-- netCDF4
-- geographiclib
-- pandas
-- scipy
-
-The script is being developed in a Linux (Ubuntu and RedHat 6) environment so Windows/OSX tests are necessary.
-
-Installation of [miniconda](1) (python package manager) is highly recommended.
 
 [1]:http://conda.pydata.org/miniconda.html
