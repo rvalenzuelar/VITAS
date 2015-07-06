@@ -39,7 +39,7 @@ class Stdtape(object):
 		dict_stdtape['lats']=self.LAT
 		dict_stdtape['lons']=self.LON
 		dict_stdtape['galt']=self.GALT
-		dict_stdtape['palt']=self.PALT						}
+		dict_stdtape['palt']=self.PALT
 
 		''' pandas dataframe for standar tape '''
 		self.df=pd.DataFrame(data=dict_stdtape,index=self.DATETIME)
