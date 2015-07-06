@@ -74,5 +74,6 @@ def plot_synth(S , F, DTM,**kwargs):
 		else:
 			P.vertical_plane(field=array,sliceo='zonal')	
 
+
 	# if P.dtm:
 	# 	P.dtm_with_flightpath()

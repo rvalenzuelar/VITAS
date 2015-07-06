@@ -76,7 +76,7 @@ def main( args ):
 	# plt.show(block=False)	
 	plt.show()
 
-
+	print 'HOLA'
 		
 
 """call main function """
