@@ -7,7 +7,7 @@
 
 from os.path import dirname,basename,expanduser,isfile,isdir
 import Terrain as tr
-import AircraftAnalysis as aa 
+import AircraftAnalysis as AA 
 import tempfile 
 import sys
 import readline
@@ -76,14 +76,14 @@ def set_working_files(**kwargs):
 
 	""" creates a synthesis object """
 	try:
-		SY=aa.Synthesis(synthfile)
+		SY=AA.Synthesis(synthfile)
 	except RuntimeError:
 		print "Input Synth Error: check path or file name\n"
 		sys.exit()
 
 	""" creates a std tape object """
 	try:
-		ST=aa.Stdtape(flightfile)
+		ST=AA.Stdtape(flightfile)
 	except RuntimeError:
 		print "Input Flight Error: check path or file name\n"
 		sys.exit()

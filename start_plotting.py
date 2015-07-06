@@ -59,7 +59,7 @@ def main( args ):
 	print "Synthesis start time :%s" % SYNTH.start
 	print "Synthesis end time :%s\n" % SYNTH.end
 
-	""" make plots """
+	""" make synthesis plots """
 	for f in plotFields:
 		P=Plotter.plot_synth(SYNTH,FLIGHT,DTM,
 							var=f,
@@ -70,9 +70,11 @@ def main( args ):
 							zoomIn=args.zoomin,
 							mask = args.mask)
 
+	""" make terrain plots """
 	Plotter.plot_terrain(P,terrain=terrain,slope=slope)
 
-	Plotter.plot_flight_meteo(P,meteo=meteo)
+	""" make flight level meteo plot """
+	Plotter.plot_flight_meteo(SYNTH,FLIGHT,meteo=meteo)
 
 	# plt.show(block=False)	
 	plt.show()

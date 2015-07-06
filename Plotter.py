@@ -6,7 +6,7 @@
 
 from os import getcwd
 import sys
-import AircraftPlot as ap
+import AircraftPlot as AP
 import Terrain
 
 def plot_terrain(SynthPlot,**kwargs):
@@ -19,18 +19,21 @@ def plot_terrain(SynthPlot,**kwargs):
 	if slope:
 	 	Terrain.plot_slope_map(SynthPlot)
 
-def plot_flight_meteo(SynthPlot, **kwargs):
+def plot_flight_meteo(Synth,StdTape, **kwargs):
 
 	meteo=kwargs['meteo']
 
 	if meteo:
-		print 'hola'
+		met=StdTape.get_meteo(Synth.start, Synth.end)	
+		flight=AP.FlightPlot(met)
+		flight.timeseries()
+		
 	
 
 def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 
 	"""creates synthesis plot instance """
-	P=ap.SynthPlot()
+	P=AP.SynthPlot()
 
 	"""set variables """
 	P.var = kwargs['var']

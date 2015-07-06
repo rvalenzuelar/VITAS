@@ -32,7 +32,16 @@ class Stdtape(object):
 		self.LON = self.read_stdtape('LON')
 		self.GALT = self.read_stdtape('GEOPOT_ALT')
 		self.PALT = self.read_stdtape('PRES_ALT')
+		self.APRES = self.read_stdtape('AIR_PRESS')
+		self.ATEMP = self.read_stdtape('AIR_TEMP')
+		self.JWLWC = self.read_stdtape('JWLWC')
+		self.DEWP = self.read_stdtape('DEW_POINT')
+		self.WSPD = self.read_stdtape('WIND_SPD')
+		self.WDIR = self.read_stdtape('WIND_DIR')
+		self.WVERT = self.read_stdtape('VERT_WIND')
+
 		self.DATETIME = self.read_stdtape('DATETIME')
+
 
 		'''creates dictionary '''
 		dict_stdtape={}
@@ -40,6 +49,13 @@ class Stdtape(object):
 		dict_stdtape['lons']=self.LON
 		dict_stdtape['galt']=self.GALT
 		dict_stdtape['palt']=self.PALT
+		dict_stdtape['apres']=self.APRES
+		dict_stdtape['atemp']=self.ATEMP
+		dict_stdtape['jwlwc']=self.JWLWC
+		dict_stdtape['dewp']=self.DEWP
+		dict_stdtape['wspd']=self.WSPD
+		dict_stdtape['wdir']=self.WDIR
+		dict_stdtape['wvert']=self.WVERT
 
 		''' pandas dataframe for standar tape '''
 		self.df=pd.DataFrame(data=dict_stdtape,index=self.DATETIME)
@@ -69,6 +85,36 @@ class Stdtape(object):
 		lon = self.df.ix[start:end]['lons'].values
 		
 		return zip(lat, lon)
+
+	def get_altitude(self,start_time, end_time,**kwargs):
+
+		alt_type=kwargs['type']
+
+		start = self.df.index.searchsorted(start_time)
+		end = self.df.index.searchsorted(end_time)
+		if alt_type == 'galt':			
+			alt = self.df.ix[start:end]['galt'].values
+		elif alt_type == 'palt':
+			alt = self.df.ix[start:end]['palt'].values
+		
+		return alt
+
+	def get_meteo(self,start_time, end_time):
+
+		start = self.df.index.searchsorted(start_time)
+		end = self.df.index.searchsorted(end_time)
+		
+		met={}
+		met['apres']=self.df.ix[start:end]['apres'].values
+		met['atemp']=self.df.ix[start:end]['atemp'].values
+		met['jwlwc']=self.df.ix[start:end]['jwlwc'].values
+		met['dewp']=self.df.ix[start:end]['dewp'].values
+		met['wspd']=self.df.ix[start:end]['wspd'].values
+		met['wdir']=self.df.ix[start:end]['wdir'].values
+		met['wvert']=self.df.ix[start:end]['wvert'].values
+
+		return met
+
 
 class Synthesis(object):
 	def __init__(self,*args):

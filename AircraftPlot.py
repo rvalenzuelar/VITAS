@@ -6,7 +6,7 @@
 #
 
 from mpl_toolkits.basemap import Basemap
-from mpl_toolkits.axes_grid1 import ImageGrid
+from mpl_toolkits.axes_grid1 import ImageGrid, AxesGrid
 import Terrain 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,7 +18,7 @@ class SynthPlot(object):
 
 	def __init__(self):
 		self.var=None
-		self.windb=None
+		self.wind=None
 		self.panel=None
 		self.slicen=None
 		self.sliceo=None
@@ -707,4 +707,38 @@ class SynthPlot(object):
 
 		# show figure
 		plt.draw()	
+
+class FlightPlot(object):
+	def __init__(self,met):
+		if met:
+			self.met=met
+		else:
+			self.met=None
+
+	def timeseries(self):
+
+		f, ax = plt.subplots(3,2, sharex=True,figsize=(10,15))
+
+
+		ax[0,0].plot(self.met['atemp'])
+		ax[0,0].plot(self.met['dewp'])
+		ax[1,0].plot(self.met['apres'])
+		ax[2,0].plot(self.met['wdir'])
+
+		ax[0,1].plot(self.met['jwlwc'])
+		ax[1,1].plot(self.met['wspd'])
+		ax[2,1].plot(self.met['wvert'])
+
+		for i in range(3):
+			ax[i,1].yaxis.tick_right()
+
+		axs=ax.ravel()
+
+		for i in range(6):
+			axs[i].grid(True)
+
+		f.subplots_adjust(	bottom=0.04,top=0.96,
+							hspace=0,wspace=0)
+
+		plt.draw
 
