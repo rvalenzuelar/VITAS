@@ -125,4 +125,11 @@ def start():
 							action='store_true',
 							help="plot a slope map")
 
+	""" Flight level options """
+	flight_options=parser.add_argument_group('Flight level options')
+	flight_options.add_argument('--meteo',
+							action='store_true',
+							help="plot meteo data from flight level")
+
+
 	return parser.parse_args()	
