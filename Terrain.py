@@ -33,10 +33,6 @@ def make_terrain_array(Terrain, Plot):
 		temp_file=tempfile.gettempdir()+'/'+tmp1
 		out_file=tempfile.gettempdir()+'/'+tmp2
 
-
-		# temp_file=home+'/Github/pythonx/temp.tif'
-		# out_file=home+'/Github/pythonx/temp_resamp.tif'
-
 		''' same boundaries as synthesis'''
 		ulx = min(Plot.lons)
 		uly = max(Plot.lats)		

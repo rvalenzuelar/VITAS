@@ -1,4 +1,4 @@
-#!//home/raul/miniconda/bin/python
+#!/home/rvalenzuela/miniconda/bin/python
 
 # Read netCDF file with pseudo-dual Doppler 
 # synthesis and plot variables
@@ -75,9 +75,6 @@ def main( args ):
 	
 	# plt.show(block=False)	
 	plt.show()
-
-	print 'HOLA'
-		
 
 """call main function """
 if __name__ == "__main__":

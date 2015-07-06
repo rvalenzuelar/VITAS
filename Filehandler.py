@@ -16,7 +16,7 @@ pr1="Enter synthesis path: "
 pr2="Enter stdtape path: "
 pr3="Enter DTM path including file: "
 
-def print_set_working_msg(tmpfile):
+def print_set_msg(tmpfile):
 
 	print 'Please enter working directories\n'
 	synthpath = raw_input(pr1)

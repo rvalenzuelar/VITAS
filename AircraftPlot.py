@@ -455,15 +455,16 @@ class SynthPlot(object):
 							vmax=self.cmap_value[1],
 							cmap=self.cmap_name)
 
-			# if plot_terrain:
-			# 	dtm_smooth=scipy.zoom(dtm_data,3)
-			# 	# print dtm_data.shape
-			# 	# print dtm_smooth.shape
-			# 	# sys.exit()
-			# 	# cont=g.contour(dtm['xg'],dtm['yg'],dtm_smooth,colors='k')
-			# 	# g.clabel(cont,fontsize=9)
-			# 	cont=g.contour(dtm['xg'],dtm['yg'],dtm_data,colors='k')
-			# 	g.clabel(cont,fontsize=9)
+			if plot_terrain:
+				# dtm_smooth=scipy.zoom(dtm_data,3)
+				# print dtm_data.shape
+				# print dtm_smooth.shape
+				# sys.exit()
+				# cont=g.contour(dtm['xg'],dtm['yg'],dtm_smooth,colors='k')
+				# g.clabel(cont,fontsize=9)
+				cont=g.contour(dtm['xg'],dtm['yg'],dtm_data,colors='k')
+				cont.levels=[100,200]
+				g.clabel(cont,cont.levels,fontsize=9)
 
 
 			if self.windb:
