@@ -6,7 +6,7 @@
 #
 
 from mpl_toolkits.basemap import Basemap
-from mpl_toolkits.axes_grid1 import ImageGrid, AxesGrid
+from mpl_toolkits.axes_grid1 import ImageGrid
 from matplotlib.patches import Rectangle
 import Terrain 
 import matplotlib.pyplot as plt
@@ -85,8 +85,10 @@ class SynthPlot(object):
 
 	def set_panel(self,option):
 
-		# set some plotting values and stores
-		# vertical level in a list of arrays
+		"""
+		set some plotting values and stores
+		vertical level in a list of arrays
+		"""
 		if option == 'single':
 			self.figure_size=(8,8)
 			self.rows_cols=(1,1)
@@ -378,16 +380,18 @@ class SynthPlot(object):
 
 	def add_flight_path(self,axis):
 
+		""" plot line """
 		x=self.flight_lon
 		y= self.flight_lat
 		axis.plot(x,y)
 
+		""" add dots and text """
 		for i in range(len(x)):
 			if i%100 == 0:
 				axis.plot(x[i],y[i],'bo')
-				axis.text(x[i],y[i],str(i/100),fontsize=16)
-
-
+				axis.text(x[i],y[i],str(i/100),
+									fontsize=16,
+									color=(0,0,0))
 
 
 	def add_coastline(self,axis):
