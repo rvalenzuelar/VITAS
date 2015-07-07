@@ -79,8 +79,7 @@ class SynthPlot(object):
 	
 	def set_flight_path(self,stdtape):
 
-		jmp=5
-		fp = zip(*stdtape[::jmp])
+		fp = zip(*stdtape)
 		self.flight_lat=fp[0]
 		self.flight_lon=fp[1]
 
@@ -377,6 +376,35 @@ class SynthPlot(object):
 		b= all(x == array[0] for x in array)
 		return b
 
+	def add_flight_path(self,axis):
+
+		x=self.flight_lon
+		y= self.flight_lat
+		axis.plot(x,y)
+
+		for i in range(len(x)):
+			if i%100 == 0:
+				axis.plot(x[i],y[i],'bo')
+				axis.text(x[i],y[i],str(i/100),fontsize=16)
+
+
+	def add_coastline(self,axis):
+		x=self.coast['lon']
+		y=self.coast['lat']
+		axis.plot(x, y, color='b')
+
+	def add_field(self,axis,field,extent):
+
+		im = axis.imshow(field,
+						interpolation='none',
+						origin='lower',
+						extent=extent,
+						vmin=self.cmap_value[0],
+						vmax=self.cmap_value[1],
+						cmap=self.cmap_name)
+
+		return im
+
 	def horizontal_plane(self ,**kwargs):
 
 		field_array=kwargs['field']
@@ -424,16 +452,10 @@ class SynthPlot(object):
 		# make gridded plot
 		for g,k,field,u,v in group:
 
-			g.plot(self.coast['lon'], self.coast['lat'], color='b')
-			g.plot(self.flight_lon, self.flight_lat)		
 
-			im = g.imshow(field.T,
-							interpolation='none',
-							origin='lower',
-							extent=extent1,
-							vmin=self.cmap_value[0],
-							vmax=self.cmap_value[1],
-							cmap=self.cmap_name)
+			self.add_coastline(g)
+			self.add_flight_path(g)
+			im=self.add_field(g,field.T,extent1)
 
 			if self.terrain.file:
 				Terrain.add_contour(g,self)
@@ -722,11 +744,11 @@ class FlightPlot(object):
 
 		varname={	0:{'var':'atemp','name': 'air temperature','loc':3},
 							1:{'var':'dewp','name': 'dew point temp','loc':3},
-							2:{'var':'apres','name': 'air pressure','loc':(0.1,0.1)},
-							3:{'var':'wdir','name':'wind direction','loc':(0.1,0.1)},
-							4:{'var':'jwlwc','name':'liquid water content','loc':(0.1,0.9)},
-							5:{'var':'wspd','name': 'wind speed','loc':(0.1,0.1)},
-							6:{'var':'wvert','name':'vertical velocity','loc':(0.1,0.1)}}
+							2:{'var':'apres','name': 'air pressure','loc':(0.05,0.9)},
+							3:{'var':'wdir','name':'wind direction','loc':(0.05,0.9)},
+							4:{'var':'jwlwc','name':'liquid water content','loc':(0.05,0.9)},
+							5:{'var':'wspd','name': 'wind speed','loc':(0.05,0.9)},
+							6:{'var':'wvert','name':'vertical velocity','loc':(0.05,0.9)}}
 
 		axs=ax.ravel()
 		for i in varname.items():			
@@ -748,6 +770,13 @@ class FlightPlot(object):
 
 		for i in range(3):
 			ax[i,1].yaxis.tick_right()			
+
+		for i in [4,5]:
+			xticks=axs[i].get_xticks()
+			newlabel=[]
+			for x in xticks:
+				newlabel.append(str(int(x/100)))
+			axs[i].set_xticklabels(newlabel)
 
 		f.subplots_adjust(	bottom=0.04,top=0.96,
 							hspace=0,wspace=0.1)
