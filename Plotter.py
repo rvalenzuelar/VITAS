@@ -14,7 +14,7 @@ def plot_terrain(SynthPlot,**kwargs):
 	slope=kwargs['slope']
 
 	if terrain:
-	 	Terrain.plot_terrain_map(SynthPlot)
+	 	Terrain.plot_altitude_map(SynthPlot)
 
 	if slope:
 	 	Terrain.plot_slope_map(SynthPlot)

@@ -77,11 +77,11 @@ def plot_slope_map(SynthPlot):
 	data['cmap']='jet'
 	data['vmin']=0
 	data['vmax']=20
-	data['title']='Slope [%]'
+	data['title']='Terrain slope [%]'
 	plot_map(SynthPlot,data)
 
 
-def plot_terrain_map(SynthPlot):
+def plot_altitude_map(SynthPlot):
 
 	dem_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
 	data=get_data(dem_file)
