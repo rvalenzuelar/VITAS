@@ -98,6 +98,15 @@ Flight level options:
   --meteo               plot meteo data from flight level
 ```
 
+Examples
+--------
+
+
+```code
+$ ./start_plotting.py -c c03/leg01.cdf -s 010123I.nc -f DBZ -p 1 --wind -z offshore
+```
+
+![alt tag](https://github.com/rvalenzuelar/vitas/blob/master/figure_example1.png)
 
 
 [1]:http://conda.pydata.org/miniconda.html
