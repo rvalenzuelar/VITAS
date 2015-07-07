@@ -7,6 +7,7 @@
 
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import ImageGrid, AxesGrid
+from matplotlib.patches import Rectangle
 import Terrain 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -719,26 +720,36 @@ class FlightPlot(object):
 
 		f, ax = plt.subplots(3,2, sharex=True,figsize=(10,15))
 
-
-		ax[0,0].plot(self.met['atemp'])
-		ax[0,0].plot(self.met['dewp'])
-		ax[1,0].plot(self.met['apres'])
-		ax[2,0].plot(self.met['wdir'])
-
-		ax[0,1].plot(self.met['jwlwc'])
-		ax[1,1].plot(self.met['wspd'])
-		ax[2,1].plot(self.met['wvert'])
-
-		for i in range(3):
-			ax[i,1].yaxis.tick_right()
+		varname={	0:{'var':'atemp','name': 'air temperature','loc':3},
+							1:{'var':'dewp','name': 'dew point temp','loc':3},
+							2:{'var':'apres','name': 'air pressure','loc':(0.1,0.1)},
+							3:{'var':'wdir','name':'wind direction','loc':(0.1,0.1)},
+							4:{'var':'jwlwc','name':'liquid water content','loc':(0.1,0.9)},
+							5:{'var':'wspd','name': 'wind speed','loc':(0.1,0.1)},
+							6:{'var':'wvert','name':'vertical velocity','loc':(0.1,0.1)}}
 
 		axs=ax.ravel()
+		for i in varname.items():			
+			var=i[1]['var']
+			name=i[1]['name']
+			loc=i[1]['loc']
+			if i[0] < 2:
+				axs[0].plot(self.met[var],label=name)
+				if i[0]==1:
+					axs[0].grid(True)
+					axs[0].legend(loc=loc,frameon=False)
+			else:
+				axs[i[0]-1].plot(self.met[var],label=name)
+				axs[i[0]-1].grid(True)
+				axs[i[0]-1].annotate(name, 
+															fontsize=16,
+															xy=loc, 
+															xycoords='axes fraction')
 
-		for i in range(6):
-			axs[i].grid(True)
+		for i in range(3):
+			ax[i,1].yaxis.tick_right()			
 
 		f.subplots_adjust(	bottom=0.04,top=0.96,
-							hspace=0,wspace=0)
-
+							hspace=0,wspace=0.1)
 		plt.draw
 
