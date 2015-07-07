@@ -742,9 +742,9 @@ class FlightPlot(object):
 				axs[i[0]-1].plot(self.met[var],label=name)
 				axs[i[0]-1].grid(True)
 				axs[i[0]-1].annotate(name, 
-															fontsize=16,
-															xy=loc, 
-															xycoords='axes fraction')
+									fontsize=16,
+									xy=loc, 
+									xycoords='axes fraction')
 
 		for i in range(3):
 			ax[i,1].yaxis.tick_right()			

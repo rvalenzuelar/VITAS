@@ -70,7 +70,7 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	P.set_geographic(SYNTH)
 
 	""" flight path from standard tape """
-	fpath=FLIGHT.get_path(SYNTH.start, SYNTH.end)	
+	fpath=FLIGHT.get_path(SYNTH.start, SYNTH.end)
 	P.set_flight_path(fpath)
 
 	""" coast line """
