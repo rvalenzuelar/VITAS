@@ -1,4 +1,4 @@
-#!/home/rvalenzuela/miniconda/bin/python
+#!/usr/bin/env python
 
 # Read netCDF file with pseudo-dual Doppler 
 # synthesis and plot variables
