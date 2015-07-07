@@ -6,6 +6,7 @@
 
 
 from os.path import isfile
+from mpl_toolkits.axes_grid1 import ImageGrid
 import tempfile
 import os
 import gdal
@@ -62,49 +63,70 @@ def plot_slope_map(SynthPlot):
 
 	extent=SynthPlot.get_extent()
 
-	dem_file=tempfile.gettempdir()+'/terrain2.tmp'
-	out_file=tempfile.gettempdir()+'/terrain3.tmp'
-	input_param = (dem_file, out_file)
-	run_gdal = 'gdaldem slope %s %s -p -s 111120' % input_param
-	os.system(run_gdal)
+	dem_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
+	out_file=tempfile.gettempdir()+'/terrain_slope.tmp'
 
-	data=get_data(out_file)
+	if isfile(out_file):
+		data=get_data(out_file)
+	else:
+		input_param = (dem_file, out_file)
+		run_gdal = 'gdaldem slope %s %s -p -s 111120 -q' % input_param
+		os.system(run_gdal)
+		data=get_data(out_file)
 
-	plt.figure()
-	plt.plot(SynthPlot.coast['lon'], SynthPlot.coast['lat'], color='r')
-	plt.plot(SynthPlot.flight_lon, SynthPlot.flight_lat,color='r')		
-	plt.imshow(data['array'],
-					interpolation='none',
-					vmin=0,
-					vmax=20,
-					extent=data['extent'])
-	plt.colorbar()	
-	plt.xlim(extent[0], extent[1])
-	plt.ylim(extent[2], extent[3])		
-	plt.title('Slope [%]')	
-	plt.draw()
+	data['cmap']='jet'
+	data['vmin']=0
+	data['vmax']=20
+	data['title']='Slope [%]'
+	plot_map(SynthPlot,data)
+
 
 def plot_terrain_map(SynthPlot):
 
+	dem_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
+	data=get_data(dem_file)
+	data['cmap']='terrain'
+	data['vmin']=0
+	data['vmax']=1000
+	data['title']='Terrain altitude [m]'
+	plot_map(SynthPlot,data)
+
+
+def plot_map(SynthPlot,data):
+
+
+	""" zoom (if any) same as the plotted field"""
 	extent=SynthPlot.get_extent()
 
-	dem_file=tempfile.gettempdir()+'/terrain2.tmp'
-	data=get_data(dem_file)
+	fig = plt.figure(figsize=(8,8))
 
-	plt.figure()
-	plt.plot(SynthPlot.coast['lon'], SynthPlot.coast['lat'], color='r')
-	plt.plot(SynthPlot.flight_lon, SynthPlot.flight_lat,color='r')		
-	plt.imshow(data['array'],
+	pg=ImageGrid( fig,111,
+							nrows_ncols = (1,1),
+							axes_pad = 0.0,
+							add_all = True,
+							share_all=False,
+							label_mode = "L",
+							cbar_location = "top",
+							cbar_mode="single")
+	
+	pg[0].plot(SynthPlot.coast['lon'], SynthPlot.coast['lat'], color='r')
+	pg[0].plot(SynthPlot.flight['lon'], SynthPlot.flight['lat'],color='r')		
+	im=pg[0].imshow(data['array'],
 					interpolation='none',
-					vmin=0,
-					vmax=600,
-					cmap='terrain',
+					vmin=data['vmin'],
+					vmax=data['vmax'],
+					cmap=data['cmap'],
 					extent=data['extent'])
-	plt.colorbar()	
-	plt.xlim(extent[0], extent[1])
-	plt.ylim(extent[2], extent[3])	
-	plt.title('Terrain altitude [m]')	
+	pg[0].set_xlim(extent[0], extent[1])
+	pg[0].set_ylim(extent[2], extent[3])	
+	pg[0].grid(True, which = 'major',linewidth=1)
+	pg.cbar_axes[0].colorbar(im)
+
+	fig.suptitle(data['title'])	
+	plt.tight_layout()
 	plt.draw()
+
+
 
 def get_data(dtmfile):
 
@@ -173,8 +195,8 @@ def make_3d_mask(data,levels,res):
 
 def make_array(dem_file, Plot):
 
-	temp_file=tempfile.gettempdir()+'/terrain1.tmp'
-	out_file=tempfile.gettempdir()+'/terrain2.tmp'
+	temp_file=tempfile.gettempdir()+'/terrain_clipped.tmp'
+	out_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
 
 	''' same boundaries as synthesis'''
 	ulx = min(Plot.lons)
@@ -192,26 +214,26 @@ def make_array(dem_file, Plot):
 	''' downsample DTM using synthesis axes '''
 	xvalues=Plot.axesval['x']
 	yvalues=Plot.axesval['y']
+
+	''' output terrian data has same 
+	horizontal resolution as synthesis'''
 	resampx_to=len(xvalues)*1
 	resampy_to=len(yvalues)*1
 
-	if isfile(temp_file):
-		os.remove(temp_file)
-
 	if isfile(out_file):
-		os.remove(out_file)
+		data=get_data(out_file)
+	else:
+		''' clip original dtm '''
+		input_param = (ulx, uly, lrx, lry, dem_file, temp_file)
+		run_gdal = 'gdal_translate -q -projwin %s %s %s %s %s %s' % input_param
+		os.system(run_gdal)
 
-	''' shrink original dtm '''
-	input_param = (ulx, uly, lrx, lry, dem_file, temp_file)
-	run_gdal = 'gdal_translate -projwin %s %s %s %s %s %s' % input_param
-	os.system(run_gdal)
+		''' resample clipped dtm '''
+		input_param = (resampy_to,resampx_to,temp_file, out_file)
+		run_gdal = 'gdalwarp -q -ts %s %s -r near -co "TFW=YES" %s %s' % input_param
+		os.system(run_gdal)
 
-	''' resample shrinked dtm '''
-	input_param = (resampy_to,resampx_to,temp_file, out_file)
-	run_gdal = 'gdalwarp -ts %s %s -r near -co "TFW=YES" %s %s' % input_param
-	os.system(run_gdal)
-
-	data=get_data(out_file)
+		data=get_data(out_file)
 
 	# mask=make_3d_mask(data,levels,res)
 	mask=[]
