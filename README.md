@@ -105,8 +105,10 @@ Examples
 ```code
 $ ./start_plotting.py -c c03/leg01.cdf -s 010123I.nc -f DBZ -p 1 --wind -z offshore
 ```
-
 ![alt tag](https://github.com/rvalenzuelar/vitas/blob/master/figure_example1.png)
+
+Adding the option `--meteo` produces the following additional plot:
+
 
 
 [1]:http://conda.pydata.org/miniconda.html
