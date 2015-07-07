@@ -22,7 +22,7 @@ import pandas as pd
 import datetime
 import numpy as np
 import subprocess
-
+import Thermodyn
 
 class Stdtape(object):
 	def __init__(self, *args):
@@ -86,19 +86,6 @@ class Stdtape(object):
 		
 		return zip(lat, lon)
 
-	def get_altitude(self,start_time, end_time,**kwargs):
-
-		alt_type=kwargs['type']
-
-		start = self.df.index.searchsorted(start_time)
-		end = self.df.index.searchsorted(end_time)
-		if alt_type == 'galt':			
-			alt = self.df.ix[start:end]['galt'].values
-		elif alt_type == 'palt':
-			alt = self.df.ix[start:end]['palt'].values
-		
-		return alt
-
 	def get_meteo(self,start_time, end_time):
 
 		start = self.df.index.searchsorted(start_time)
@@ -106,13 +93,18 @@ class Stdtape(object):
 		
 		met={}
 		met['apres']=self.df.ix[start:end]['apres'].values
-		met['atemp']=self.df.ix[start:end]['atemp'].values
 		met['jwlwc']=self.df.ix[start:end]['jwlwc'].values
-		met['dewp']=self.df.ix[start:end]['dewp'].values
-		met['wspd']=self.df.ix[start:end]['wspd'].values
-		met['wdir']=self.df.ix[start:end]['wdir'].values
+		met['wspd']	=self.df.ix[start:end]['wspd'].values
+		met['wdir']	=self.df.ix[start:end]['wdir'].values
 		met['wvert']=self.df.ix[start:end]['wvert'].values
-
+		atemp=self.df.ix[start:end]['atemp'].values
+		dewp=self.df.ix[start:end]['dewp'].values
+		met['atemp']=atemp		
+		met['dewp']	= dewp
+		met['relh']	= Thermodyn.relative_humidity(atemp,dewp)
+		met['galt'] = self.df.ix[start:end]['galt'].values
+		met['palt'] = self.df.ix[start:end]['palt'].values
+		
 		return met
 
 

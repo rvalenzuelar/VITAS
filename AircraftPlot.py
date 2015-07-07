@@ -92,7 +92,7 @@ class SynthPlot(object):
 			self.rows_cols=(1,1)
 			self.windb_size=6.5
 			self.windb_jump=2
-			self.zlevel_textsize=12
+			self.zlevel_textsize=16
 			self.windv_scale=0.5
 			self.windv_width=2
 
@@ -101,7 +101,7 @@ class SynthPlot(object):
 			self.rows_cols=(3,2)
 			self.windb_size=5
 			self.windb_jump=5
-			self.zlevel_textsize=10
+			self.zlevel_textsize=12
 			self.windv_scale=0.5
 			self.windv_width=2
 
@@ -386,6 +386,8 @@ class SynthPlot(object):
 			if i%100 == 0:
 				axis.plot(x[i],y[i],'bo')
 				axis.text(x[i],y[i],str(i/100),fontsize=16)
+
+
 
 
 	def add_coastline(self,axis):
@@ -732,7 +734,9 @@ class SynthPlot(object):
 		plt.draw()	
 
 class FlightPlot(object):
-	def __init__(self,met):
+	def __init__(self,**kwargs):
+
+		met=kwargs['data']
 		if met:
 			self.met=met
 		else:
@@ -740,45 +744,89 @@ class FlightPlot(object):
 
 	def timeseries(self):
 
-		f, ax = plt.subplots(3,2, sharex=True,figsize=(10,15))
 
-		varname={	0:{'var':'atemp','name': 'air temperature','loc':3},
-							1:{'var':'dewp','name': 'dew point temp','loc':3},
-							2:{'var':'apres','name': 'air pressure','loc':(0.05,0.9)},
-							3:{'var':'wdir','name':'wind direction','loc':(0.05,0.9)},
-							4:{'var':'jwlwc','name':'liquid water content','loc':(0.05,0.9)},
-							5:{'var':'wspd','name': 'wind speed','loc':(0.05,0.9)},
-							6:{'var':'wvert','name':'vertical velocity','loc':(0.05,0.9)}}
+		varname={	0:{'var':'atemp','name': 'air temperature',
+									'loc':3,'ylim':None},
+							1:{'var':'dewp','name': 'dew point temp',
+									'loc':3,'ylim':None},
+							4:{'var':'relh','name':'relative humidity',
+									'loc':(0.05,0.05),'ylim':[80,101]},							
+							7:{'var':'jwlwc','name':'liquid water content',
+									'loc':(0.05,0.9),'ylim':None},
+							2:{'var':'wdir','name':'wind direction',
+									'loc':(0.05,0.9),'ylim':None},
+							5:{'var':'wspd','name': 'wind speed',
+									'loc':(0.05,0.9),'ylim':None},
+							8:{'var':'wvert','name':'vertical velocity',
+									'loc':(0.05,0.9),'ylim':None},
+							3:{'var':'apres','name': 'air pressure',
+									'loc':(0.05,0.9),'ylim':None},
+							6:{'var':'galt','name': 'geopotential alt',
+									'loc':(0.05,0.9),'ylim':None},
+							9:{'var':'palt','name': 'pressure alt',
+									'loc':(0.05,0.9),'ylim':None}}
 
+		f, ax = plt.subplots(3,3, sharex=True,figsize=(15,15))
 		axs=ax.ravel()
 		for i in varname.items():			
 			var=i[1]['var']
 			name=i[1]['name']
 			loc=i[1]['loc']
+			ylim=i[1]['ylim']
 			if i[0] < 2:
 				axs[0].plot(self.met[var],label=name)
+				if ylim: axs[0].set_ylim(ylim)
 				if i[0]==1:
 					axs[0].grid(True)
 					axs[0].legend(loc=loc,frameon=False)
 			else:
 				axs[i[0]-1].plot(self.met[var],label=name)
+				if ylim: axs[i[0]-1].set_ylim(ylim)
 				axs[i[0]-1].grid(True)
 				axs[i[0]-1].annotate(name, 
 									fontsize=16,
 									xy=loc, 
 									xycoords='axes fraction')
 
-		for i in range(3):
-			ax[i,1].yaxis.tick_right()			
+		# for i in range(3):
+		# 	ax[i,1].yaxis.tick_right()			
 
-		for i in [4,5]:
-			xticks=axs[i].get_xticks()
-			newlabel=[]
-			for x in xticks:
-				newlabel.append(str(int(x/100)))
-			axs[i].set_xticklabels(newlabel)
+		self.adjust_xaxis(axs)
+		self.adjust_yaxis(axs)
 
-		f.subplots_adjust(	bottom=0.04,top=0.96,
-							hspace=0,wspace=0.1)
+		f.subplots_adjust(bottom=0.04,top=0.96,
+											hspace=0,wspace=0.2)
 		plt.draw
 
+	def adjust_yaxis(self,axes):
+
+		for i in range(9):
+
+			newlabels=[]
+			yticks=axes[i].get_yticks()
+			for y in yticks:
+				newlabels.append(str(y))
+
+			if i in [0,1,2]:
+				newlabels[0]=''
+				axes[i].set_yticklabels(newlabels)
+			elif i in [3,4,5]:
+				newlabels[0]=''
+				newlabels[-1]=''
+				axes[i].set_yticklabels(newlabels)
+			elif i == 6:
+				newlabels[-2]=''
+				axes[i].set_yticklabels(newlabels)
+			elif i in [7,8]:
+				newlabels[-1]=''
+				axes[i].set_yticklabels(newlabels)
+
+
+	def adjust_xaxis(self,axes):
+
+		for i in [6,7,8]:
+			xticks=axes[i].get_xticks()
+			newlabels=[]
+			for x in xticks:
+				newlabels.append(str(int(x/100)))
+			axes[i].set_xticklabels(newlabels)
