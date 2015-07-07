@@ -38,9 +38,8 @@ class SynthPlot(object):
 		self.lons=None
 		self.extent={'lx':' ','rx':' ','by':' ','ty':' '}
 		self.extentv={'lx':' ','rx':' ','by':' ','ty':' '}
-		self.coast={'lon':' ', 'lat': ' '}
-		self.flight_lat=None
-		self.flight_lon=None
+		self.coast={'lon':None, 'lat':None}
+		self.flight={'lon':None, 'lat':None}
 		self.maskLat=None
 		self.maskLon=None
 		self.minz=None
@@ -80,8 +79,8 @@ class SynthPlot(object):
 	def set_flight_path(self,stdtape):
 
 		fp = zip(*stdtape)
-		self.flight_lat=fp[0]
-		self.flight_lon=fp[1]
+		self.flight['lat']=fp[0]
+		self.flight['lon']=fp[1]
 
 	def set_panel(self,option):
 
@@ -381,8 +380,8 @@ class SynthPlot(object):
 	def add_flight_path(self,axis):
 
 		""" plot line """
-		x=self.flight_lon
-		y= self.flight_lat
+		x=self.flight['lon']
+		y= self.flight['lat']
 		axis.plot(x,y)
 
 		""" add dots and text """
@@ -476,8 +475,8 @@ class SynthPlot(object):
 			g.set_ylim(extent2[2], extent2[3])				
 
 			g.grid(True, which = 'major',linewidth=1)
-			g.grid(True, which = 'minor',alpha=0.5)
-			g.minorticks_on()
+			# g.grid(True, which = 'minor',alpha=0.5)
+			# g.minorticks_on()
 
 			ztext='MSL='+str(k)+'km'
 			g.text(	0.1, 0.08,
@@ -491,7 +490,6 @@ class SynthPlot(object):
 		plot_grids.cbar_axes[0].colorbar(im)
 		fig.suptitle(' Dual-Doppler Synthesis: '+ self.get_var_title(self.var) )
 
-		# show figure
 		plt.tight_layout()
 		plt.draw()
 
