@@ -11,7 +11,7 @@ the future the code will become an installable python module. Also, it is limite
 Installation
 ----------------
 
-Copy the repository to your local computer (for example to your home folder). Then, within the vitas folder call ./start_plotting with the options described in the help menu.
+Copy the repository to your local computer (for example to your home folder). Then, within the vitas folder call `./start_plotting` with the options described in the help menu.
 
 There are several python modules that are required:
 
@@ -101,6 +101,7 @@ Flight level options:
 Examples
 --------
 
+Calling a single panel of DBZ with wind vectors and offshore zoom in (defined within the code):
 
 ```code
 $ ./start_plotting.py -c c03/leg01.cdf -s 010123I.nc -f DBZ -p 1 --wind -z offshore
@@ -110,6 +111,13 @@ $ ./start_plotting.py -c c03/leg01.cdf -s 010123I.nc -f DBZ -p 1 --wind -z offsh
 Adding the option `--meteo` produces the following additional plot:
 
 ![alt tag](https://github.com/rvalenzuelar/vitas/blob/master/figure_example2.png)
+
+Changing the panel number gives different altitudes of analyses. With no panel option `-p`, VITAS plots six default panels:
+
+```code
+$ ./start_plotting.py -c c03/leg01.cdf -s 010123I.nc -f DBZ --wind -z offshore
+```
+![alt tag](https://github.com/rvalenzuelar/vitas/blob/master/figure_example3.png)
 
 
 [1]:http://conda.pydata.org/miniconda.html
