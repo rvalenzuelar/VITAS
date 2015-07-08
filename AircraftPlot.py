@@ -313,12 +313,11 @@ class SynthPlot(object):
 	
 	def zoom_in(self,in_extent,center_point):
 
-	
 		y,x=center_point
 		ie=in_extent
 		oe=[None,None,None,None]
 		delx=1.2 #[deg]
-		dely=1.0 #[deg]
+		dely=1.1 #[deg]
 
 		if x<ie[0] or x>ie[1] or y<ie[2] or y>ie[3]:
 			print "Zoom center point out of geographic extention boundaries"
@@ -477,7 +476,7 @@ class SynthPlot(object):
 			if self.zoomOpt[0] == 'offshore':
 				center=(38.6,-123.5)
 			elif self.zoomOpt[0] == 'onshore':
-				center=()
+				center=(38.85,-123.25)
 			extent2=self.zoom_in(extent1,center)
 		else:
 			extent2=extent1
@@ -588,21 +587,16 @@ class SynthPlot(object):
 		wComp  = self.get_slices(w_array)
 		profiles = Terrain.get_altitude_profile(self)
 
-		# zvalues=self.axesval['z']		
-		# print zvalues
-		# self.minz=0.25
-		# self.maxz=5.0
-		# zvalues=self.axesval['z']
-		# self.zmask= np.logical_and(zvalues >= self.minz, zvalues <= self.maxz)
-
 		''' field extent '''
-		extent=self.get_extent()
-		
-		# ''' if zoomOpt is false then extent1=extent2 '''
-		# if self.zoomOpt:
-		# 	self.zoom_in(self.zoomOpt[0])
-		# extent2=self.get_extent()
+		extent1=self.get_extent()
 
+		''' if zoomOpt is false then extent1=extent2 '''			
+		if self.zoomOpt:
+			if self.zoomOpt[0] == 'offshore':
+				center=(38.6,-123.5)
+			elif self.zoomOpt[0] == 'onshore':
+				center=(38.85,-123.25)
+			extent2=self.zoom_in(extent1,center)
 
 		self.scale=20
 		if self.sliceo=='meridional':
@@ -610,14 +604,11 @@ class SynthPlot(object):
 			# extent1['rx']=extent1['ty']*self.scale
 			# extent1['ty']=self.maxz
 			# extent1['by']=self.minz
-
-			extent1=self.adjust_extent(extent,'meridional','data')
-			extent2=self.adjust_extent(extent,'meridional','detail')
-
-			# exit()
-
+			extent3=self.adjust_extent(extent2,'meridional','data')
+			extent4=self.adjust_extent(extent2,'meridional','detail')
 			horizontalComp=vComp
 			geo_axis='Lon: '
+
 		elif self.sliceo=='zonal':
 			# extent1['lx']=extent1['lx']*self.scale
 			# extent1['rx']=extent1['rx']*self.scale
@@ -628,8 +619,8 @@ class SynthPlot(object):
 			horizontalComp=uComp
 			geo_axis='Lat: '
 
-		print extent1
-		print extent2
+		print extent3
+		print extent4
 			
 		"""creates iterator group """
 		group=zip(plot_grids,
