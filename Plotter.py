@@ -67,7 +67,7 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	# P.w_array=SYNTH.WUP
 
 	""" general  geographic domain boundaries """
-	P.set_geographic(SYNTH)
+	P.set_geographic_extent(SYNTH)
 
 	""" flight path from standard tape """
 	fpath=FLIGHT.get_path(SYNTH.start, SYNTH.end)
