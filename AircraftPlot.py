@@ -7,7 +7,7 @@
 
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import ImageGrid
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Rectangle,Polygon
 import Terrain 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,8 +42,8 @@ class SynthPlot(object):
 		self.flight={'lon':None, 'lat':None}
 		self.maskLat=None
 		self.maskLon=None
-		self.minz=None
-		self.maxz=None
+		# self.minz=None
+		# self.maxz=None
 		self.scale=None
 		self.axesval={'x':' ','y':' ','z':' '}
 		self.zlevels=[]
@@ -53,7 +53,7 @@ class SynthPlot(object):
 		self.w_array=[]
 		self.terrain=None
 
-	def set_geographic(self,synth):
+	def set_geographic_extent(self,synth):
 
 		self.lats=synth.LAT
 		self.extent['by']=min(synth.LAT)
@@ -189,17 +189,19 @@ class SynthPlot(object):
 	def chop_vertical(self,array):
 
 		array=np.squeeze(array)
-		lats=self.shrink(self.lats,mask=self.maskLat)
-		lons=self.shrink(self.lons,mask=self.maskLon)
+		# lats=self.shrink(self.lats,mask=self.maskLat)
+		# lons=self.shrink(self.lons,mask=self.maskLon)
 
 		slices=[]
 		if self.sliceo=='zonal':		
 			for coord in self.slicez:
-				idx=self.find_nearest(lats,coord)
+				# idx=self.find_nearest(lats,coord)
+				idx=self.find_nearest(self.lats,coord)
 				slices.append(array[:,idx,:])
 		elif self.sliceo=='meridional':
 			for coord in self.slicem:
-				idx=self.find_nearest(lons,-coord)
+				# idx=self.find_nearest(lons,-coord)
+				idx=self.find_nearest(self.lons,-coord)
 				slices.append(array[idx,:,:])
 		# elif self.sliceo=='cross':
 		# elif self.sliceo=='along:
@@ -309,22 +311,33 @@ class SynthPlot(object):
 								width=1.5)
 			qk=grid_ax.quiverkey(Q,0.95,0.8,10,r'$10 \frac{m}{s}$')
 	
-	def zoom_in(self,zoom_type):
+	def zoom_in(self,in_extent,center_point):
 
-		if zoom_type == 'offshore':
-			self.extent['by']=38.1
-			self.extent['ty']=39.1
-			self.extent['lx']=-124.1
-			self.extent['rx']=-122.9
-		elif zoom_type == 'onshore':
-			self.extent['by']=38.3
-			self.extent['ty']=39.4
-			self.extent['lx']=-123.9
-			self.extent['rx']=-122.6	
-		self.maskLat= np.logical_and(self.lats >= self.extent['by'], 
-										self.lats <= self.extent['ty'])
-		self.maskLon= np.logical_and(self.lons >= self.extent['lx'], 
-										self.lons <= self.extent['rx'])
+	
+		y,x=center_point
+		ie=in_extent
+		oe=[None,None,None,None]
+		delx=1.2 #[deg]
+		dely=1.0 #[deg]
+
+		if x<ie[0] or x>ie[1] or y<ie[2] or y>ie[3]:
+			print "Zoom center point out of geographic extention boundaries"
+			sys.exit()
+
+		oe[0]=x-delx/2
+		oe[1]=x+delx/2
+		oe[2]=y-dely/2
+		oe[3]=y+dely/2
+
+		if oe[0]<ie[0]:oe[0]=ie[0]
+		if oe[1]>ie[1]:oe[1]=ie[1]
+		if oe[2]<ie[2]:oe[2]=ie[2]
+		if oe[3]>ie[3]:oe[3]=ie[3]
+
+		self.maskLat= np.logical_and(self.lats >=oe[2],self.lats <= oe[3])
+		self.maskLon= np.logical_and(self.lons >= oe[0], self.lons <= oe[1])
+			
+		return oe
 
 	def shrink(self,array, **kwargs):
 
@@ -362,8 +375,8 @@ class SynthPlot(object):
 
 	def adjust_ticklabels(self,g):
 		
-		g.set_xlim(self.extent_vertical[0], self.extent_vertical[1])
-		g.set_ylim(0,self.maxz)
+		# g.set_xlim(self.extent['lx'], self.extent['rx'])
+		# g.set_ylim(0,self.maxz)
 		
 		new_xticklabel = [str(np.around(val/self.scale,1)) for val in g.get_xticks()]
 		g.set_xticklabels(new_xticklabel)
@@ -392,7 +405,6 @@ class SynthPlot(object):
 									fontsize=16,
 									color=(0,0,0))
 
-
 	def add_coastline(self,axis):
 		x=self.coast['lon']
 		y=self.coast['lat']
@@ -409,6 +421,22 @@ class SynthPlot(object):
 						cmap=self.cmap_name)
 
 		return im
+
+	def add_terrain_profile(self,axis,profile,profaxis):
+
+		''' to kilometers '''
+		profile=profile/1000.0
+		
+		if self.sliceo=='zonal':
+			lons=profaxis*self.scale
+			verts=zip(lons,profile)+[(lons[-1],0)]
+		elif self.sliceo=='meridional':
+			lats=profaxis[::-1]*self.scale
+			profile=profile[::-1]
+			verts=zip(lats,profile)+[(lats[-1],0)]
+		poly=Polygon(verts,fc='0.9',ec='0.5')
+		# print verts
+		axis.add_patch(poly)
 
 	def horizontal_plane(self ,**kwargs):
 
@@ -441,17 +469,26 @@ class SynthPlot(object):
 								cbar_location = "top",
 								cbar_mode="single")
 	
-
+		''' field extent '''
 		extent1=self.get_extent()
-		if self.zoomOpt:
-			self.zoom_in(self.zoomOpt[0])
-		extent2=self.get_extent()
 
+		''' if zoomOpt is false then extent1=extent2 '''			
+		if self.zoomOpt:
+			if self.zoomOpt[0] == 'offshore':
+				center=(38.6,-123.5)
+			elif self.zoomOpt[0] == 'onshore':
+				center=()
+			extent2=self.zoom_in(extent1,center)
+		else:
+			extent2=extent1
+
+
+		''' make slices '''
 		field_group = self.get_slices(field_array)
 		ucomp = self.get_slices(u_array)
 		vcomp = self.get_slices(v_array)		
 
-		# creates iterator group
+		''' creates iterator group '''
 		group=zip(plot_grids,self.zlevels,field_group,ucomp,vcomp)
 
 		# make gridded plot
@@ -475,8 +512,8 @@ class SynthPlot(object):
 			g.set_ylim(extent2[2], extent2[3])				
 
 			g.grid(True, which = 'major',linewidth=1)
-			# g.grid(True, which = 'minor',alpha=0.5)
-			# g.minorticks_on()
+			g.grid(True, which = 'minor',alpha=0.5)
+			g.minorticks_on()
 
 			ztext='MSL='+str(k)+'km'
 			g.text(	0.1, 0.08,
@@ -492,6 +529,33 @@ class SynthPlot(object):
 
 		plt.tight_layout()
 		plt.draw()
+
+	def adjust_extent(self,ori_extent,orient,type_extent):
+
+		# print ori_extent
+
+		out_extent=[None,None,None,None]
+
+		if orient == 'meridional':
+			out_extent[0]=ori_extent[2] *self.scale
+			out_extent[1]=ori_extent[3] *self.scale
+		elif orient == 'zonal':
+			out_extent[0]=ori_extent[0] *self.scale
+			out_extent[1]=ori_extent[1] *self.scale
+
+		# print out_extent
+			
+		if type_extent=='data':
+			zvalues=self.axesval['z']		
+			out_extent[2]=min(zvalues)
+			out_extent[3]=max(zvalues)
+		elif type_extent=='detail':
+			out_extent[2]=0.0
+			out_extent[3]=5.0			
+
+		# print out_extent
+		
+		return out_extent
 
 	def vertical_plane(self,**kwargs):
 
@@ -517,78 +581,91 @@ class SynthPlot(object):
 								cbar_mode="single",
 								aspect=True)
 
-		field_array=self.shrink(field_array,xmask=self.maskLon,ymask=self.maskLat)
-		u_array=self.shrink(u_array,xmask=self.maskLon,ymask=self.maskLat)
-		v_array=self.shrink(v_array,xmask=self.maskLon,ymask=self.maskLat)
-		w_array=self.shrink(w_array,xmask=self.maskLon,ymask=self.maskLat)
-
 		""" get list with slices """
 		field_group = self.get_slices(field_array)
 		uComp  = self.get_slices(u_array)
 		vComp  = self.get_slices(v_array)
 		wComp  = self.get_slices(w_array)
+		profiles = Terrain.get_altitude_profile(self)
 
-		self.minz=0.25
-		self.maxz=5.0
-		zvalues=self.axesval['z']
-		self.zmask= np.logical_and(zvalues >= self.minz, zvalues <= self.maxz)
+		# zvalues=self.axesval['z']		
+		# print zvalues
+		# self.minz=0.25
+		# self.maxz=5.0
+		# zvalues=self.axesval['z']
+		# self.zmask= np.logical_and(zvalues >= self.minz, zvalues <= self.maxz)
+
+		''' field extent '''
+		extent=self.get_extent()
+		
+		# ''' if zoomOpt is false then extent1=extent2 '''
+		# if self.zoomOpt:
+		# 	self.zoom_in(self.zoomOpt[0])
+		# extent2=self.get_extent()
+
 
 		self.scale=20
 		if self.sliceo=='meridional':
-			# self.extent_vertical=[self.lat_bot*self.scale,
-			# 						self.lat_top*self.scale,
-			# 						self.minz,
-			# 						self.maxz ]
-			self.extentv['lx']=self.extent['by']*self.scale
-			self.extentv['rx']=self.extent['ty']*self.scale
-			self.extentv['ty']=self.maxz
-			self.extentv['by']=self.minz
+			# extent1['lx']=extent1['by']*self.scale
+			# extent1['rx']=extent1['ty']*self.scale
+			# extent1['ty']=self.maxz
+			# extent1['by']=self.minz
+
+			extent1=self.adjust_extent(extent,'meridional','data')
+			extent2=self.adjust_extent(extent,'meridional','detail')
+
+			# exit()
+
 			horizontalComp=vComp
 			geo_axis='Lon: '
 		elif self.sliceo=='zonal':
-			# self.extent_vertical=[self.lon_left*self.scale,
-			# 						self.lon_right*self.scale,
-			# 						self.minz,
-			# 						self.maxz ]
-			self.extentv['lx']=self.extent['lx']*self.scale
-			self.extentv['rx']=self.extent['rx']*self.scale
-			self.extentv['ty']=self.maxz
-			self.extentv['by']=self.minz									
+			# extent1['lx']=extent1['lx']*self.scale
+			# extent1['rx']=extent1['rx']*self.scale
+			# extent1['ty']=self.maxz
+			# extent1['by']=self.minz									
+			extent1=self.adjust_extent(extent1,'zonal')
+			extent2=self.adjust_extent(extent2,'zonal')			
 			horizontalComp=uComp
 			geo_axis='Lat: '
+
+		print extent1
+		print extent2
 			
 		"""creates iterator group """
 		group=zip(plot_grids,
 					field_group,
 					horizontalComp,
-					wComp)
+					wComp,
+					profiles['altitude'],profiles['axis'])
 
 		"""make gridded plot """
 		p=0
-		for g,field,h_comp,w_comp in group:
 
-			field=field[: ,self.zmask]
-			h_comp=h_comp[: ,self.zmask]
-			w_comp=w_comp[: ,self.zmask]
+		# extent=self.get_extent()
 
-			im = g.imshow(field.T,
-							interpolation='none',
-							origin='lower',
-							extent=self.extent_vertical,
-							vmin=self.cmap_value[0],
-							vmax=self.cmap_value[1],
-							cmap=self.cmap_name)
-			
-			if self.wind:
-				self.add_windvector(g,h_comp.T,w_comp.T)
+		for g,field,h_comp,w_comp,prof,profax in group:
+
+			# field=field[: ,self.zmask]
+			# h_comp=h_comp[: ,self.zmask]
+			# w_comp=w_comp[: ,self.zmask]
+
+			im=self.add_field(g,field.T,extent1)
+			self.add_terrain_profile(g,prof,profax)
+
+			# if self.wind:
+				# self.add_windvector(g,h_comp.T,w_comp.T)
 
 			self.add_slice_line(g)
+
+			g.set_xlim(extent2[0], extent2[1])
+			g.set_ylim(0, extent2[3])	
 
 			g.grid(True, which = 'major',linewidth=1)
 			g.grid(True, which = 'minor',alpha=0.5)
 			g.minorticks_on()
 
 			self.adjust_ticklabels(g)
+
 			if self.sliceo=='meridional':
 				geotext=geo_axis+str(self.slicem[p])
 			elif self.sliceo=='zonal':
