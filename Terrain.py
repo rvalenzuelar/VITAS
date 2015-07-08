@@ -35,11 +35,11 @@ def add_contour(axis,Plot):
 		dtm=Plot.terrain.array
 
 	cont=axis.contour(dtm['xg'],dtm['yg'],dtm['data'],
-					levels=[200,600],
-					colors=( (0,0,0) , (0.4,0.4,0.4) ),
+					levels=[200,600,1000],
+					colors=( (0,0,0) , (0.3,0.3,0.3), (0.6,0.6,0.6) ),
 					linewidths=2)
 	
-	axis.clabel(cont,[200,600],fmt='%.0f',fontsize=12,inline_spacing=2)	
+	axis.clabel(cont,[200,600,1000],fmt='%.0f',fontsize=12,inline_spacing=2)	
 
 def plot_altitude_mask(axis,S,dtm):
 
@@ -248,3 +248,37 @@ def make_array(dem_file, Plot):
 	dtm['yg']=data['yg']
 
 	return dtm
+
+def get_altitude_profile(Plot):
+
+	dem_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
+	dtm=get_data(dem_file)
+
+	data=dtm['array']
+
+	altitude=[]
+	if Plot.sliceo=='zonal':		
+		geoax=dtm['yg']
+		plotax=dtm['xg']
+		for coord in Plot.slicez:
+			idx=Plot.find_nearest(geoax,coord)
+			altitude.append(data[idx,:])
+	elif Plot.sliceo=='meridional':
+		geoax=dtm['xg']
+		plotax=dtm['yg']
+		for coord in Plot.slicem:
+			idx=Plot.find_nearest(geoax,-coord)
+			altitude.append(data[:,idx])
+
+
+	axis=[]
+	for a in altitude:
+		axis.append(plotax)
+
+	# print profiles
+	# exit()
+	prof={}
+	prof['altitude']=altitude
+	prof['axis']=axis
+
+	return prof
