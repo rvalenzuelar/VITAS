@@ -186,8 +186,6 @@ class SynthPlot(object):
 	def chop_vertical(self,array):
 
 		array=np.squeeze(array)
-		# lats=self.shrink(self.lats,mask=self.maskLat)
-		# lons=self.shrink(self.lons,mask=self.maskLon)
 
 		slices=[]
 		if self.sliceo=='zonal':		
@@ -226,46 +224,47 @@ class SynthPlot(object):
 
 	def add_slice_line(self,axis):
 
+		line_fmt='ro-'
+
 		if self.slice_type =='horizontal':
 			x0 = y0 = None
 			if self.slicem:
-				y0=min(self.shrink(self.lats,mask=self.maskLat))
-				y1=max(self.shrink(self.lats,mask=self.maskLat))
+				y0=min(self.lats)
+				y1=max(self.lats)
 				for value in self.slicem:
 					x0 = x1 = -value
-					axis.plot([x0,x1],[y0,y1],'ro-')
+					axis.plot([x0,x1],[y0,y1],line_fmt)
 
 			if self.slicez:
-				x0=min(self.shrink(self.lons,mask=self.maskLon))
-				x1=max(self.shrink(self.lons,mask=self.maskLon))
+				x0=min(self.lons)
+				x1=max(self.lons)
 				for value in self.slicez:
 					y0 = y1 = value
-					axis.plot([x0,x1],[y0,y1],'ro-')				
+					axis.plot([x0,x1],[y0,y1],line_fmt)				
 
 		elif self.slice_type =='vertical':
 			x0=x1=y0=y1=None			
 			if self.sliceo=='meridional':
-				x0=min(self.shrink(self.lats,mask=self.maskLat))
-				x1=max(self.shrink(self.lats,mask=self.maskLat))
+				x0=min(self.lats)
+				x1=max(self.lats)
 			if self.sliceo=='zonal':
-				x0=min(self.shrink(self.lons,mask=self.maskLon))
-				x1=max(self.shrink(self.lons,mask=self.maskLon))
+				x0=min(self.lons)
+				x1=max(self.lons)
 			
 			x0=x0*self.scale
 			x1=x1*self.scale
 			if self.all_same(self.zlevels):
 				y0 = y1 = self.zlevels[0]
-				axis.plot([x0,x1],[y0,y1],'ro-')
+				axis.plot([x0,x1],[y0,y1],line_fmt)
 			else:
 				for value in self.zlevels:
 					y0 = y1 = value
-
-
-					axis.plot([x0,x1],[y0,y1],'ro-')
+					axis.plot([x0,x1],[y0,y1],line_fmt)
 
 	def add_windvector(self,grid_ax,comp1,comp2):
 
 		if self.slice_type == 'horizontal':
+
 			xjump=self.windb_jump
 			yjump=self.windb_jump
 
@@ -288,13 +287,13 @@ class SynthPlot(object):
 
 			xjump=2
 			if self.sliceo=='meridional':
-				lats=self.shrink(self.lats,mask=self.maskLat)
+				lats=self.lats
 				x=self.resample(lats,res=xjump)
 			elif self.sliceo=='zonal':		
-				lons=self.shrink(self.lons,mask=self.maskLon)
+				lons=self.lons
 				x=self.resample(lons,res=xjump)
 
-			zvalues=self.shrink(self.axesval['z'],mask=self.zmask)
+			zvalues=self.axesval['z']
 			zjump=1
 			y=self.resample(zvalues,res=zjump)
 
@@ -470,6 +469,23 @@ class SynthPlot(object):
 		# print verts
 		axis.add_patch(poly)
 
+	def match_horizontal_grid(self,axis):
+
+
+				if self.sliceo=='meridional':
+					major = self.horizontal['ymajor']
+					minor = self.horizontal['yminor']
+					
+				elif self.sliceo=='zonal':
+					major = self.horizontal['xmajor']
+					minor = self.horizontal['xminor']
+
+				major_ticks=major*self.scale
+				minor_ticks=minor*self.scale
+
+				axis.set_xticks(major_ticks)                                                       
+				axis.set_xticks(minor_ticks, minor=True) 
+
 	def horizontal_plane(self ,**kwargs):
 
 		field_array=kwargs['field']
@@ -641,8 +657,8 @@ class SynthPlot(object):
 			im=self.add_field(g,field.T,extent3)
 			self.add_terrain_profile(g,prof,profax)
 
-			# if self.wind:
-				# self.add_windvector(g,h_comp.T,w_comp.T)
+			if self.wind:
+				self.add_windvector(g,h_comp.T,w_comp.T)
 
 			self.add_slice_line(g)
 
@@ -650,33 +666,10 @@ class SynthPlot(object):
 			g.set_ylim(extent4[2], extent4[3])	
 
 			if p == 0:
-				x0,x1 = g.get_xlim()
-				x0 = np.floor((x0/self.scale)*10)/10
-				x1 = np.ceil((x1/self.scale)*10)/10
-
-				if self.sliceo=='meridional':
-					major = self.horizontal['ymajor']
-					minor = self.horizontal['yminor']
-					delta_major=min(np.diff(major))
-					delta_minor=np.floor(min(np.diff(minor))*100)/100					
-				elif self.sliceo=='zonal':
-					major = self.horizontal['xmajor']
-					minor = self.horizontal['xminor']
-					delta_major=min(np.diff(major))
-					delta_minor=np.ceil(min(np.diff(minor))*100)/100
-
-				print delta_major
-				print delta_minor
-
-				major_ticks = np.arange(np.ceil(x0),x1,delta_major)*self.scale
-				minor_ticks = np.arange(x0,x1,delta_minor)*self.scale
-
-				g.set_xticks(major_ticks)                                                       
-				g.set_xticks(minor_ticks, minor=True) 
+				self.match_horizontal_grid(g)
 
 			g.grid(True, which = 'major',linewidth=1)
-			# g.grid(True, which = 'minor',alpha=0.5)
-			# g.minorticks_on()
+
 
 			self.adjust_ticklabels(g)
 
