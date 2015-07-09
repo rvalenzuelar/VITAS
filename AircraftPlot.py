@@ -40,7 +40,7 @@ class SynthPlot(object):
 		self.flight={'lon':None, 'lat':None}
 		self.maskLat=None
 		self.maskLon=None
-		self.horizontal={'xticks':None,'yticks':None}
+		self.horizontal={'xminor':None,'xmajor':None,'yminor':None,'ymajor':None}
 		self.scale=None
 		self.axesval={'x':None,'y':None,'z':None}
 		self.zlevels=[]
@@ -555,8 +555,11 @@ class SynthPlot(object):
 					verticalalignment='center',
 					transform=g.transAxes)
 
-			self.horizontal['yticks']=g.get_yticks(minor=False)
-			# print g.get_yticks(minor=True)
+			self.horizontal['ymajor'] = g.get_yticks(minor=False)
+			self.horizontal['yminor'] = g.get_yticks(minor=True)
+			self.horizontal['xmajor'] = g.get_xticks(minor=False)
+			self.horizontal['xminor'] = g.get_xticks(minor=True)			
+
 
 		 # add color bar
 		plot_grids.cbar_axes[0].colorbar(im)
@@ -564,7 +567,6 @@ class SynthPlot(object):
 
 		plt.tight_layout()
 		plt.draw()
-
 
 	def vertical_plane(self,**kwargs):
 
@@ -607,6 +609,8 @@ class SynthPlot(object):
 			elif self.zoomOpt[0] == 'onshore':
 				center=(38.85,-123.25)
 			extent2=self.zoom_in(extent1,center)
+		else:
+			extent2=extent1
 
 		self.scale=20
 		if self.sliceo=='meridional':
@@ -616,8 +620,8 @@ class SynthPlot(object):
 			geo_axis='Lon: '
 
 		elif self.sliceo=='zonal':
-			extent3=self.adjust_extent(extent1,'zonal')
-			extent4=self.adjust_extent(extent2,'zonal')			
+			extent3=self.adjust_extent(extent1,'zonal','data')
+			extent4=self.adjust_extent(extent2,'zonal','detail')			
 			horizontalComp=uComp
 			geo_axis='Lat: '
 
@@ -645,19 +649,36 @@ class SynthPlot(object):
 			g.set_xlim(extent4[0], extent4[1])
 			g.set_ylim(extent4[2], extent4[3])	
 
+			if p == 0:
+				x0,x1 = g.get_xlim()
+				x0 = np.floor((x0/self.scale)*10)/10
+				x1 = np.ceil((x1/self.scale)*10)/10
+
+				if self.sliceo=='meridional':
+					major = self.horizontal['ymajor']
+					minor = self.horizontal['yminor']
+					delta_major=min(np.diff(major))
+					delta_minor=np.floor(min(np.diff(minor))*100)/100					
+				elif self.sliceo=='zonal':
+					major = self.horizontal['xmajor']
+					minor = self.horizontal['xminor']
+					delta_major=min(np.diff(major))
+					delta_minor=np.ceil(min(np.diff(minor))*100)/100
+
+				print delta_major
+				print delta_minor
+
+				major_ticks = np.arange(np.ceil(x0),x1,delta_major)*self.scale
+				minor_ticks = np.arange(x0,x1,delta_minor)*self.scale
+
+				g.set_xticks(major_ticks)                                                       
+				g.set_xticks(minor_ticks, minor=True) 
 
 			g.grid(True, which = 'major',linewidth=1)
 			# g.grid(True, which = 'minor',alpha=0.5)
 			# g.minorticks_on()
 
-			# print g.get_xticks()
-
-			# print g.get_xticks()/20
-
 			self.adjust_ticklabels(g)
-
-			# print g.get_xticks()/20
-
 
 			if self.sliceo=='meridional':
 				geotext=geo_axis+str(self.slicem[p])
@@ -806,6 +827,7 @@ class SynthPlot(object):
 		plt.draw()	
 
 class FlightPlot(object):
+
 	def __init__(self,**kwargs):
 
 		met=kwargs['data']
