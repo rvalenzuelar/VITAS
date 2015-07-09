@@ -285,6 +285,17 @@ class SynthPlot(object):
 
 		elif self.slice_type == 'vertical':
 
+			# xfoo=range(121)
+			# yfoo=range(44)
+			# plt.figure()
+			# plt.quiver(xfoo,yfoo,comp1,comp2,
+			# 			units='dots',
+			# 			scale=0.5,
+			# 			scale_units='dots',
+			# 			width=1.5)
+			# plt.axis([40,100,0,15])
+			# plt.draw()
+
 			xjump=2
 			if self.sliceo=='meridional':
 				lats=self.lats
@@ -303,8 +314,7 @@ class SynthPlot(object):
 			Q=grid_ax.quiver(x*self.scale,y, hor, ver,
 								units='dots', 
 								scale=0.5, 
-								scale_units='dots',
-								width=1.5)
+								scale_units='dots')
 			qk=grid_ax.quiverkey(Q,0.95,0.8,10,r'$10 \frac{m}{s}$')
 	
 	def zoom_in(self,in_extent,center_point):
@@ -471,20 +481,19 @@ class SynthPlot(object):
 
 	def match_horizontal_grid(self,axis):
 
+		if self.sliceo=='meridional':
+			major = self.horizontal['ymajor']
+			minor = self.horizontal['yminor']
+			
+		elif self.sliceo=='zonal':
+			major = self.horizontal['xmajor']
+			minor = self.horizontal['xminor']
 
-				if self.sliceo=='meridional':
-					major = self.horizontal['ymajor']
-					minor = self.horizontal['yminor']
-					
-				elif self.sliceo=='zonal':
-					major = self.horizontal['xmajor']
-					minor = self.horizontal['xminor']
+		major_ticks=major*self.scale
+		minor_ticks=minor*self.scale
 
-				major_ticks=major*self.scale
-				minor_ticks=minor*self.scale
-
-				axis.set_xticks(major_ticks)                                                       
-				axis.set_xticks(minor_ticks, minor=True) 
+		axis.set_xticks(major_ticks)                                                       
+		axis.set_xticks(minor_ticks, minor=True) 
 
 	def horizontal_plane(self ,**kwargs):
 
