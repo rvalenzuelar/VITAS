@@ -32,20 +32,17 @@ class SynthPlot(object):
 		self.geo_textsize=None
 		self.windv_scale=None
 		self.windv_width=None
-		self.cmap_value=None
-		self.cmap_name=None
+		self.cmap={'name':None,'range':None}
 		self.lats=None 
 		self.lons=None
-		self.extent={'lx':' ','rx':' ','by':' ','ty':' '}
-		self.extentv={'lx':' ','rx':' ','by':' ','ty':' '}
+		self.extent={'lx':None,'rx':None,'by':None,'ty':None}
 		self.coast={'lon':None, 'lat':None}
 		self.flight={'lon':None, 'lat':None}
 		self.maskLat=None
 		self.maskLon=None
-		# self.minz=None
-		# self.maxz=None
+		self.horizontal={'xticks':None,'yticks':None}
 		self.scale=None
-		self.axesval={'x':' ','y':' ','z':' '}
+		self.axesval={'x':None,'y':None,'z':None}
 		self.zlevels=[]
 		self.slice_type=None
 		self.u_array=[]
@@ -127,30 +124,30 @@ class SynthPlot(object):
 
 		# define colormap range
 		if field == 'DBZ':
-			self.cmap_value=[-15,45]
-			self.cmap_name='nipy_spectral'
+			self.cmap['range']=[-15,45]
+			self.cmap['name']='nipy_spectral'
 		elif field == 'U':
-			self.cmap_value=[-20,20]
-			self.cmap_name='Accent'
+			self.cmap['range']=[-20,20]
+			self.cmap['name']='Accent'
 		elif field == 'V':
-			self.cmap_value=[-10,30]
-			self.cmap_name='Accent'			
+			self.cmap['range']=[-10,30]
+			self.cmap['name']='Accent'			
 		elif field in ['WVA','WUP']:
-			self.cmap_value=[-2,2]
-			self.cmap_name='PRGn'			
+			self.cmap['range']=[-2,2]
+			self.cmap['name']='PRGn'			
 		elif field in ['SPH','SPD']:
 			if self.slice_type == 'horizontal':
-				self.cmap_value=[5,20]
-				self.cmap_name='Accent'
+				self.cmap['range']=[5,20]
+				self.cmap['name']='Accent'
 			else:
-				self.cmap_value=[0,35]
-				self.cmap_name='Accent'			
+				self.cmap['range']=[0,35]
+				self.cmap['name']='Accent'			
 		elif field == 'CON':
-			self.cmap_value=[-1,1]
-			self.cmap_name='RdBu_r'
+			self.cmap['range']=[-1,1]
+			self.cmap['name']='RdBu_r'
 		elif field == 'VOR':
-			self.cmap_value=[-1,1]
-			self.cmap_name='PuOr'
+			self.cmap['range']=[-1,1]
+			self.cmap['name']='PuOr'
 
 	def get_slices(self,array):
 
@@ -374,16 +371,52 @@ class SynthPlot(object):
 
 	def adjust_ticklabels(self,g):
 		
-		# g.set_xlim(self.extent['lx'], self.extent['rx'])
-		# g.set_ylim(0,self.maxz)
-		
+				
+		# newval=[]
+		# for val in list(self.horizontal['yticks']):
+		# 	newval.append(val*self.scale)
+		# g.set_xticks(newval)
+		# new_xticklabel = [str(np.around(val/self.scale,1)) for val in newval]
+		# g.set_xticklabels(new_xticklabel)
+
 		new_xticklabel = [str(np.around(val/self.scale,1)) for val in g.get_xticks()]
 		g.set_xticklabels(new_xticklabel)
+
+		# g.set_xticks([38.2,38.3,38.4,38.5])
+		# new_xticklabel = [str(np.around(val/self.scale,1)) for val in g.get_xticks()]
+		# g.set_xticklabels(new_xticklabel)
 
 		new_yticklabel = [str(val) for val in g.get_yticks()]
 		new_yticklabel[0]=' '
 		new_yticklabel[-1]=' '
 		g.set_yticklabels(new_yticklabel)		
+
+	def adjust_extent(self,ori_extent,orient,type_extent):
+
+		# print ori_extent
+
+		out_extent=[None,None,None,None]
+
+		if orient == 'meridional':
+			out_extent[0]=ori_extent[2] *self.scale
+			out_extent[1]=ori_extent[3] *self.scale
+		elif orient == 'zonal':
+			out_extent[0]=ori_extent[0] *self.scale
+			out_extent[1]=ori_extent[1] *self.scale
+
+		# print out_extent
+			
+		if type_extent=='data':
+			zvalues=self.axesval['z']		
+			out_extent[2]=min(zvalues)
+			out_extent[3]=max(zvalues)
+		elif type_extent=='detail':
+			out_extent[2]=0.0
+			out_extent[3]=5.0			
+
+		# print out_extent
+		
+		return out_extent
 
 	def all_same(self,array):
 		b= all(x == array[0] for x in array)
@@ -415,9 +448,9 @@ class SynthPlot(object):
 						interpolation='none',
 						origin='lower',
 						extent=extent,
-						vmin=self.cmap_value[0],
-						vmax=self.cmap_value[1],
-						cmap=self.cmap_name)
+						vmin=self.cmap['range'][0],
+						vmax=self.cmap['range'][1],
+						cmap=self.cmap['name'])
 
 		return im
 
@@ -522,6 +555,9 @@ class SynthPlot(object):
 					verticalalignment='center',
 					transform=g.transAxes)
 
+			self.horizontal['yticks']=g.get_yticks(minor=False)
+			# print g.get_yticks(minor=True)
+
 		 # add color bar
 		plot_grids.cbar_axes[0].colorbar(im)
 		fig.suptitle(' Dual-Doppler Synthesis: '+ self.get_var_title(self.var) )
@@ -529,32 +565,6 @@ class SynthPlot(object):
 		plt.tight_layout()
 		plt.draw()
 
-	def adjust_extent(self,ori_extent,orient,type_extent):
-
-		# print ori_extent
-
-		out_extent=[None,None,None,None]
-
-		if orient == 'meridional':
-			out_extent[0]=ori_extent[2] *self.scale
-			out_extent[1]=ori_extent[3] *self.scale
-		elif orient == 'zonal':
-			out_extent[0]=ori_extent[0] *self.scale
-			out_extent[1]=ori_extent[1] *self.scale
-
-		# print out_extent
-			
-		if type_extent=='data':
-			zvalues=self.axesval['z']		
-			out_extent[2]=min(zvalues)
-			out_extent[3]=max(zvalues)
-		elif type_extent=='detail':
-			out_extent[2]=0.0
-			out_extent[3]=5.0			
-
-		# print out_extent
-		
-		return out_extent
 
 	def vertical_plane(self,**kwargs):
 
@@ -600,28 +610,18 @@ class SynthPlot(object):
 
 		self.scale=20
 		if self.sliceo=='meridional':
-			# extent1['lx']=extent1['by']*self.scale
-			# extent1['rx']=extent1['ty']*self.scale
-			# extent1['ty']=self.maxz
-			# extent1['by']=self.minz
-			extent3=self.adjust_extent(extent2,'meridional','data')
+			extent3=self.adjust_extent(extent1,'meridional','data')
 			extent4=self.adjust_extent(extent2,'meridional','detail')
 			horizontalComp=vComp
 			geo_axis='Lon: '
 
 		elif self.sliceo=='zonal':
-			# extent1['lx']=extent1['lx']*self.scale
-			# extent1['rx']=extent1['rx']*self.scale
-			# extent1['ty']=self.maxz
-			# extent1['by']=self.minz									
-			extent1=self.adjust_extent(extent1,'zonal')
-			extent2=self.adjust_extent(extent2,'zonal')			
+			extent3=self.adjust_extent(extent1,'zonal')
+			extent4=self.adjust_extent(extent2,'zonal')			
 			horizontalComp=uComp
 			geo_axis='Lat: '
 
-		print extent3
-		print extent4
-			
+
 		"""creates iterator group """
 		group=zip(plot_grids,
 					field_group,
@@ -632,15 +632,9 @@ class SynthPlot(object):
 		"""make gridded plot """
 		p=0
 
-		# extent=self.get_extent()
-
 		for g,field,h_comp,w_comp,prof,profax in group:
 
-			# field=field[: ,self.zmask]
-			# h_comp=h_comp[: ,self.zmask]
-			# w_comp=w_comp[: ,self.zmask]
-
-			im=self.add_field(g,field.T,extent1)
+			im=self.add_field(g,field.T,extent3)
 			self.add_terrain_profile(g,prof,profax)
 
 			# if self.wind:
@@ -648,14 +642,22 @@ class SynthPlot(object):
 
 			self.add_slice_line(g)
 
-			g.set_xlim(extent2[0], extent2[1])
-			g.set_ylim(0, extent2[3])	
+			g.set_xlim(extent4[0], extent4[1])
+			g.set_ylim(extent4[2], extent4[3])	
+
 
 			g.grid(True, which = 'major',linewidth=1)
-			g.grid(True, which = 'minor',alpha=0.5)
-			g.minorticks_on()
+			# g.grid(True, which = 'minor',alpha=0.5)
+			# g.minorticks_on()
+
+			# print g.get_xticks()
+
+			# print g.get_xticks()/20
 
 			self.adjust_ticklabels(g)
+
+			# print g.get_xticks()/20
+
 
 			if self.sliceo=='meridional':
 				geotext=geo_axis+str(self.slicem[p])
@@ -758,9 +760,9 @@ class SynthPlot(object):
 							interpolation='none',
 							origin='lower',
 							extent=self.extent_vertical,
-							vmin=self.cmap_value[0],
-							vmax=self.cmap_value[1],
-							cmap=self.cmap_name)
+							vmin=self.cmap['range'][0],
+							vmax=self.cmap['range'][1],
+							cmap=self.cmap['name'])
 
 			# self.add_windvector(g,hcomp,wcomp)
 
