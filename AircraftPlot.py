@@ -930,49 +930,64 @@ class FlightPlot(object):
 
 	def compare_with_synth(self,**kwargs):
 
-		array=kwargs['array']
-		slat=kwargs['lat']
-		slon=kwargs['lon']
-		z=kwargs['vertical']
+		# check:
+		# http://stackoverflow.com/questions/7878398/
+		# how-to-extract-an-arbitrary-line-of-values-from-a-numpy-array
 
-		idx = np.where(z==1.0)
-		data = np.squeeze(array[:,:,idx])
+		synth=kwargs['array']
+		synth_xaxis=kwargs['x']
+		synth_yaxis=kwargs['y']
+		synth_zxis=kwargs['z']
+		zlevel=kwargs['level']
+
+		idx = np.where(synth_zxis==zlevel)
+		data = np.squeeze(synth[:,:,idx])
 
 		flat,flon=zip(*self.path)
 
 		flat = np.asarray(self.around(flat,4))
 		flon = np.asarray(self.around(flon,4))
-		slat = np.asarray(self.around(slat,4))
-		slon = np.asarray(self.around(slon,4))
+		synth_yaxis = np.asarray(self.around(synth_yaxis,4))
+		synth_xaxis = np.asarray(self.around(synth_xaxis,4))
 
-		y0=self.find_index_recursively(array=slat,value=flat[0],decimals=4)
-		y1=self.find_index_recursively(array=slat,value=flat[-1],decimals=4)
+		y0=self.find_index_recursively(array=synth_yaxis,value=flat[0],decimals=4)
+		y1=self.find_index_recursively(array=synth_yaxis,value=flat[-1],decimals=4)
 
-		x0=self.find_index_recursively(array=slon,value=flon[0],decimals=4)
-		x1=self.find_index_recursively(array=slon,value=flon[-1],decimals=4)
+		x0=self.find_index_recursively(array=synth_xaxis,value=flon[0],decimals=4)
+		x1=self.find_index_recursively(array=synth_xaxis,value=flon[-1],decimals=4)
 
-		x = np.linspace(x0, x1, 100)
-		y = np.linspace(y0, y1, 100)
+		length = int(np.hypot(x1-x0, y1-y0))
+		x = np.linspace(x0, x1, length)
+		y = np.linspace(y0, y1, length)
 
-		datai=data[x.astype(np.int), y.astype(np.int)]
+		data_x=synth_yaxis[y.astype(np.int)]
+		data_y=data[y.astype(np.int),x.astype(np.int)]
 
-
-		flight_x=flat[::-1]
-		flight_y=self.met['wspd']
-		
-		
+		flight_x=flat
+		flight_y=self.met['wspd']			
 		spl = spline(flight_x, flight_y)
 
-
-		xs = slat[y1:y0]
+		# xs = synth_yaxis[y1:y0]
 		
-		flight_ys=spl(xs[1:])
+		# print synth_yaxis
+		# print len(synth_yaxis)
+		# print data_x
+		# print len(data_x)
+		# print data_y
+		# print len(data_y)
+
+
+
+		# flight_ys=spl(xs[1:])
+		flight_ys=spl(data_x)
+		# print flight_ys
+
 
 		# if x[0]<x[-1]:
 			# datai=datai[::-1]
 
 		plt.figure()
-		plt.plot(datai)
+		plt.plot(data_y[::-1])
 		plt.plot(flight_ys)
 		plt.draw()
 

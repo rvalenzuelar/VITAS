@@ -76,7 +76,7 @@ def main( args ):
 	""" make flight level meteo plot """
 	Plotter.plot_flight_meteo(SYNTH,FLIGHT,meteo=meteo)
 
-	Plotter.compare_synth_flight(SYNTH,FLIGHT)
+	Plotter.compare_synth_flight(SYNTH,FLIGHT,panel=args.panel)
 
 	# plt.show(block=False)	
 	plt.show()

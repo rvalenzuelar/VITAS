@@ -30,7 +30,7 @@ def plot_flight_meteo(Synth,StdTape, **kwargs):
 		flight.timeseries()
 		
 
-def compare_synth_flight(Synth,StdTape):
+def compare_synth_flight(Synth,StdTape,**kwargs):
 
 	met=StdTape.get_meteo(Synth.start, Synth.end)	
 	path=StdTape.get_path(Synth.start, Synth.end)	
@@ -41,8 +41,12 @@ def compare_synth_flight(Synth,StdTape):
 	lon=Synth.LON
 	z=Synth.Z
 
+	panel = kwargs['panel']
+
+	print z[panel]
+
 	array=Synth.SPH
-	flight.compare_with_synth(array=array,lat=lat,lon=lon,vertical=z)
+	flight.compare_with_synth(array=array,x=lon,y=lat,z=z,level=z[panel])
 	
 
 def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
