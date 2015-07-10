@@ -10,6 +10,7 @@ import AircraftPlot as AP
 import Terrain
 
 def plot_terrain(SynthPlot,**kwargs):
+
 	terrain=kwargs['terrain']
 	slope=kwargs['slope']
 
@@ -25,9 +26,23 @@ def plot_flight_meteo(Synth,StdTape, **kwargs):
 
 	if meteo:
 		met=StdTape.get_meteo(Synth.start, Synth.end)	
-		flight=AP.FlightPlot(data=met)
+		flight=AP.FlightPlot(meteo=met)
 		flight.timeseries()
 		
+
+def compare_synth_flight(Synth,StdTape):
+
+	met=StdTape.get_meteo(Synth.start, Synth.end)	
+	path=StdTape.get_path(Synth.start, Synth.end)	
+	
+	flight=AP.FlightPlot(meteo=met,path=path)
+
+	lat=Synth.LAT
+	lon=Synth.LON
+	z=Synth.Z
+
+	array=Synth.SPH
+	flight.compare_with_synth(array=array,lat=lat,lon=lon,vertical=z)
 	
 
 def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
@@ -95,6 +110,5 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 										sliceo='zonal') # zonal component)
 		else:
 			P.vertical_plane(field=array,sliceo='zonal')	
-
 
 	return P

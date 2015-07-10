@@ -12,7 +12,7 @@ import Terrain
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-import scipy.ndimage as scipy
+from scipy.interpolate import UnivariateSpline as spline 
 import itertools as it
 
 class SynthPlot(object):
@@ -221,101 +221,6 @@ class SynthPlot(object):
 			title = title.replace('Horizontal','Meridional')
 
 		return title
-
-	def add_slice_line(self,axis):
-
-		line_fmt='ro-'
-
-		if self.slice_type =='horizontal':
-			x0 = y0 = None
-			if self.slicem:
-				y0=min(self.lats)
-				y1=max(self.lats)
-				for value in self.slicem:
-					x0 = x1 = -value
-					axis.plot([x0,x1],[y0,y1],line_fmt)
-
-			if self.slicez:
-				x0=min(self.lons)
-				x1=max(self.lons)
-				for value in self.slicez:
-					y0 = y1 = value
-					axis.plot([x0,x1],[y0,y1],line_fmt)				
-
-		elif self.slice_type =='vertical':
-			x0=x1=y0=y1=None			
-			if self.sliceo=='meridional':
-				x0=min(self.lats)
-				x1=max(self.lats)
-			if self.sliceo=='zonal':
-				x0=min(self.lons)
-				x1=max(self.lons)
-			
-			x0=x0*self.scale
-			x1=x1*self.scale
-			if self.all_same(self.zlevels):
-				y0 = y1 = self.zlevels[0]
-				axis.plot([x0,x1],[y0,y1],line_fmt)
-			else:
-				for value in self.zlevels:
-					y0 = y1 = value
-					axis.plot([x0,x1],[y0,y1],line_fmt)
-
-	def add_windvector(self,grid_ax,comp1,comp2):
-
-		if self.slice_type == 'horizontal':
-
-			xjump=self.windb_jump
-			yjump=self.windb_jump
-
-			x=self.resample(self.lons,res=xjump)
-			y=self.resample(self.lats,res=yjump)
-
-			uu=self.resample(comp1,xres=xjump,yres=yjump)
-			vv=self.resample(comp2,xres=xjump,yres=yjump)
-
-			Q=grid_ax.quiver(x,y,uu,vv, 
-								units='dots', 
-								scale=self.windv_scale, 
-								scale_units='dots',
-								width=self.windv_width)
-			qk=grid_ax.quiverkey(Q,0.8,0.08,10,r'$10 \frac{m}{s}$')
-			grid_ax.set_xlim(self.extent['lx'],self.extent['rx'])
-			grid_ax.set_ylim(self.extent['by'], self.extent['ty'])			
-
-		elif self.slice_type == 'vertical':
-
-			# xfoo=range(121)
-			# yfoo=range(44)
-			# plt.figure()
-			# plt.quiver(xfoo,yfoo,comp1,comp2,
-			# 			units='dots',
-			# 			scale=0.5,
-			# 			scale_units='dots',
-			# 			width=1.5)
-			# plt.axis([40,100,0,15])
-			# plt.draw()
-
-			xjump=2
-			if self.sliceo=='meridional':
-				lats=self.lats
-				x=self.resample(lats,res=xjump)
-			elif self.sliceo=='zonal':		
-				lons=self.lons
-				x=self.resample(lons,res=xjump)
-
-			zvalues=self.axesval['z']
-			zjump=1
-			y=self.resample(zvalues,res=zjump)
-
-			hor= self.resample(comp1,xres=xjump,yres=zjump)
-			ver= self.resample(comp2,xres=xjump,yres=zjump)
-
-			Q=grid_ax.quiver(x*self.scale,y, hor, ver,
-								units='dots', 
-								scale=0.5, 
-								scale_units='dots')
-			qk=grid_ax.quiverkey(Q,0.95,0.8,10,r'$10 \frac{m}{s}$')
 	
 	def zoom_in(self,in_extent,center_point):
 
@@ -430,6 +335,101 @@ class SynthPlot(object):
 	def all_same(self,array):
 		b= all(x == array[0] for x in array)
 		return b
+
+	def add_slice_line(self,axis):
+
+		line_fmt='ro-'
+
+		if self.slice_type =='horizontal':
+			x0 = y0 = None
+			if self.slicem:
+				y0=min(self.lats)
+				y1=max(self.lats)
+				for value in self.slicem:
+					x0 = x1 = -value
+					axis.plot([x0,x1],[y0,y1],line_fmt)
+
+			if self.slicez:
+				x0=min(self.lons)
+				x1=max(self.lons)
+				for value in self.slicez:
+					y0 = y1 = value
+					axis.plot([x0,x1],[y0,y1],line_fmt)				
+
+		elif self.slice_type =='vertical':
+			x0=x1=y0=y1=None			
+			if self.sliceo=='meridional':
+				x0=min(self.lats)
+				x1=max(self.lats)
+			if self.sliceo=='zonal':
+				x0=min(self.lons)
+				x1=max(self.lons)
+			
+			x0=x0*self.scale
+			x1=x1*self.scale
+			if self.all_same(self.zlevels):
+				y0 = y1 = self.zlevels[0]
+				axis.plot([x0,x1],[y0,y1],line_fmt)
+			else:
+				for value in self.zlevels:
+					y0 = y1 = value
+					axis.plot([x0,x1],[y0,y1],line_fmt)
+
+	def add_windvector(self,grid_ax,comp1,comp2):
+
+		if self.slice_type == 'horizontal':
+
+			xjump=self.windb_jump
+			yjump=self.windb_jump
+
+			x=self.resample(self.lons,res=xjump)
+			y=self.resample(self.lats,res=yjump)
+
+			uu=self.resample(comp1,xres=xjump,yres=yjump)
+			vv=self.resample(comp2,xres=xjump,yres=yjump)
+
+			Q=grid_ax.quiver(x,y,uu,vv, 
+								units='dots', 
+								scale=self.windv_scale, 
+								scale_units='dots',
+								width=self.windv_width)
+			qk=grid_ax.quiverkey(Q,0.8,0.08,10,r'$10 \frac{m}{s}$')
+			grid_ax.set_xlim(self.extent['lx'],self.extent['rx'])
+			grid_ax.set_ylim(self.extent['by'], self.extent['ty'])			
+
+		elif self.slice_type == 'vertical':
+
+			# xfoo=range(131)
+			# yfoo=range(44)
+			# plt.figure()
+			# plt.quiver(xfoo,yfoo,comp1,comp2,
+			# 			units='dots',
+			# 			scale=0.5,
+			# 			scale_units='dots',
+			# 			width=1.5)
+			# plt.axis([40,100,0,15])
+			# plt.draw()
+
+			xjump=2
+			if self.sliceo=='meridional':
+				lats=self.lats
+				x=self.resample(lats,res=xjump)
+			elif self.sliceo=='zonal':		
+				lons=self.lons
+				x=self.resample(lons,res=xjump)
+
+			zvalues=self.axesval['z']
+			zjump=1
+			y=self.resample(zvalues,res=zjump)
+
+			hor= self.resample(comp1,xres=xjump,yres=zjump)
+			ver= self.resample(comp2,xres=xjump,yres=zjump)
+
+			Q=grid_ax.quiver(x*self.scale,y, hor, ver,
+								units='dots', 
+								scale=0.5, 
+								scale_units='dots')
+			qk=grid_ax.quiverkey(Q,0.95,0.8,10,r'$10 \frac{m}{s}$')
 
 	def add_flight_path(self,axis):
 
@@ -832,14 +832,16 @@ class FlightPlot(object):
 
 	def __init__(self,**kwargs):
 
-		met=kwargs['data']
-		if met:
-			self.met=met
-		else:
-			self.met=None
+		self.met=None
+		self.path=None
+
+		for key,value in kwargs.iteritems():
+			if key == 'meteo':
+				self.met=value
+			elif key == 'path':
+				self.path=value
 
 	def timeseries(self):
-
 
 		varname={	0:{'var':'atemp','name': 'air temperature',
 									'loc':3,'ylim':None},
@@ -917,7 +919,6 @@ class FlightPlot(object):
 				newlabels[-1]=''
 				axes[i].set_yticklabels(newlabels)
 
-
 	def adjust_xaxis(self,axes):
 
 		for i in [6,7,8]:
@@ -926,3 +927,84 @@ class FlightPlot(object):
 			for x in xticks:
 				newlabels.append(str(int(x/100)))
 			axes[i].set_xticklabels(newlabels)
+
+	def compare_with_synth(self,**kwargs):
+
+		array=kwargs['array']
+		slat=kwargs['lat']
+		slon=kwargs['lon']
+		z=kwargs['vertical']
+
+		idx = np.where(z==1.0)
+		data = np.squeeze(array[:,:,idx])
+
+		flat,flon=zip(*self.path)
+
+		flat = np.asarray(self.around(flat,4))
+		flon = np.asarray(self.around(flon,4))
+		slat = np.asarray(self.around(slat,4))
+		slon = np.asarray(self.around(slon,4))
+
+		y0=self.find_index_recursively(array=slat,value=flat[0],decimals=4)
+		y1=self.find_index_recursively(array=slat,value=flat[-1],decimals=4)
+
+		x0=self.find_index_recursively(array=slon,value=flon[0],decimals=4)
+		x1=self.find_index_recursively(array=slon,value=flon[-1],decimals=4)
+
+		x = np.linspace(x0, x1, 100)
+		y = np.linspace(y0, y1, 100)
+
+		datai=data[x.astype(np.int), y.astype(np.int)]
+
+
+		flight_x=flat[::-1]
+		flight_y=self.met['wspd']
+		
+		
+		spl = spline(flight_x, flight_y)
+
+
+		xs = slat[y1:y0]
+		
+		flight_ys=spl(xs[1:])
+
+		# if x[0]<x[-1]:
+			# datai=datai[::-1]
+
+		plt.figure()
+		plt.plot(datai)
+		plt.plot(flight_ys)
+		plt.draw()
+
+		# sys.exit()
+
+	def find_index_recursively(self,**kwargs):
+
+		''' array and value have to have
+				the same number of decimals
+				positions
+		'''
+		array=kwargs['array']
+		value=kwargs['value']
+		decimals=kwargs['decimals'] #decimals of each element
+
+		idx= np.where(array == value)
+
+		while len(idx[0])==0:
+
+			decimals-=1
+			if decimals <0:
+				return None
+			array = np.asarray(self.around(array,decimals))
+			value = round(value,decimals)
+			idx= np.where(array == value)
+
+		return idx[0][0]
+
+	def around(self,array,decimals):
+
+		rounded=[]
+		for val in array:
+			rounded.append(round(val,decimals))
+
+		return rounded

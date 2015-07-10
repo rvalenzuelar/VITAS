@@ -120,6 +120,9 @@ def plot_map(SynthPlot,data):
 	pg[0].set_xlim(extent[0], extent[1])
 	pg[0].set_ylim(extent[2], extent[3])	
 	pg[0].grid(True, which = 'major',linewidth=1)
+	pg[0].grid(True, which = 'minor',alpha=0.5)
+	pg[0].minorticks_on()
+
 	pg.cbar_axes[0].colorbar(im)
 
 	fig.suptitle(data['title'])	
