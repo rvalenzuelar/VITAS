@@ -43,7 +43,7 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 
 	panel = kwargs['panel']
 
-	print z[panel]
+	# print z[panel]
 
 	array=Synth.SPH
 	flight.compare_with_synth(array=array,x=lon,y=lat,z=z,level=z[panel])
