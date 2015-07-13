@@ -7,13 +7,15 @@
 
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import ImageGrid
-from matplotlib.patches import Rectangle,Polygon
+from matplotlib.patches import Polygon
+from matplotlib.path import Path
 import Terrain 
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-from scipy.interpolate import UnivariateSpline as spline 
 import itertools as it
+import pixels_along_line as line 
+
 
 class SynthPlot(object):
 
@@ -190,13 +192,11 @@ class SynthPlot(object):
 		slices=[]
 		if self.sliceo=='zonal':		
 			for coord in self.slicez:
-				# idx=self.find_nearest(lats,coord)
-				idx=self.find_nearest(self.lats,coord)
+				idx=find_nearest(self.lats,coord)
 				slices.append(array[:,idx,:])
 		elif self.sliceo=='meridional':
 			for coord in self.slicem:
-				# idx=self.find_nearest(lons,-coord)
-				idx=self.find_nearest(self.lons,-coord)
+				idx=find_nearest(self.lons,-coord)
 				slices.append(array[idx,:,:])
 		# elif self.sliceo=='cross':
 		# elif self.sliceo=='along:
@@ -278,10 +278,6 @@ class SynthPlot(object):
 
 		return array
 
-	def find_nearest(self,array,value):
-
-		idx = (np.abs(array-value)).argmin()
-		return idx
 
 	def adjust_ticklabels(self,g):
 		
@@ -935,91 +931,162 @@ class FlightPlot(object):
 		# how-to-extract-an-arbitrary-line-of-values-from-a-numpy-array
 
 		synth=kwargs['array']
-		synth_xaxis=kwargs['x']
-		synth_yaxis=kwargs['y']
-		synth_zxis=kwargs['z']
+		synth_lons=kwargs['x']
+		synth_lats=kwargs['y']
+		synth_z=kwargs['z']
 		zlevel=kwargs['level']
 
-		idx = np.where(synth_zxis==zlevel)
+		idx = np.where(synth_z==zlevel)
 		data = np.squeeze(synth[:,:,idx])
 
-		flat,flon=zip(*self.path)
+		flgt_lats,flgt_lons=zip(*self.path)
 
-		flat = np.asarray(self.around(flat,4))
-		flon = np.asarray(self.around(flon,4))
-		synth_yaxis = np.asarray(self.around(synth_yaxis,4))
-		synth_xaxis = np.asarray(self.around(synth_xaxis,4))
+		flight_wspd=self.met['wspd']
 
-		y0=self.find_index_recursively(array=synth_yaxis,value=flat[0],decimals=4)
-		y1=self.find_index_recursively(array=synth_yaxis,value=flat[-1],decimals=4)
+		flgt_lats = np.asarray(around(flgt_lats,4))
+		flgt_lons = np.asarray(around(flgt_lons,4))
+		synth_lats = np.asarray(around(synth_lats,4))
+		synth_lons = np.asarray(around(synth_lons,4))
 
-		x0=self.find_index_recursively(array=synth_xaxis,value=flon[0],decimals=4)
-		x1=self.find_index_recursively(array=synth_xaxis,value=flon[-1],decimals=4)
+		y0=find_index_recursively(array=synth_lats,value=flgt_lats[0],decimals=4)
+		y1=find_index_recursively(array=synth_lats,value=flgt_lats[-1],decimals=4)
 
-		length = int(np.hypot(x1-x0, y1-y0))
-		x = np.linspace(x0, x1, length)
-		y = np.linspace(y0, y1, length)
+		x0=find_index_recursively(array=synth_lons,value=flgt_lons[0],decimals=4)
+		x1=find_index_recursively(array=synth_lons,value=flgt_lons[-1],decimals=4)
 
-		data_x=synth_yaxis[y.astype(np.int)]
-		data_y=data[y.astype(np.int),x.astype(np.int)]
+		# print synth_lats[y0], synth_lons[x0]
+		# print synth_lats[y1], synth_lons[x1]
+	
+		# print round(np.average(np.diff(flgt_lats)),4)
+		# print round(np.average(np.diff(flgt_lons)),4)
 
-		flight_x=flat
-		flight_y=self.met['wspd']			
-		spl = spline(flight_x, flight_y)
+		del_lat = round(np.average(np.diff(synth_lats)),4)
+		del_lon = round(np.average(np.diff(synth_lons)),4)
 
-		# xs = synth_yaxis[y1:y0]
+		# print del_lat
+		# print del_lon
+
+
+
+
+
+		coords=line.xiaolin(x0,y0,x1,y1,width=2)
+		data_extract=[]
+		data_lat=[]
+		data_lon=[]
+
+		for lon,lat in coords:
+			data_extract.append(data[lon,lat])
+			data_lon.append(synth_lons[lon])
+			data_lat.append(synth_lats[lat])
+			data[lon,lat]=0 #for drawing line in imshow
+
+
+		foo_lat=[]
+		foo_lon=[]
+		for lat,lon in zip(flgt_lats,flgt_lons):
+			foo_lat.append(find_index_recursively(array=synth_lats,value=lat,decimals=4))
+			foo_lon.append(find_index_recursively(array=synth_lons,value=lon,decimals=4))
+
+		# print len(foo_lat),flgt_lats.size,foo_lat
+		# print len(foo_lon),flgt_lons.size,foo_lon
+
+		# for lon,lat in zip(foo_lon,foo_lat):
+		# 	data[lon,lat]=0 #for drawing line in imshow
+
+		codes = [Path.MOVETO,
+					Path.LINETO,
+					Path.LINETO,
+					Path.LINETO,
+					Path.CLOSEPOLY]
+		# count=0
+		flgt_data_mean=[]
 		
-		# print synth_yaxis
-		# print len(synth_yaxis)
-		# print data_x
-		# print len(data_x)
-		# print data_y
-		# print len(data_y)
+		for lon,lat in zip(data_lon,data_lat):
+			# print lat,lon
+			lo=lat-del_lat/2
+			up=lat+del_lat/2
+			le=lon-del_lon/2
+			ri=lon+del_lon/2
+			vertices=[[le,lo],[le,up],[ri,up],[ri,lo],[le,lo]]
+			
+			pixel_box=Path(vertices,codes)
+			
+			flgt_data=[]	
+			for flon,flat in zip(flgt_lons,flgt_lats):
+				if pixel_box.contains_point((flon,flat)):
+					value=flight_wspd[np.where(flgt_lons==flon)]
+					flgt_data.append(value[0])
+
+			# print flgt_data
+
+			if flgt_data:
+				flgt_data_mean.append(np.nanmean(flgt_data))
 
 
-
-		# flight_ys=spl(xs[1:])
-		flight_ys=spl(data_x)
-		# print flight_ys
-
-
-		# if x[0]<x[-1]:
-			# datai=datai[::-1]
+		# print flgt_data_mean
 
 		plt.figure()
-		plt.plot(data_y[::-1])
-		plt.plot(flight_ys)
+		plt.imshow(data.T,
+			interpolation='none',
+			origin='lower')
+		plt.xlim([20,90]), plt.ylim([10,90])
+		# plt.xlim([30,100]), plt.ylim([30,110])
 		plt.draw()
+
+		# plt.figure()
+		# plt.plot(data_extract[::-1])
+		# plt.draw()
+
+		# plt.figure()
+		# plt.plot(flight_wspd)
+		# plt.draw()
+
+		# plt.figure()
+		# plt.plot(flgt_data_mean[::-1])
+		# plt.draw()
+
 
 		# sys.exit()
 
-	def find_index_recursively(self,**kwargs):
+def find_index_recursively(**kwargs):
 
-		''' array and value have to have
-				the same number of decimals
-				positions
-		'''
-		array=kwargs['array']
-		value=kwargs['value']
-		decimals=kwargs['decimals'] #decimals of each element
+	''' array and value have to have
+			the same number of decimals
+			positions
+	'''
+	array=kwargs['array']
+	value=kwargs['value']
+	decimals=kwargs['decimals'] #decimals of each element
 
-		idx= np.where(array == value)
+	idx= np.where(array == value)
+	array_new=array
+	value_new=value
+	while len(idx[0])==0:
 
-		while len(idx[0])==0:
-
-			decimals-=1
-			if decimals <0:
-				return None
-			array = np.asarray(self.around(array,decimals))
-			value = round(value,decimals)
-			idx= np.where(array == value)
-
+		decimals-=1
+		if decimals <0:
+			return None
+		array_new = np.asarray(around(array_new,decimals))
+		value_new = round(value_new,decimals)
+		idx= np.where(array_new == value_new)
+	
+	if len(idx[0])>1:
+		idxx=find_nearest(array[idx[0]],value)
+		return idx[0][idxx]
+	else:
 		return idx[0][0]
+							 
+							
+def around(array,decimals):
 
-	def around(self,array,decimals):
+	rounded=[]
+	for val in array:
+		rounded.append(round(val,decimals))
+	return rounded
 
-		rounded=[]
-		for val in array:
-			rounded.append(round(val,decimals))
 
-		return rounded
+def find_nearest(array,value):
+
+	idx = (np.abs(array-value)).argmin()
+	return idx
