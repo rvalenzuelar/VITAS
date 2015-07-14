@@ -1013,74 +1013,94 @@ class FlightPlot(object):
 
 		synth_coord=list(product(synth_lons,synth_lats))
 		tree = cKDTree(synth_coord)
-		neigh = 9	
-		dist, idx = tree.query(linesynth, 
-							k=neigh, eps=0, p=2, distance_upper_bound=0.1)		
+		neigh = 9
+		dist, idx = tree.query(linesynth, k=neigh, eps=0, p=2, distance_upper_bound=0.1)
 
-		
 		idx_split=zip(*idx)
-
 		idx0 = list(idx_split[0])
+
+		""" convert to one-column array """
 		data = data.reshape(121*131,1)
-		
+		# data_line=data.copy()
+
+		""" extract center point value """
 		data_extract=data[idx0]
-		data[idx0]=0
 
+		""" draw pixel line """
+		line_center=[]
+		line_neighbors=[]
+		# for i in idx:
+		# 	data_line[i]=0
+		# for i in idx:
+		# 	data_line[i[0]]=30
+		for i in idx:
+			line_center.append(i[0])
+			# line_neighbors.append(synth_coord[i[1:]])
+
+		print line_center
+
+		""" interpolate pixels """
+		data_extract2=[]
+		for i in idx:
+			data_extract2.append(np.nanmean(data[i]))
+
+		""" draw interpolated line """
+		# for i,val in zip(idx0,data_extract2):
+		# 	data[i]=val
+
+		""" convert back to 2D array """
 		data=data.reshape(121,131)
+		# data_line=data_line.reshape(121,131)
 
-
-		# codes = [Path.MOVETO,
-		# 			Path.LINETO,
-		# 			Path.LINETO,
-		# 			Path.LINETO,
-		# 			Path.CLOSEPOLY]
-		# # count=0
-		# flgt_data_mean=[]
 		
-		# for lon,lat in zip(data_lon,data_lat):
-		# 	# print lat,lon
-		# 	lo=lat-del_lat/2
-		# 	up=lat+del_lat/2
-		# 	le=lon-del_lon/2
-		# 	ri=lon+del_lon/2
-		# 	vertices=[[le,lo],[le,up],[ri,up],[ri,lo],[le,lo]]
-			
-		# 	pixel_box=Path(vertices,codes)
-			
-		# 	flgt_data=[]	
-		# 	for flon,flat in zip(flgt_lons,flgt_lats):
-		# 		if pixel_box.contains_point((flon,flat)):
-		# 			value=flight_wspd[np.where(flgt_lons==flon)]
-		# 			flgt_data.append(value[0])
 
-		# 	# print flgt_data
+		""" swap coordinates to (lon,lat)"""
+		flight_coord = [(t[1], t[0]) for t in self.path]
+		tree = cKDTree(flight_coord)
+		neigh = 15
+		dist, idx = tree.query(linesynth, k=neigh, eps=0, p=2, distance_upper_bound=0.1)
 
-		# 	if flgt_data:
-		# 		flgt_data_mean.append(np.nanmean(flgt_data))
-
-
-		# print flgt_data_mean
+		""" average flight data """
+		flgt_mean=[]
+		for i in idx:
+			flgt_mean.append(np.nanmean(flight_wspd[i]))
 
 		plt.figure()
 		plt.imshow(data.T,
 			interpolation='none',
 			origin='lower')
+		plt.plot(*zip(*line_center))
+		plt.xlim([20,90]), plt.ylim([10,90])
+		# plt.xlim([30,100]), plt.ylim([30,110])
+		plt.draw()
+
+		# plt.figure()
+		# plt.imshow(data_line.T,
+		# 	interpolation='none',
+		# 	origin='lower')
 		# plt.xlim([20,90]), plt.ylim([10,90])
-		plt.xlim([30,100]), plt.ylim([30,110])
+		# # plt.xlim([30,100]), plt.ylim([30,110])
+		# plt.draw()
+
+		plt.figure()
+		plt.plot(data_extract,'bo',label='raw synthesis data')
+		plt.plot(data_extract2,'r',label='synthesis interpolated')
+		plt.plot(flgt_mean,'g',label='flight data')
+		plt.legend(numpoints=1,loc=3)
 		plt.draw()
 
 		plt.figure()
-		plt.plot(data_extract[::-1])
+		ax=plt.subplot(111)
+		ax.scatter(data_extract2,flgt_mean)
+		ax.plot([8, 20], [8, 20], 
+				color='k', linestyle='-', linewidth=2)		
+		ax.set_aspect(1)
+		ax.grid(which='major')
+		ax.set_xlim([8,20])
+		ax.set_ylim([8,20])
+		plt.xlabel('synthesis WSPD')
+		plt.ylabel('flight WSPD')
 		plt.draw()
-
-		# plt.figure()
-		# plt.plot(flight_wspd)
-		# plt.draw()
-
-		# plt.figure()
-		# plt.plot(flgt_data_mean[::-1])
-		# plt.draw()
-
 
 		# sys.exit()
 
