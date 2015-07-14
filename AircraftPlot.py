@@ -970,29 +970,47 @@ class FlightPlot(object):
 
 
 
-		coords=line.xiaolin(x0,y0,x1,y1,width=2)
-		data_extract=[]
-		data_lat=[]
-		data_lon=[]
+		# coords=line.xiaolin(x0,y0,x1,y1,width=2)
+		# data_extract=[]
+		# data_lat=[]
+		# data_lon=[]
 
-		for lon,lat in coords:
+		# for lon,lat in coords:
+		# 	data_extract.append(data[lon,lat])
+		# 	data_lon.append(synth_lons[lon])
+		# 	data_lat.append(synth_lats[lat])
+		# 	# data[lon,lat]=0 #for drawing line in imshow
+
+
+		idx_lat=[]
+		idx_lon=[]
+		for lat,lon in zip(flgt_lats,flgt_lons):
+			idx_lat.append(find_index_recursively(array=synth_lats,value=lat,decimals=4))
+			idx_lon.append(find_index_recursively(array=synth_lons,value=lon,decimals=4))
+
+		# print len(idx_lat),flgt_lats.size,idx_lat
+		# print len(idx_lon),flgt_lons.size,idx_lon
+
+		data_extract=[]
+		for lon,lat in zip(idx_lon,idx_lat):
 			data_extract.append(data[lon,lat])
-			data_lon.append(synth_lons[lon])
-			data_lat.append(synth_lats[lat])
 			data[lon,lat]=0 #for drawing line in imshow
 
+		# print data_extract
+		# print data[idx_lon[-37],idx_lat[-37]]
 
-		foo_lat=[]
-		foo_lon=[]
-		for lat,lon in zip(flgt_lats,flgt_lons):
-			foo_lat.append(find_index_recursively(array=synth_lats,value=lat,decimals=4))
-			foo_lon.append(find_index_recursively(array=synth_lons,value=lon,decimals=4))
+		# datai=interpolate_synth(data,idx_lon,idx_lat,epsilon=1)
 
-		# print len(foo_lat),flgt_lats.size,foo_lat
-		# print len(foo_lon),flgt_lons.size,foo_lon
 
-		# for lon,lat in zip(foo_lon,foo_lat):
-		# 	data[lon,lat]=0 #for drawing line in imshow
+		print flgt_lons[200]
+		print flgt_lats[200]
+		# print flight_wspd
+
+
+
+		# print XI
+		# print YI
+		print ZI
 
 		codes = [Path.MOVETO,
 					Path.LINETO,
@@ -1002,26 +1020,26 @@ class FlightPlot(object):
 		# count=0
 		flgt_data_mean=[]
 		
-		for lon,lat in zip(data_lon,data_lat):
-			# print lat,lon
-			lo=lat-del_lat/2
-			up=lat+del_lat/2
-			le=lon-del_lon/2
-			ri=lon+del_lon/2
-			vertices=[[le,lo],[le,up],[ri,up],[ri,lo],[le,lo]]
+		# for lon,lat in zip(data_lon,data_lat):
+		# 	# print lat,lon
+		# 	lo=lat-del_lat/2
+		# 	up=lat+del_lat/2
+		# 	le=lon-del_lon/2
+		# 	ri=lon+del_lon/2
+		# 	vertices=[[le,lo],[le,up],[ri,up],[ri,lo],[le,lo]]
 			
-			pixel_box=Path(vertices,codes)
+		# 	pixel_box=Path(vertices,codes)
 			
-			flgt_data=[]	
-			for flon,flat in zip(flgt_lons,flgt_lats):
-				if pixel_box.contains_point((flon,flat)):
-					value=flight_wspd[np.where(flgt_lons==flon)]
-					flgt_data.append(value[0])
+		# 	flgt_data=[]	
+		# 	for flon,flat in zip(flgt_lons,flgt_lats):
+		# 		if pixel_box.contains_point((flon,flat)):
+		# 			value=flight_wspd[np.where(flgt_lons==flon)]
+		# 			flgt_data.append(value[0])
 
-			# print flgt_data
+		# 	# print flgt_data
 
-			if flgt_data:
-				flgt_data_mean.append(np.nanmean(flgt_data))
+		# 	if flgt_data:
+		# 		flgt_data_mean.append(np.nanmean(flgt_data))
 
 
 		# print flgt_data_mean
@@ -1030,8 +1048,8 @@ class FlightPlot(object):
 		plt.imshow(data.T,
 			interpolation='none',
 			origin='lower')
-		plt.xlim([20,90]), plt.ylim([10,90])
-		# plt.xlim([30,100]), plt.ylim([30,110])
+		# plt.xlim([20,90]), plt.ylim([10,90])
+		plt.xlim([30,100]), plt.ylim([30,110])
 		plt.draw()
 
 		# plt.figure()
@@ -1048,6 +1066,12 @@ class FlightPlot(object):
 
 
 		# sys.exit()
+
+
+""" 
+Module functions 
+*****************************
+"""
 
 def find_index_recursively(**kwargs):
 
@@ -1090,3 +1114,19 @@ def find_nearest(array,value):
 
 	idx = (np.abs(array-value)).argmin()
 	return idx
+
+def interpolate_synth(data,idx_lon,idx_lat,**kwargs):
+
+	epsilon=kwargs['epsilon']
+	interp_array=[]
+
+	for lon,lat in zip(idx_lon,idx_lat):
+		
+		if data[lon,lat]:
+			interp_array.append(data[lon,lat])
+		else:
+			# search neighbors
+			# http://stackoverflow.com/questions/12923586/nearest-neighbor-search-python
+
+			# calculate average
+			# save average
