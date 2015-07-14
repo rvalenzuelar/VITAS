@@ -9,11 +9,13 @@ from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import ImageGrid
 from matplotlib.patches import Polygon
 from matplotlib.path import Path
+from itertools import product
+from scipy.spatial import cKDTree
+
 import Terrain 
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-import itertools as it
 import pixels_along_line as line 
 
 
@@ -988,37 +990,52 @@ class FlightPlot(object):
 			idx_lat.append(find_index_recursively(array=synth_lats,value=lat,decimals=4))
 			idx_lon.append(find_index_recursively(array=synth_lons,value=lon,decimals=4))
 
-		# print len(idx_lat),flgt_lats.size,idx_lat
-		# print len(idx_lon),flgt_lons.size,idx_lon
 
-		data_extract=[]
-		for lon,lat in zip(idx_lon,idx_lat):
-			data_extract.append(data[lon,lat])
-			data[lon,lat]=0 #for drawing line in imshow
-
-		# print data_extract
-		# print data[idx_lon[-37],idx_lat[-37]]
-
-		# datai=interpolate_synth(data,idx_lon,idx_lat,epsilon=1)
-
-
-		print flgt_lons[200]
-		print flgt_lats[200]
-		# print flight_wspd
+		coords_filetered=[]
+		first=True
+		for val in zip(idx_lon,idx_lat):
+			if first:
+				val_foo=val
+				coords_filetered.append(val)
+				first=False
+			elif val!=val_foo:
+				coords_filetered.append(val)
+				val_foo=val
 
 
+		line_lat=[]
+		line_lon=[]		
+		for lon,lat in coords_filetered:
+			line_lon.append(synth_lons[lon])
+			line_lat.append(synth_lats[lat])			
 
-		# print XI
-		# print YI
-		print ZI
+		linesynth=zip(line_lon,line_lat)
 
-		codes = [Path.MOVETO,
-					Path.LINETO,
-					Path.LINETO,
-					Path.LINETO,
-					Path.CLOSEPOLY]
-		# count=0
-		flgt_data_mean=[]
+		synth_coord=list(product(synth_lons,synth_lats))
+		tree = cKDTree(synth_coord)
+		neigh = 9	
+		dist, idx = tree.query(linesynth, 
+							k=neigh, eps=0, p=2, distance_upper_bound=0.1)		
+
+		
+		idx_split=zip(*idx)
+
+		idx0 = list(idx_split[0])
+		data = data.reshape(121*131,1)
+		
+		data_extract=data[idx0]
+		data[idx0]=0
+
+		data=data.reshape(121,131)
+
+
+		# codes = [Path.MOVETO,
+		# 			Path.LINETO,
+		# 			Path.LINETO,
+		# 			Path.LINETO,
+		# 			Path.CLOSEPOLY]
+		# # count=0
+		# flgt_data_mean=[]
 		
 		# for lon,lat in zip(data_lon,data_lat):
 		# 	# print lat,lon
@@ -1052,9 +1069,9 @@ class FlightPlot(object):
 		plt.xlim([30,100]), plt.ylim([30,110])
 		plt.draw()
 
-		# plt.figure()
-		# plt.plot(data_extract[::-1])
-		# plt.draw()
+		plt.figure()
+		plt.plot(data_extract[::-1])
+		plt.draw()
 
 		# plt.figure()
 		# plt.plot(flight_wspd)
@@ -1118,13 +1135,13 @@ def find_nearest(array,value):
 def interpolate_synth(data,idx_lon,idx_lat,**kwargs):
 
 	epsilon=kwargs['epsilon']
-	interp_array=[]
+	# interp_array=[]
 
-	for lon,lat in zip(idx_lon,idx_lat):
+	# for lon,lat in zip(idx_lon,idx_lat):
 		
-		if data[lon,lat]:
-			interp_array.append(data[lon,lat])
-		else:
+	# 	if data[lon,lat]:
+	# 		interp_array.append(data[lon,lat])
+	# 	else:
 			# search neighbors
 			# http://stackoverflow.com/questions/12923586/nearest-neighbor-search-python
 
