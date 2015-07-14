@@ -1069,7 +1069,7 @@ class FlightPlot(object):
 		plt.imshow(data.T,
 			interpolation='none',
 			origin='lower')
-		plt.plot(*zip(*line_center))
+		# plt.plot(*zip(*line_center))
 		plt.xlim([20,90]), plt.ylim([10,90])
 		# plt.xlim([30,100]), plt.ylim([30,110])
 		plt.draw()
