@@ -117,7 +117,7 @@ synthesis_grid_name={'X':'x','Y':'y','Z':'z'}
 wind_vector_jump={'x':2,'y':2,'z':1}
 figure_size={'single':(8,8),'multi':(8,12),'vertical':(12,10)}
 ```
-Each variable contains a valid python object (string, integer, tuple, or list) that depends on what the variable modifies. For example:
+Each variable contains a valid python object (string, integer, tuple, list, or dictionary) that agrees with the input argument of the pyplot object being modified. For example:
 
 ```code
 flight_line_color='red'
