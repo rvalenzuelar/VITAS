@@ -64,7 +64,8 @@ def main( config, args ):
 							slicem = args.slicem,
 							slicez = args.slicez,
 							zoomIn=args.zoomin,
-							mask = args.mask)
+							mask = args.mask,
+							config=config)
 
 	""" make terrain plots """
 	Plotter.plot_terrain(P,terrain=terrain,slope=slope)

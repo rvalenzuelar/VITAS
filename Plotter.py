@@ -62,6 +62,10 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	P.panel = kwargs['panel']
 	P.zoomOpt = kwargs['zoomIn']
 	P.mask = kwargs['mask']
+	
+
+
+	""" terrain array """
 	P.terrain = DTM
 
 	try:
