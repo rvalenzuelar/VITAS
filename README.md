@@ -94,12 +94,12 @@ Flight level options:
 Config file
 --------
 
-A configuration file named `vitas.config` has to be created in the VITAS folder. This file contains the following parameters that are read by VITAS :
+A configuration file named `vitas.config` has to be created in the VITAS folder. This file is meant for personalize VITAS and contains the following parameters that are read by VITAS :
 
 ```code
-folder_synthesis='~/P3_v2/synth_test'
-folder_flight_level='~/Github/correct_dorade_metadata'
-filepath_dtm ='~/Github/RadarQC/merged_dem_38-39_123-124_extended.tif'
+folder_synthesis='~/folder_1/folder_2/.../folder_n'
+folder_flight_level='~/folder_1/folder_2/.../folder_n'
+filepath_dtm ='~/folder_1/folder_2/.../folder_n/DTMfile.tif'
 zoom_center={'offshore':(38.6,-123.5),'onshore':(38.85,-123.25)}
 zoom_del={'x':1.2,'y':1.1}
 coast_line_color='blue'
