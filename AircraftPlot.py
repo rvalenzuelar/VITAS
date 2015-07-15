@@ -24,7 +24,8 @@ class SynthPlot(object):
 	def __init__(self):
 
 		self.axesval={'x':None,'y':None,'z':None}
-		self.cmap={'name':None,'range':None}
+		self.cmapName=None
+		self.cmapRange=None
 		self.coast={'lon':None, 'lat':None}
 		self.coastColor=None
 		self.coastWidth=None
@@ -75,10 +76,14 @@ class SynthPlot(object):
 		self.flightPointSize=config['flight_point_size']
 		self.terrainContours=config['terrain_contours']
 		self.terrainContourColors=config['terrain_contours_color']
+
 		synthesis_field_name={'DBZ':'MAXDZ','U':'F2U','V':'F2V','WVA':'WVARF2','WUP':'WUPF2','VOR':'VORT2','CON':'CONM2'}
-		synthesis_field_cmap={'DBZ':'nipy_spectral','U':'Accent','V':'Accent','WVA':'PRGn','WUP':'PRGn','VOR':'PuOr','CON':'RdBu_r'}
-		synthesis_field_cmap_range={'DBZ':[-15,45],'U':[-20,20],'V':[-10,30],'WVA':[-2,2],'WUP':[-2,2],'VOR':[-1,1],'CON':[-1,1]}
+		
+		self.cmapName=config['synthesis_field_cmap_name']
+		self.cmapRange=config['synthesis_field_cmap_range']
+		
 		synthesis_grid_name={'X':'x','Y':'y','Z':'z'}
+		
 		self.wind_jump=config['wind_vector_jump']
 		self.figure_size=config['figure_size']
 
@@ -147,35 +152,6 @@ class SynthPlot(object):
 			self.geo_textsize=12
 			self.windv_scale=0.5
 			self.windv_width=2
-
-	def set_colormap(self,field):
-
-		# define colormap range
-		if field == 'DBZ':
-			self.cmap['range']=[-15,45]
-			self.cmap['name']='nipy_spectral'
-		elif field == 'U':
-			self.cmap['range']=[-20,20]
-			self.cmap['name']='Accent'
-		elif field == 'V':
-			self.cmap['range']=[-10,30]
-			self.cmap['name']='Accent'			
-		elif field in ['WVA','WUP']:
-			self.cmap['range']=[-2,2]
-			self.cmap['name']='PRGn'			
-		elif field in ['SPH','SPD']:
-			if self.slice_type == 'horizontal':
-				self.cmap['range']=[5,20]
-				self.cmap['name']='Accent'
-			else:
-				self.cmap['range']=[0,35]
-				self.cmap['name']='Accent'			
-		elif field == 'CON':
-			self.cmap['range']=[-1,1]
-			self.cmap['name']='RdBu_r'
-		elif field == 'VOR':
-			self.cmap['range']=[-1,1]
-			self.cmap['name']='PuOr'
 
 	def get_slices(self,array):
 
@@ -355,15 +331,19 @@ class SynthPlot(object):
 		y=self.coast['lat']
 		axis.plot(x, y,color=self.coastColor,linewidth=self.coastWidth)
 
-	def add_field(self,axis,field,extent):
+	def add_field(self,axis,**kwargs):
 
-		im = axis.imshow(field,
+		array=kwargs['array']
+		name=kwargs['name']
+		extent=kwargs['ext']
+
+		im = axis.imshow(array,
 						interpolation='none',
 						origin='lower',
 						extent=extent,
-						vmin=self.cmap['range'][0],
-						vmax=self.cmap['range'][1],
-						cmap=self.cmap['name'])
+						vmin=self.cmapRange[name][0],
+						vmax=self.cmapRange[name][1],
+						cmap=self.cmapName[name])
 
 		return im
 
@@ -419,7 +399,6 @@ class SynthPlot(object):
 			figsize=self.figure_size['multi']
 
 		self.slice_type='horizontal'
-		self.set_colormap(self.var)
 
 		fig = plt.figure(figsize=figsize)
 
@@ -460,7 +439,7 @@ class SynthPlot(object):
 
 			self.add_coastline(g)
 			self.add_flight_path(g)
-			im=self.add_field(g,field.T,extent1)
+			im=self.add_field(g,array=field.T,name=self.var,ext=extent1)
 
 			if self.terrain.file:
 				Terrain.add_contour(g,self)
@@ -492,7 +471,7 @@ class SynthPlot(object):
 			self.horizontal['xminor'] = g.get_xticks(minor=True)			
 
 
-		 # add color bar
+		 ''' add color bar '''
 		plot_grids.cbar_axes[0].colorbar(im)
 		fig.suptitle(' Dual-Doppler Synthesis: '+ self.get_var_title(self.var) )
 
@@ -508,8 +487,7 @@ class SynthPlot(object):
 		w_array=self.w_array
 
 		self.slice_type='vertical'
-		self.set_panel(self.slice_type)
-		self.set_colormap(self.var)
+		self.set_panel(self.slice_type)		
 
 		figsize=self.figure_size['vertical']
 		fig = plt.figure(figsize=figsize)
@@ -570,7 +548,8 @@ class SynthPlot(object):
 
 		for g,field,h_comp,w_comp,prof,profax in group:
 
-			im=self.add_field(g,field.T,extent3)
+			im=self.add_field(g,array=field.T,name=self.var,ext=extent3)
+
 			self.add_terrain_profile(g,prof,profax)
 
 			if self.wind:
