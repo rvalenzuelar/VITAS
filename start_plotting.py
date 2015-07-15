@@ -24,8 +24,6 @@ def main( config, args ):
 	print_shapes = args.print_shapes
 	print_global_atts = args.print_global_atts
 	print_axis = args.print_axis
-	swd=args.set_working_directory
-	gwd=args.get_working_directory
 	terrain=args.terrain
 	slope=args.slope
 	meteo=args.meteo
