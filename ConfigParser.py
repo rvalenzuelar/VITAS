@@ -4,11 +4,23 @@
 # Raul Valenzuela
 # July, 2015
 
+
+import ast
+
 def start():
 	f = open("vitas.config")
-	data = f.readlines()
-	for line in data:
-	# parse input, assign values to variables
-	key, value = line.split(":")
-	player[key.strip()] = value.strip()
+	input_config = f.readlines()
+	config={}
+	for line in input_config:
+		key, value = line.split("=")
+		config[key.strip()] = ast.literal_eval(value.strip())
+
 	f.close()
+
+	a= config['folder_synthesis']
+	b= config['folder_flight_level']
+	c= config['zoom_center']
+
+	print a
+	print b
+	print c['onshore']

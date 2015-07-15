@@ -14,6 +14,7 @@ import sys
 import matplotlib.pyplot as plt
 import Filehandler as fh 
 import ArgParser as parser
+import ConfigParser as config
 
 def main( args ):
 	
@@ -83,6 +84,9 @@ def main( args ):
 
 """call main function """
 if __name__ == "__main__":
+
+	config.start()
+	sys.exit()
 
 	args = parser.start()
 
