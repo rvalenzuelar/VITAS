@@ -27,6 +27,8 @@ def main( config, args ):
 	terrain=args.terrain
 	slope=args.slope
 	meteo=args.meteo
+	valid=args.valid
+
 
 	""" retrieves synthesis and flight level objects """
 	SYNTH,FLIGHT,DTM=fh.set_working_files(cedfile=cedfile,stdfile=stdfile,
@@ -74,7 +76,8 @@ def main( config, args ):
 	Plotter.plot_flight_meteo(SYNTH,FLIGHT,meteo=meteo)
 
 	""" compare synth and flight level """
-	Plotter.compare_synth_flight(SYNTH,FLIGHT,panel=args.panel,zoomin=args.zoomin)
+	if valid:
+		Plotter.compare_synth_flight(SYNTH,FLIGHT,level=valid,zoomin=args.zoomin)
 
 	# plt.show(block=False)	
 	plt.show()

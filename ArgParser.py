@@ -121,5 +121,14 @@ def start():
 							action='store_true',
 							help="plot meteo data from flight level")
 
+	""" Validation options """
+	flight_options=parser.add_argument_group('Validation options')
+	flight_options.add_argument('--valid','-v',
+							metavar='level (int)',
+							type=int, 
+							nargs='+',
+							required=False,
+							help="plot validation info for a given level between 0 and max num of vertical levels")
+
 
 	return parser.parse_args()	
