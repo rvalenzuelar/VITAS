@@ -49,7 +49,6 @@ usage: start_plotting.py [--help] [--ced file] [--std file] [--panel num]
                          [--zoomin str] [--wind] [--mask]
                          [--all | --field STR [STR ...]] [--print_shapes]
                          [--print_global_atts] [--print_axis STR [STR ...]]
-                         [--set_working_directory | --get_working_directory]
                          [--slicez lat float) [lat (float) ...]]
                          [--slicem lon (float) [lon (float ...]] [--terrain]
                          [--slope] [--meteo]
@@ -78,12 +77,6 @@ Print options:
   --print_axis STR [STR ...], -pa STR [STR ...]
                          print axis values (X,Y,Z)
 
-Working directory:
-  --set_working_directory, -swd
-                        set working directories
-  --get_working_directory, -gwd
-                        get working directories
-
 Slice options:
   --slicez lat (float) [lat (float) ...], -slz lat (float) [lat (float) ...]
                         latitude coordinates for zonal slices
@@ -96,6 +89,7 @@ Terrain options:
 
 Flight level options:
   --meteo               plot meteo data from flight level
+
 ```
 
 Examples
