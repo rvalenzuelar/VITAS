@@ -16,7 +16,7 @@ import Filehandler as fh
 import ArgParser as parser
 import ConfigParser as config
 
-def main( args ):
+def main( config, args ):
 	
 	cedfile = args.ced
 	stdfile = args.std
@@ -30,12 +30,9 @@ def main( args ):
 	slope=args.slope
 	meteo=args.meteo
 
-	if gwd:
-		fh.get_working_directory()
-		sys.exit()
-
 	""" retrieves synthesis and flight level objects """
-	SYNTH,FLIGHT,DTM=fh.set_working_files(cedfile=cedfile,stdfile=stdfile,swd=swd)
+	SYNTH,FLIGHT,DTM=fh.set_working_files(cedfile=cedfile,stdfile=stdfile,
+											config=config)
 
 	""" print shape of attribute arrays """
 	if print_shapes:
@@ -85,9 +82,8 @@ def main( args ):
 """call main function """
 if __name__ == "__main__":
 
-	config.start()
-	sys.exit()
+	config = config.start()
 
 	args = parser.start()
 
-	main(args)
+	main(config,args)

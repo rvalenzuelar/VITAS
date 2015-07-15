@@ -91,16 +91,6 @@ def start():
 							choices=['X','x','Y','y','Z','z'],
 							help=" print axis values (X,Y,Z)")	
 
-	""" Working directory Options """
-	working_options=parser.add_argument_group('Working directory')
-	group_directory=working_options.add_mutually_exclusive_group()
-	group_directory.add_argument('--set_working_directory','-swd',
-							action='store_true',
-							help="set working directories")
-	group_directory.add_argument('--get_working_directory','-gwd',
-							action='store_true',
-							help="get working directories")
-
 	""" Slice options """
 	slice_options=parser.add_argument_group('Slice options')
 	slice_options.add_argument('--slicez', '-slz',

@@ -5,22 +5,56 @@
 # July, 2015
 
 
+from os.path import dirname,basename,expanduser,isfile,isdir
 import ast
+import sys
 
 def start():
 	f = open("vitas.config")
 	input_config = f.readlines()
+	f.close()
+
 	config={}
 	for line in input_config:
 		key, value = line.split("=")
-		config[key.strip()] = ast.literal_eval(value.strip())
+		if not value:
+			print "Please set the value of: "+key
+		else:
+			config[key.strip()] = ast.literal_eval(value.strip())
 
-	f.close()
+	synthpath=config['folder_synthesis']
+	stdpath=config['folder_flight_level']
+	dtmfile=config['filepath_dtm']
 
-	a= config['folder_synthesis']
-	b= config['folder_flight_level']
-	c= config['zoom_center']
+	if synthpath == '.':
+		synthpath = getcwd()
 
-	print a
-	print b
-	print c['onshore']
+	if stdpath == '.':
+		stdpath = getcwd()
+
+	home = expanduser("~")
+
+	synthpath=synthpath.replace('~',home)
+	stdpath=stdpath.replace('~',home)
+	dtmfile=dtmfile.replace('~',home)
+
+	if not isdir(synthpath):
+		print "Please check input folder_synthesis"
+		sys.exit()
+
+	if not isdir(stdpath):
+		print "Please check input folder_flight_level"
+		sys.exit()
+
+	if not isfile(dtmfile):
+		print "Please check input filepath_dtm"
+		sys.exit()
+
+
+	config['folder_synthesis']=synthpath
+	config['folder_flight_level']=stdpath
+	config['filepath_dtm']=dtmfile
+
+
+	return config
+
