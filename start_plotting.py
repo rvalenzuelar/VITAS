@@ -13,7 +13,7 @@ import Plotter
 import sys
 import matplotlib.pyplot as plt
 import Filehandler as fh 
-import PlotArgParser as parser
+import ArgParser as parser
 
 def main( args ):
 	
