@@ -264,13 +264,13 @@ def get_altitude_profile(Plot):
 		geoax=dtm['yg']
 		plotax=dtm['xg']
 		for coord in Plot.slicez:
-			idx=Plot.find_nearest(geoax,coord)
+			idx=find_nearest(geoax,coord)
 			altitude.append(data[idx,:])
 	elif Plot.sliceo=='meridional':
 		geoax=dtm['xg']
 		plotax=dtm['yg']
 		for coord in Plot.slicem:
-			idx=Plot.find_nearest(geoax,-coord)
+			idx=find_nearest(geoax,-coord)
 			altitude.append(data[:,idx])
 
 
@@ -285,3 +285,8 @@ def get_altitude_profile(Plot):
 	prof['axis']=axis
 
 	return prof
+
+def find_nearest(array,value):
+
+	idx = (np.abs(array-value)).argmin()
+	return idx
