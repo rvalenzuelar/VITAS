@@ -947,12 +947,14 @@ class FlightPlot(object):
 		synth_lats=kwargs['y']
 		synth_z=kwargs['z']
 		zlevel=kwargs['level']
+		zoom=kwargs['zoom']
 
 		idx = np.where(synth_z==zlevel)
 		data = np.squeeze(synth[:,:,idx])
 
 		flgt_lats,flgt_lons=zip(*self.path)
 		flight_wspd=self.met['wspd']
+		flight_altitude=self.met['palt']
 
 		flgt_lats = np.asarray(around(flgt_lats,4))
 		flgt_lons = np.asarray(around(flgt_lons,4))
@@ -1030,32 +1032,55 @@ class FlightPlot(object):
 
 		""" average flight data """
 		flgt_mean=[]
+		flgt_altitude=[]
 		for i in idx:
 			flgt_mean.append(np.nanmean(flight_wspd[i]))
+			flgt_altitude.append(np.nanmean(flight_altitude[i]))
+
 
 		""" make plots """
 		jet = plt.get_cmap('jet')
 		cNorm = colors.Normalize(vmin=np.amin(data), vmax=np.amax(data))
 		scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
 
+		''' grid '''
 		plt.figure()
-		plt.imshow(data.T,	interpolation='none',origin='lower')
+		im=plt.imshow(data.T,	interpolation='none',origin='lower')
 		for p,val in zip(line_center,data_extract2):
 			colorVal=scalarMap.to_rgba(val)
 			plt.plot(p[0],p[1],color=colorVal,marker='s',markersize=6,linestyle='none')
-		# plt.plot(*zip(*line_neighbors),color='g',marker='o',markersize=4,linestyle='none')
-		# plt.xlim([20,90]), plt.ylim([10,90])
-		plt.xlim([30,100]), plt.ylim([30,110])
-		plt.draw()
-
-		plt.figure()
-		plt.plot(data_extract,'bo',label='raw synthesis data')
-		plt.plot(data_extract2,'r',label='synthesis interpolated')
-		plt.plot(flgt_mean,'g',label='flight data')
+		if zoom=='onshore':
+			plt.xlim([30,100]), plt.ylim([30,110])
+		elif zoom=='offshore':
+			plt.xlim([20,90]), plt.ylim([10,90])
+		plt.xlabel('X')
+		plt.ylabel('Y')
+		plt.colorbar(im)
+		plt.title('horizontal wind speed')
 		plt.grid(which='major')
-		plt.legend(numpoints=1,loc=4)
 		plt.draw()
 
+		''' timeseries '''
+		fig, ax1 = plt.subplots()
+		ln1=ax1.plot(data_extract,'bo',label='raw synthesis wind')
+		ln2=ax1.plot(data_extract2,'rs',label='synthesis wind interpolated')
+		ln3=ax1.plot(flgt_mean,'g',label='flight wind')
+		ax1.set_ylabel('wind speed [m/s]')
+		ax1.set_xlabel('Points along line')
+		ax2=ax1.twinx()
+		vmin=min(flgt_altitude)-50
+		vmax=max(flgt_altitude)+50
+		ln4=ax2.plot(flgt_altitude,'black',label='flight altitude')
+		ax2.set_ylim([vmin,vmax])
+		ax2.set_ylabel('Meters MSL')
+		lns=ln1+ln2+ln3+ln4
+		labs=[l.get_label() for l in lns]
+		ax2.legend(lns,labs,numpoints=1,loc=4,prop={'size':10})
+		plt.grid(which='major')
+		plt.draw()
+
+
+		''' scatter '''
 		plt.figure()
 		ax=plt.subplot(111)
 		ax.scatter(data_extract2,flgt_mean)
@@ -1071,9 +1096,8 @@ class FlightPlot(object):
 		# sys.exit()
 
 
-""" 
-Module functions 
-*****************************
+"""			Module functions 
+	**********************************
 """
 
 def find_index_recursively(**kwargs):
@@ -1118,18 +1142,3 @@ def find_nearest(array,value):
 	idx = (np.abs(array-value)).argmin()
 	return idx
 
-def interpolate_synth(data,idx_lon,idx_lat,**kwargs):
-
-	epsilon=kwargs['epsilon']
-	# interp_array=[]
-
-	# for lon,lat in zip(idx_lon,idx_lat):
-		
-	# 	if data[lon,lat]:
-	# 		interp_array.append(data[lon,lat])
-	# 	else:
-			# search neighbors
-			# http://stackoverflow.com/questions/12923586/nearest-neighbor-search-python
-
-			# calculate average
-			# save average

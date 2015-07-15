@@ -72,7 +72,8 @@ def main( config, args ):
 	""" make flight level meteo plot """
 	Plotter.plot_flight_meteo(SYNTH,FLIGHT,meteo=meteo)
 
-	Plotter.compare_synth_flight(SYNTH,FLIGHT,panel=args.panel)
+	""" compare synth and flight level """
+	Plotter.compare_synth_flight(SYNTH,FLIGHT,panel=args.panel,zoomin=args.zoomin)
 
 	# plt.show(block=False)	
 	plt.show()
@@ -81,7 +82,7 @@ def main( config, args ):
 if __name__ == "__main__":
 
 	args = parser.start()
-	
+
 	config = config.start()
 
 	main(config,args)

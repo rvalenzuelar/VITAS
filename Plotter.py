@@ -32,6 +32,10 @@ def plot_flight_meteo(Synth,StdTape, **kwargs):
 
 def compare_synth_flight(Synth,StdTape,**kwargs):
 
+	panel = kwargs['panel']
+	zoomOpt = kwargs['zoomin']
+	
+
 	met=StdTape.get_meteo(Synth.start, Synth.end)	
 	path=StdTape.get_path(Synth.start, Synth.end)	
 	
@@ -41,12 +45,10 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 	lon=Synth.LON
 	z=Synth.Z
 
-	panel = kwargs['panel']
-
-	# print z[panel]
-
+	""" synthesis horizontal velocity"""
 	array=Synth.SPH
-	flight.compare_with_synth(array=array,x=lon,y=lat,z=z,level=z[panel])
+
+	flight.compare_with_synth(array=array,x=lon,y=lat,z=z,level=z[panel],zoom=zoomOpt[0])
 	
 
 def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
