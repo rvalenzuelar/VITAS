@@ -93,7 +93,8 @@ Flight level options:
 
 Validation options:
   --valid level (int) [level (int) ...], -v level (int) [level (int) ...]
-                        plot validation info for a given level between 0 and max num of vertical levels
+                        plot validation info for a given level between 0 and max num 
+                        of vertical levels
 
 ```
 Config file
