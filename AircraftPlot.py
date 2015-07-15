@@ -42,8 +42,6 @@ class SynthPlot(object):
 		self.extent={'lx':None,'rx':None,'by':None,'ty':None}
 		self.coast={'lon':None, 'lat':None}
 		self.flight={'lon':None, 'lat':None}
-		self.maskLat=None
-		self.maskLon=None
 		self.horizontal={'xminor':None,'xmajor':None,'yminor':None,'ymajor':None}
 		self.scale=None
 		self.axesval={'x':None,'y':None,'z':None}
@@ -156,11 +154,11 @@ class SynthPlot(object):
 	def get_slices(self,array):
 
 		if self.slice_type == 'horizontal':
-			slice_group  = self.chop_horizontal(array)
+			slice_group  = chop_horizontal(self,array)
 			return slice_group
 
 		elif self.slice_type == 'vertical':
-			slice_group = self.chop_vertical(array)
+			slice_group = chop_vertical(self,array)
 			return slice_group
 
 	def get_extent(self):
@@ -172,38 +170,6 @@ class SynthPlot(object):
 					self.extent['ty']]		
 
 		return extent
-
-	def chop_horizontal(self, array):
-
-		zvalues=self.axesval['z']
-
-		# set  vertical level in a list of arrays
-		if self.panel:
-			choped_array = [array[:,:,self.panel[0]] for i in range(6)]
-			self.zlevels = [zvalues[self.panel[0]] for i in range(6)]	
-		else:
-			choped_array = [array[:,:,i+1] for i in range(6)]
-			self.zlevels = [zvalues[i+1] for i in range(6)]
-			
-		return choped_array
-
-	def chop_vertical(self,array):
-
-		array=np.squeeze(array)
-
-		slices=[]
-		if self.sliceo=='zonal':		
-			for coord in self.slicez:
-				idx=find_nearest(self.lats,coord)
-				slices.append(array[:,idx,:])
-		elif self.sliceo=='meridional':
-			for coord in self.slicem:
-				idx=find_nearest(self.lons,-coord)
-				slices.append(array[idx,:,:])
-		# elif self.sliceo=='cross':
-		# elif self.sliceo=='along:
-
-		return slices
 
 	def get_var_title(self,var):
 		var_title={	'DBZ': 'Reflectivity factor [dBZ]',
@@ -223,63 +189,6 @@ class SynthPlot(object):
 			title = title.replace('Horizontal','Meridional')
 
 		return title
-	
-	def zoom_in(self,in_extent,center_point):
-
-		y,x=center_point
-		ie=in_extent
-		oe=[None,None,None,None]
-		delx=1.2 #[deg]
-		dely=1.1 #[deg]
-
-		if x<ie[0] or x>ie[1] or y<ie[2] or y>ie[3]:
-			print "Zoom center point out of geographic extention boundaries"
-			sys.exit()
-
-		oe[0]=x-delx/2
-		oe[1]=x+delx/2
-		oe[2]=y-dely/2
-		oe[3]=y+dely/2
-
-		if oe[0]<ie[0]:oe[0]=ie[0]
-		if oe[1]>ie[1]:oe[1]=ie[1]
-		if oe[2]<ie[2]:oe[2]=ie[2]
-		if oe[3]>ie[3]:oe[3]=ie[3]
-
-		self.maskLat= np.logical_and(self.lats >=oe[2],self.lats <= oe[3])
-		self.maskLon= np.logical_and(self.lons >= oe[0], self.lons <= oe[1])
-			
-		return oe
-
-	def shrink(self,array, **kwargs):
-
-		if len(kwargs)==1:
-			array=array[kwargs['mask']]
-
-		elif len(kwargs)==2:
-			MaskDimX=kwargs['xmask']
-			MaskDimY=kwargs['ymask']
-			array=array[MaskDimX][:,MaskDimY]
-
-		if len(array)==1:
-			return array[0]
-		else:
-			return array
-
-	def resample(self,array,**kwargs):
-
-
-
-		if len(kwargs)==1:
-			array=array[::kwargs['res']]
-
-		elif len(kwargs)==2:
-			yjump=kwargs['yres']
-			xjump=kwargs['xres']
-			array= array[::yjump,::xjump]
-
-		return array
-
 
 	def adjust_ticklabels(self,g):
 		
@@ -302,37 +211,6 @@ class SynthPlot(object):
 		new_yticklabel[0]=' '
 		new_yticklabel[-1]=' '
 		g.set_yticklabels(new_yticklabel)		
-
-	def adjust_extent(self,ori_extent,orient,type_extent):
-
-		# print ori_extent
-
-		out_extent=[None,None,None,None]
-
-		if orient == 'meridional':
-			out_extent[0]=ori_extent[2] *self.scale
-			out_extent[1]=ori_extent[3] *self.scale
-		elif orient == 'zonal':
-			out_extent[0]=ori_extent[0] *self.scale
-			out_extent[1]=ori_extent[1] *self.scale
-
-		# print out_extent
-			
-		if type_extent=='data':
-			zvalues=self.axesval['z']		
-			out_extent[2]=min(zvalues)
-			out_extent[3]=max(zvalues)
-		elif type_extent=='detail':
-			out_extent[2]=0.0
-			out_extent[3]=5.0			
-
-		# print out_extent
-		
-		return out_extent
-
-	def all_same(self,array):
-		b= all(x == array[0] for x in array)
-		return b
 
 	def add_slice_line(self,axis):
 
@@ -365,7 +243,7 @@ class SynthPlot(object):
 			
 			x0=x0*self.scale
 			x1=x1*self.scale
-			if self.all_same(self.zlevels):
+			if all_same(self.zlevels):
 				y0 = y1 = self.zlevels[0]
 				axis.plot([x0,x1],[y0,y1],line_fmt)
 			else:
@@ -380,11 +258,11 @@ class SynthPlot(object):
 			xjump=self.windb_jump
 			yjump=self.windb_jump
 
-			x=self.resample(self.lons,res=xjump)
-			y=self.resample(self.lats,res=yjump)
+			x=resample(self.lons,res=xjump)
+			y=resample(self.lats,res=yjump)
 
-			uu=self.resample(comp1,xres=xjump,yres=yjump)
-			vv=self.resample(comp2,xres=xjump,yres=yjump)
+			uu=resample(comp1,xres=xjump,yres=yjump)
+			vv=resample(comp2,xres=xjump,yres=yjump)
 
 			Q=grid_ax.quiver(x,y,uu,vv, 
 								units='dots', 
@@ -411,17 +289,17 @@ class SynthPlot(object):
 			xjump=2
 			if self.sliceo=='meridional':
 				lats=self.lats
-				x=self.resample(lats,res=xjump)
+				x=resample(lats,res=xjump)
 			elif self.sliceo=='zonal':		
 				lons=self.lons
-				x=self.resample(lons,res=xjump)
+				x=resample(lons,res=xjump)
 
 			zvalues=self.axesval['z']
 			zjump=1
-			y=self.resample(zvalues,res=zjump)
+			y=resample(zvalues,res=zjump)
 
-			hor= self.resample(comp1,xres=xjump,yres=zjump)
-			ver= self.resample(comp2,xres=xjump,yres=zjump)
+			hor= resample(comp1,xres=xjump,yres=zjump)
+			ver= resample(comp2,xres=xjump,yres=zjump)
 
 			Q=grid_ax.quiver(x*self.scale,y, hor, ver,
 								units='dots', 
@@ -533,7 +411,7 @@ class SynthPlot(object):
 				center=(38.6,-123.5)
 			elif self.zoomOpt[0] == 'onshore':
 				center=(38.85,-123.25)
-			extent2=self.zoom_in(extent1,center)
+			extent2=zoom_in(extent1,center)
 		else:
 			extent2=extent1
 
@@ -631,20 +509,20 @@ class SynthPlot(object):
 				center=(38.6,-123.5)
 			elif self.zoomOpt[0] == 'onshore':
 				center=(38.85,-123.25)
-			extent2=self.zoom_in(extent1,center)
+			extent2=zoom_in(extent1,center)
 		else:
 			extent2=extent1
 
 		self.scale=20
 		if self.sliceo=='meridional':
-			extent3=self.adjust_extent(extent1,'meridional','data')
-			extent4=self.adjust_extent(extent2,'meridional','detail')
+			extent3=adjust_extent(self,extent1,'meridional','data')
+			extent4=adjust_extent(self,extent2,'meridional','detail')
 			horizontalComp=vComp
 			geo_axis='Lon: '
 
 		elif self.sliceo=='zonal':
-			extent3=self.adjust_extent(extent1,'zonal','data')
-			extent4=self.adjust_extent(extent2,'zonal','detail')			
+			extent3=adjust_extent(self,extent1,'zonal','data')
+			extent4=adjust_extent(self,extent2,'zonal','detail')			
 			horizontalComp=uComp
 			geo_axis='Lat: '
 
@@ -1096,9 +974,9 @@ class FlightPlot(object):
 		# sys.exit()
 
 
-"""			Module functions 
-	**********************************
-"""
+'''	**********************************		
+			Module functions 
+	********************************** '''
 
 def find_index_recursively(**kwargs):
 
@@ -1141,4 +1019,105 @@ def find_nearest(array,value):
 
 	idx = (np.abs(array-value)).argmin()
 	return idx
+
+def chop_horizontal(self, array):
+
+	zvalues=self.axesval['z']
+
+	''' set  vertical level in a list of arrays '''
+	if self.panel:
+		choped_array = [array[:,:,self.panel[0]] for i in range(6)]
+		self.zlevels = [zvalues[self.panel[0]] for i in range(6)]	
+	else:
+		choped_array = [array[:,:,i+1] for i in range(6)]
+		self.zlevels = [zvalues[i+1] for i in range(6)]
+		
+	return choped_array
+
+def chop_vertical(self,array):
+
+	array=np.squeeze(array)
+
+	slices=[]
+	if self.sliceo=='zonal':		
+		for coord in self.slicez:
+			idx=find_nearest(self.lats,coord)
+			slices.append(array[:,idx,:])
+	elif self.sliceo=='meridional':
+		for coord in self.slicem:
+			idx=find_nearest(self.lons,-coord)
+			slices.append(array[idx,:,:])
+	# elif self.sliceo=='cross':
+	# elif self.sliceo=='along:
+
+	return slices	
+
+def resample(array,**kwargs):
+
+	if len(kwargs)==1:
+		array=array[::kwargs['res']]
+
+	elif len(kwargs)==2:
+		yjump=kwargs['yres']
+		xjump=kwargs['xres']
+		array= array[::yjump,::xjump]
+
+	return array
+
+def all_same(array):
+	b= all(x == array[0] for x in array)
+
+	return b
+
+def zoom_in(in_extent,center_point):
+
+	y,x=center_point
+	inext=in_extent
+	outext=[None,None,None,None]
+	delx=1.2 #[deg]
+	dely=1.1 #[deg]
+
+	if x<inext[0] or x>inext[1] or y<inext[2] or y>inext[3]:
+		print "Zoom center point out of geographic extention boundaries"
+		sys.exit()
+
+	outext[0]=x-delx/2
+	outext[1]=x+delx/2
+	outext[2]=y-dely/2
+	outext[3]=y+dely/2
+
+	if outext[0]<inext[0]:outext[0]=inext[0]
+	if outext[1]>inext[1]:outext[1]=inext[1]
+	if outext[2]<inext[2]:outext[2]=inext[2]
+	if outext[3]>inext[3]:outext[3]=inext[3]
+		
+	return outext	
+
+
+def adjust_extent(self,ori_extent,orient,type_extent):
+
+	# print ori_extent
+
+	out_extent=[None,None,None,None]
+
+	if orient == 'meridional':
+		out_extent[0]=ori_extent[2] *self.scale
+		out_extent[1]=ori_extent[3] *self.scale
+	elif orient == 'zonal':
+		out_extent[0]=ori_extent[0] *self.scale
+		out_extent[1]=ori_extent[1] *self.scale
+
+	# print out_extent
+		
+	if type_extent=='data':
+		zvalues=self.axesval['z']		
+		out_extent[2]=min(zvalues)
+		out_extent[3]=max(zvalues)
+	elif type_extent=='detail':
+		out_extent[2]=0.0
+		out_extent[3]=5.0			
+
+	# print out_extent
+	
+	return out_extent
 
