@@ -8,7 +8,6 @@
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import ImageGrid
 from matplotlib.patches import Polygon
-from matplotlib.path import Path
 from itertools import product
 from scipy.spatial import cKDTree
 
@@ -18,7 +17,6 @@ import matplotlib.colors as colors
 import matplotlib.cm as cmx
 import numpy as np
 import sys
-import pixels_along_line as line 
 
 
 class SynthPlot(object):
@@ -987,7 +985,7 @@ class FlightPlot(object):
 			line_lon.append(synth_lons[lon])
 			line_lat.append(synth_lats[lat])			
 		linesynth=zip(line_lon,line_lat)
-		
+
 		""" search nearest neighbors """
 		synth_coord=list(product(synth_lons,synth_lats))
 		tree = cKDTree(synth_coord)
