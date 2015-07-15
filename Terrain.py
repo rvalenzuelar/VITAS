@@ -22,9 +22,6 @@ class Terrain(object):
 
 		self.array=None
 
-# def plot_level():
-
-# def plot_profile():
 
 def add_contour(axis,Plot):
 
@@ -35,8 +32,8 @@ def add_contour(axis,Plot):
 		dtm=Plot.terrain.array
 
 	cont=axis.contour(dtm['xg'],dtm['yg'],dtm['data'],
-					levels=[200,600,1000],
-					colors=( (0,0,0) , (0.3,0.3,0.3), (0.6,0.6,0.6) ),
+					levels=Plot.terrainContours,
+					colors=Plot.terrainContourColors,
 					linewidths=2)
 	
 	axis.clabel(cont,[200,600,1000],fmt='%.0f',fontsize=12,inline_spacing=2)	

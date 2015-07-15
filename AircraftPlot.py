@@ -22,35 +22,57 @@ import sys
 class SynthPlot(object):
 
 	def __init__(self):
-		self.var=None
-		self.wind=None
-		self.panel=None
-		self.slicen=None
-		self.sliceo=None
-		self.zoomOpt=None	
-		self.figure_size=(None,None)
-		self.rows_cols=(None,None)
-		self.windb_size=None
-		self.windb_jump=None
-		self.zlevel_textsize=None
-		self.geo_textsize=None
-		self.windv_scale=None
-		self.windv_width=None
+
+		self.axesval={'x':None,'y':None,'z':None}
 		self.cmap={'name':None,'range':None}
+		self.coast={'lon':None, 'lat':None}
+		self.coastColor=None
+		self.extent={'lx':None,'rx':None,'by':None,'ty':None}
+		self.figure_size=None
+		self.flight={'lon':None, 'lat':None}
+		self.flightColor=None
+		self.geo_textsize=None
+		self.horizontal={'xminor':None,'xmajor':None,'yminor':None,'ymajor':None}
 		self.lats=None 
 		self.lons=None
-		self.extent={'lx':None,'rx':None,'by':None,'ty':None}
-		self.coast={'lon':None, 'lat':None}
-		self.flight={'lon':None, 'lat':None}
-		self.horizontal={'xminor':None,'xmajor':None,'yminor':None,'ymajor':None}
+		self.panel=None
+		self.rows_cols=(None,None)
 		self.scale=None
-		self.axesval={'x':None,'y':None,'z':None}
-		self.zlevels=[]
 		self.slice_type=None
+		self.slicen=None
+		self.sliceo=None
+		self.terrain=None
+		self.terrainContours=None
+		self.terrainContourColors=None
 		self.u_array=[]
 		self.v_array=[]
+		self.var=None
 		self.w_array=[]
-		self.terrain=None
+		self.wind=None
+		self.wind_jump=None
+		self.windb_size=None
+		self.windv_scale=None
+		self.windv_width=None
+		self.zlevel_textsize=None
+		self.zlevels=[]
+		self.zoomCenter=None
+		self.zoomDelta=None
+		self.zoomOpt=None
+
+	def config(self,config):
+
+		self.zoomCenter=config['zoom_center']
+		self.zoomDelta=config['zoom_del']
+		self.coastColor=config['coast_line_color']
+		self.flightColor=config['flight_line_color']
+		self.terrainContours=config['terrain_contours']
+		self.terrainContourColors=config['terrain_contours_color']
+		synthesis_field_name={'DBZ':'MAXDZ','U':'F2U','V':'F2V','WVA':'WVARF2','WUP':'WUPF2','VOR':'VORT2','CON':'CONM2'}
+		synthesis_field_cmap={'DBZ':'nipy_spectral','U':'Accent','V':'Accent','WVA':'PRGn','WUP':'PRGn','VOR':'PuOr','CON':'RdBu_r'}
+		synthesis_field_cmap_range={'DBZ':[-15,45],'U':[-20,20],'V':[-10,30],'WVA':[-2,2],'WUP':[-2,2],'VOR':[-1,1],'CON':[-1,1]}
+		synthesis_grid_name={'X':'x','Y':'y','Z':'z'}
+		self.wind_jump=config['wind_vector_jump']
+		self.figure_size=config['figure_size']
 
 	def set_geographic_extent(self,synth):
 
@@ -87,20 +109,18 @@ class SynthPlot(object):
 		set some plotting values and stores
 		vertical level in a list of arrays
 		"""
-		if option == 'single':
-			self.figure_size=(8,8)
+		if option == 'single':			
 			self.rows_cols=(1,1)
 			self.windb_size=6.5
-			self.windb_jump=2
 			self.zlevel_textsize=16
 			self.windv_scale=0.5
 			self.windv_width=2
 
 		elif option == 'multi':
-			self.figure_size=(8,12)
 			self.rows_cols=(3,2)
 			self.windb_size=5
-			self.windb_jump=5
+			self.wind_jump['x']=self.wind_jump['x']+3
+			self.wind_jump['y']=self.wind_jump['y']+3
 			self.zlevel_textsize=12
 			self.windv_scale=0.5
 			self.windv_width=2
@@ -114,10 +134,8 @@ class SynthPlot(object):
 				rows=len(self.slicem)
 			elif self.sliceo=='zonal':
 				rows=len(self.slicez)
-			self.figure_size=(12,10)
 			self.rows_cols=(rows,cols)
 			self.windb_size=5
-			self.windb_jump=5
 			self.geo_textsize=12
 			self.windv_scale=0.5
 			self.windv_width=2
@@ -255,8 +273,8 @@ class SynthPlot(object):
 
 		if self.slice_type == 'horizontal':
 
-			xjump=self.windb_jump
-			yjump=self.windb_jump
+			xjump=self.wind_jump['x']
+			yjump=self.wind_jump['y']
 
 			x=resample(self.lons,res=xjump)
 			y=resample(self.lats,res=yjump)
@@ -295,7 +313,7 @@ class SynthPlot(object):
 				x=resample(lons,res=xjump)
 
 			zvalues=self.axesval['z']
-			zjump=1
+			zjump=self.wind_jump['z']
 			y=resample(zvalues,res=zjump)
 
 			hor= resample(comp1,xres=xjump,yres=zjump)
@@ -385,13 +403,15 @@ class SynthPlot(object):
 
 		if self.panel:
 			self.set_panel('single')
+			figsize=self.figure_size['single']
 		else:
 			self.set_panel('multi')
+			figsize=self.figure_size['multi']
 
 		self.slice_type='horizontal'
 		self.set_colormap(self.var)
 
-		fig = plt.figure(figsize=(self.figure_size))
+		fig = plt.figure(figsize=figsize)
 
 		plot_grids=ImageGrid( fig,111,
 								nrows_ncols = self.rows_cols,
@@ -481,7 +501,8 @@ class SynthPlot(object):
 		self.set_panel(self.slice_type)
 		self.set_colormap(self.var)
 
-		fig = plt.figure(figsize=(self.figure_size))
+		figsize=self.figure_size['vertical']
+		fig = plt.figure(figsize=figsize)
 
 		plot_grids=ImageGrid( fig,111,
 								nrows_ncols = self.rows_cols,
@@ -1005,15 +1026,13 @@ def find_index_recursively(**kwargs):
 		return idx[0][idxx]
 	else:
 		return idx[0][0]
-							 
-							
+							 						
 def around(array,decimals):
 
 	rounded=[]
 	for val in array:
 		rounded.append(round(val,decimals))
 	return rounded
-
 
 def find_nearest(array,value):
 

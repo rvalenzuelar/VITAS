@@ -48,7 +48,7 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 	""" synthesis horizontal velocity"""
 	array=Synth.SPH
 
-	flight.compare_with_synth(array=array,x=lon,y=lat,z=z,level=z[panel],zoom=zoomOpt[0])
+	flight.compare_with_synth(array=array,x=lon,y=lat,z=z,level=z[3],zoom=zoomOpt[0])
 	
 
 def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
@@ -62,8 +62,9 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	P.panel = kwargs['panel']
 	P.zoomOpt = kwargs['zoomIn']
 	P.mask = kwargs['mask']
-	
 
+	""" configure plot using vitas.config file '"""
+	P.config(kwargs['config'])
 
 	""" terrain array """
 	P.terrain = DTM
