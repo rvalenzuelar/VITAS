@@ -80,8 +80,8 @@ def main( config, args ):
 """call main function """
 if __name__ == "__main__":
 
-	config = config.start()
-
 	args = parser.start()
+	
+	config = config.start()
 
 	main(config,args)
