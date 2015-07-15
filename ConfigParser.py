@@ -39,15 +39,15 @@ def start():
 	dtmfile=dtmfile.replace('~',home)
 
 	if not isdir(synthpath):
-		print "Please check input folder_synthesis"
+		print "Please check input folder_synthesis\n"
 		sys.exit()
 
 	if not isdir(stdpath):
-		print "Please check input folder_flight_level"
+		print "Please check input folder_flight_level\n"
 		sys.exit()
 
 	if not isfile(dtmfile):
-		print "Please check input filepath_dtm"
+		print "Please check input filepath_dtm\n"
 		sys.exit()
 
 
