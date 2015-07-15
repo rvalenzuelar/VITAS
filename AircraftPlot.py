@@ -14,6 +14,8 @@ from scipy.spatial import cKDTree
 
 import Terrain 
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+import matplotlib.cm as cmx
 import numpy as np
 import sys
 import pixels_along_line as line 
@@ -928,9 +930,19 @@ class FlightPlot(object):
 
 	def compare_with_synth(self,**kwargs):
 
-		# check:
-		# http://stackoverflow.com/questions/7878398/
-		# how-to-extract-an-arbitrary-line-of-values-from-a-numpy-array
+		""" Method description
+			----------------------------
+			Comparison between the synthesis field and flight level
+			data is achieved by:
+
+			1) Find all the indexes of the synth grid where the flight trajectory intersects
+			2) Filter out repeated indexes of the trajectory (LINE)
+			3) Save geographic coordinates of the LINE
+			4) In the synth grid, search the 9 nearest neighbors along each point of LINE
+			5) Fill missing synth values by averaging the neighbors
+			6) In the flight data, search 15 values nearest to each point of LINE 
+			7) Average each set of 15 values of the flight array
+		"""
 
 		synth=kwargs['array']
 		synth_lons=kwargs['x']
@@ -942,46 +954,12 @@ class FlightPlot(object):
 		data = np.squeeze(synth[:,:,idx])
 
 		flgt_lats,flgt_lons=zip(*self.path)
-
 		flight_wspd=self.met['wspd']
 
 		flgt_lats = np.asarray(around(flgt_lats,4))
 		flgt_lons = np.asarray(around(flgt_lons,4))
 		synth_lats = np.asarray(around(synth_lats,4))
 		synth_lons = np.asarray(around(synth_lons,4))
-
-		y0=find_index_recursively(array=synth_lats,value=flgt_lats[0],decimals=4)
-		y1=find_index_recursively(array=synth_lats,value=flgt_lats[-1],decimals=4)
-
-		x0=find_index_recursively(array=synth_lons,value=flgt_lons[0],decimals=4)
-		x1=find_index_recursively(array=synth_lons,value=flgt_lons[-1],decimals=4)
-
-		# print synth_lats[y0], synth_lons[x0]
-		# print synth_lats[y1], synth_lons[x1]
-	
-		# print round(np.average(np.diff(flgt_lats)),4)
-		# print round(np.average(np.diff(flgt_lons)),4)
-
-		del_lat = round(np.average(np.diff(synth_lats)),4)
-		del_lon = round(np.average(np.diff(synth_lons)),4)
-
-		# print del_lat
-		# print del_lon
-
-
-
-
-
-		# coords=line.xiaolin(x0,y0,x1,y1,width=2)
-		# data_extract=[]
-		# data_lat=[]
-		# data_lon=[]
-
-		# for lon,lat in coords:
-		# 	data_extract.append(data[lon,lat])
-		# 	data_lon.append(synth_lons[lon])
-		# 	data_lat.append(synth_lats[lat])
-		# 	# data[lon,lat]=0 #for drawing line in imshow
 
 
 		idx_lat=[]
@@ -990,69 +968,61 @@ class FlightPlot(object):
 			idx_lat.append(find_index_recursively(array=synth_lats,value=lat,decimals=4))
 			idx_lon.append(find_index_recursively(array=synth_lons,value=lon,decimals=4))
 
-
-		coords_filetered=[]
+		""" filter out repeated indexes """
+		indexes_filtered=[]
 		first=True
 		for val in zip(idx_lon,idx_lat):
 			if first:
 				val_foo=val
-				coords_filetered.append(val)
+				indexes_filtered.append(val)
 				first=False
 			elif val!=val_foo:
-				coords_filetered.append(val)
+				indexes_filtered.append(val)
 				val_foo=val
 
-
+		""" save geographic coordinates of the line """
 		line_lat=[]
 		line_lon=[]		
-		for lon,lat in coords_filetered:
+		for lon,lat in indexes_filtered:
 			line_lon.append(synth_lons[lon])
 			line_lat.append(synth_lats[lat])			
-
 		linesynth=zip(line_lon,line_lat)
-
+		
+		""" search nearest neighbors """
 		synth_coord=list(product(synth_lons,synth_lats))
 		tree = cKDTree(synth_coord)
 		neigh = 9
 		dist, idx = tree.query(linesynth, k=neigh, eps=0, p=2, distance_upper_bound=0.1)
 
-		idx_split=zip(*idx)
-		idx0 = list(idx_split[0])
-
 		""" convert to one-column array """
 		data = data.reshape(121*131,1)
-		# data_line=data.copy()
+
+		""" gets the center point """
+		idx_split=zip(*idx)
+		idx0 = list(idx_split[0])
 
 		""" extract center point value """
 		data_extract=data[idx0]
 
-		""" draw pixel line """
-		line_center=[]
-		line_neighbors=[]
-		# for i in idx:
-		# 	data_line[i]=0
-		# for i in idx:
-		# 	data_line[i[0]]=30
-		for i in idx:
-			line_center.append(i[0])
-			# line_neighbors.append(synth_coord[i[1:]])
-
-		print line_center
-
-		""" interpolate pixels """
+		""" average neighbors """
 		data_extract2=[]
 		for i in idx:
 			data_extract2.append(np.nanmean(data[i]))
 
-		""" draw interpolated line """
-		# for i,val in zip(idx0,data_extract2):
-		# 	data[i]=val
+		""" save center points of line """
+		line_center=[]
+		line_neighbors=[]
+		grid_shape=(121,131)
+		for i in idx:
+			value=np.unravel_index(i[0], grid_shape)
+			line_center.append(value)
+			for j in i[1:]:
+				value=np.unravel_index(j, grid_shape)
+				line_neighbors.append(value)
 
 		""" convert back to 2D array """
 		data=data.reshape(121,131)
-		# data_line=data_line.reshape(121,131)
-
-		
+	
 
 		""" swap coordinates to (lon,lat)"""
 		flight_coord = [(t[1], t[0]) for t in self.path]
@@ -1065,35 +1035,33 @@ class FlightPlot(object):
 		for i in idx:
 			flgt_mean.append(np.nanmean(flight_wspd[i]))
 
-		plt.figure()
-		plt.imshow(data.T,
-			interpolation='none',
-			origin='lower')
-		# plt.plot(*zip(*line_center))
-		plt.xlim([20,90]), plt.ylim([10,90])
-		# plt.xlim([30,100]), plt.ylim([30,110])
-		plt.draw()
+		""" make plots """
+		jet = plt.get_cmap('jet')
+		cNorm = colors.Normalize(vmin=np.amin(data), vmax=np.amax(data))
+		scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
 
-		# plt.figure()
-		# plt.imshow(data_line.T,
-		# 	interpolation='none',
-		# 	origin='lower')
+		plt.figure()
+		plt.imshow(data.T,	interpolation='none',origin='lower')
+		for p,val in zip(line_center,data_extract2):
+			colorVal=scalarMap.to_rgba(val)
+			plt.plot(p[0],p[1],color=colorVal,marker='s',markersize=6,linestyle='none')
+		# plt.plot(*zip(*line_neighbors),color='g',marker='o',markersize=4,linestyle='none')
 		# plt.xlim([20,90]), plt.ylim([10,90])
-		# # plt.xlim([30,100]), plt.ylim([30,110])
-		# plt.draw()
+		plt.xlim([30,100]), plt.ylim([30,110])
+		plt.draw()
 
 		plt.figure()
 		plt.plot(data_extract,'bo',label='raw synthesis data')
 		plt.plot(data_extract2,'r',label='synthesis interpolated')
 		plt.plot(flgt_mean,'g',label='flight data')
-		plt.legend(numpoints=1,loc=3)
+		plt.grid(which='major')
+		plt.legend(numpoints=1,loc=4)
 		plt.draw()
 
 		plt.figure()
 		ax=plt.subplot(111)
 		ax.scatter(data_extract2,flgt_mean)
-		ax.plot([8, 20], [8, 20], 
-				color='k', linestyle='-', linewidth=2)		
+		ax.plot([8, 20], [8, 20], color='k', linestyle='-', linewidth=2)		
 		ax.set_aspect(1)
 		ax.grid(which='major')
 		ax.set_xlim([8,20])
