@@ -27,10 +27,14 @@ class SynthPlot(object):
 		self.cmap={'name':None,'range':None}
 		self.coast={'lon':None, 'lat':None}
 		self.coastColor=None
+		self.coastWidth=None
 		self.extent={'lx':None,'rx':None,'by':None,'ty':None}
 		self.figure_size=None
 		self.flight={'lon':None, 'lat':None}
 		self.flightColor=None
+		self.flightWidth=None
+		self.flightPointColor=None
+		self.flightPointSize=None
 		self.geo_textsize=None
 		self.horizontal={'xminor':None,'xmajor':None,'yminor':None,'ymajor':None}
 		self.lats=None 
@@ -64,7 +68,11 @@ class SynthPlot(object):
 		self.zoomCenter=config['zoom_center']
 		self.zoomDelta=config['zoom_del']
 		self.coastColor=config['coast_line_color']
+		self.coastWidth=config['coast_line_width']
 		self.flightColor=config['flight_line_color']
+		self.flightWidth=config['flight_line_width']
+		self.flightPointColor=config['flight_point_color']
+		self.flightPointSize=config['flight_point_size']
 		self.terrainContours=config['terrain_contours']
 		self.terrainContourColors=config['terrain_contours_color']
 		synthesis_field_name={'DBZ':'MAXDZ','U':'F2U','V':'F2V','WVA':'WVARF2','WUP':'WUPF2','VOR':'VORT2','CON':'CONM2'}
@@ -330,20 +338,22 @@ class SynthPlot(object):
 		""" plot line """
 		x=self.flight['lon']
 		y= self.flight['lat']
-		axis.plot(x,y)
+		axis.plot(x,y,color=self.flightColor,linewidth=self.flightWidth)
 
 		""" add dots and text """
 		for i in range(len(x)):
 			if i%100 == 0:
-				axis.plot(x[i],y[i],'bo')
-				axis.text(x[i],y[i],str(i/100),
-									fontsize=16,
-									color=(0,0,0))
+				prop={'fontsize':self.flightPointSize,'color':(1,1,1),
+						'horizontalalignment':'center',
+        					'verticalalignment':'center'}
+				axis.text(x[i],y[i],str(i/100),prop)
+				axis.plot(x[i],y[i],
+					marker='o',color=self.flightPointColor,markersize=self.flightPointSize)				
 
 	def add_coastline(self,axis):
 		x=self.coast['lon']
 		y=self.coast['lat']
-		axis.plot(x, y, color='b')
+		axis.plot(x, y,color=self.coastColor,linewidth=self.coastWidth)
 
 	def add_field(self,axis,field,extent):
 
