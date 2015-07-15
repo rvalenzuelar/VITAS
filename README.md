@@ -24,7 +24,7 @@ There are several python modules that are required:
 - pandas
 - scipy
 
-Installation of [miniconda](1) (python package manager) is highly recommended. Once miniconda is installed, modules can be installed by using:
+Installation of [miniconda](http://conda.pydata.org/miniconda.html) (python package manager) is highly recommended. Once miniconda is installed, modules can be installed by using:
 
 ```code
 $ conda install [name of the module]
@@ -137,5 +137,3 @@ $ ./start_plotting.py -c c03/leg01.cdf -s 010123I.nc -f DBZ --wind -z offshore
 ```
 ![alt tag](https://github.com/rvalenzuelar/vitas/blob/master/figure_example3.png)
 
-
-[1]:http://conda.pydata.org/miniconda.html
