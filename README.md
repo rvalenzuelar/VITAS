@@ -52,6 +52,7 @@ usage: start_plotting.py [--help] [--ced file] [--std file] [--panel num]
                          [--slicez lat float) [lat (float) ...]]
                          [--slicem lon (float) [lon (float ...]] [--terrain]
                          [--slope] [--meteo]
+                         [--valid level (int) [level (int ...]]
 
 Help:
   --help, -h            shows this help message and exit
@@ -89,6 +90,10 @@ Terrain options:
 
 Flight level options:
   --meteo               plot meteo data from flight level
+
+Validation options:
+  --valid level (int) [level (int) ...], -v level (int) [level (int) ...]
+                        plot validation info for a given level between 0 and max num of vertical levels
 
 ```
 Config file
