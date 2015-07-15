@@ -5,7 +5,7 @@
 # July, 2015
 
 
-from os.path import dirname,basename,expanduser,isfile,isdir
+from os.path import expanduser,isfile,isdir
 import ast
 import sys
 
