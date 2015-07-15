@@ -119,15 +119,20 @@ figure_size={'single':(8,8),'multi':(8,12),'vertical':(12,10)}
 ```
 Each variable contains a valid python object (string, integer, tuple, or list) that depends of what the variable modifies. For example:
 
-`flight_line_color='red' (string)`
+```code
+flight_line_color='red'
+```
 or 
-`flight_line_color=(0.3, 0.1, 0.4) (tuple)`
-
+```code
+flight_line_color=(0.3, 0.1, 0.4)
+```
 are both valid, but:
 
-`flight_line_color=2 (int)`
+```code
+flight_line_color=2
+```
 
-is not valid.
+is not.
 
 
 Examples
