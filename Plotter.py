@@ -26,8 +26,9 @@ def plot_flight_meteo(Synth,StdTape, **kwargs):
 
 	if meteo:
 		met=StdTape.get_meteo(Synth.start, Synth.end)	
-		flight=AP.FlightPlot(meteo=met)
-		flight.timeseries()
+		flight_name = Synth.file[-13:]
+		flight=AP.FlightPlot(meteo=met, name=flight_name)
+		flight.plot_meteo()
 		
 
 def compare_synth_flight(Synth,StdTape,**kwargs):

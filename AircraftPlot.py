@@ -720,14 +720,17 @@ class FlightPlot(object):
 
 		self.met=None
 		self.path=None
+		self.name=None
 
 		for key,value in kwargs.iteritems():
 			if key == 'meteo':
 				self.met=value
 			elif key == 'path':
 				self.path=value
+			elif key == 'name':
+				self.name=value
 
-	def timeseries(self):
+	def plot_meteo(self):
 
 		varname={	0:{'var':'atemp','name': 'air temperature',
 									'loc':3,'ylim':None},
@@ -750,7 +753,7 @@ class FlightPlot(object):
 							9:{'var':'palt','name': 'pressure alt',
 									'loc':(0.05,0.9),'ylim':None}}
 
-		f, ax = plt.subplots(3,3, sharex=True,figsize=(15,15))
+		fig, ax = plt.subplots(3,3, sharex=True,figsize=(15,10))
 		axs=ax.ravel()
 		for i in varname.items():			
 			var=i[1]['var']
@@ -772,13 +775,11 @@ class FlightPlot(object):
 									xy=loc, 
 									xycoords='axes fraction')
 
-		# for i in range(3):
-		# 	ax[i,1].yaxis.tick_right()			
 
 		self.adjust_xaxis(axs)
 		self.adjust_yaxis(axs)
-
-		f.subplots_adjust(bottom=0.04,top=0.96,
+		fig.suptitle('Flight level meteorology for '+self.name,y=0.95)
+		fig.subplots_adjust(bottom=0.04,top=0.9,
 											hspace=0,wspace=0.2)
 		plt.draw
 
