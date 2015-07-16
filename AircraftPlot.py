@@ -37,6 +37,8 @@ class SynthPlot(object):
 		self.flightPointColor=None
 		self.flightPointSize=None
 		self.geo_textsize=None
+		self.gridmajorOn=False
+		self.gridminorOn=False
 		self.horizontal={'xminor':None,'xmajor':None,'yminor':None,'ymajor':None}
 		self.lats=None 
 		self.lons=None
@@ -76,16 +78,12 @@ class SynthPlot(object):
 		self.flightPointSize=config['flight_point_size']
 		self.terrainContours=config['terrain_contours']
 		self.terrainContourColors=config['terrain_contours_color']
-
-		synthesis_field_name={'DBZ':'MAXDZ','U':'F2U','V':'F2V','WVA':'WVARF2','WUP':'WUPF2','VOR':'VORT2','CON':'CONM2'}
-		
 		self.cmapName=config['synthesis_field_cmap_name']
 		self.cmapRange=config['synthesis_field_cmap_range']
-		
-		synthesis_grid_name={'X':'x','Y':'y','Z':'z'}
-		
 		self.wind_jump=config['wind_vector_jump']
 		self.figure_size=config['figure_size']
+		self.gridmajorOn=config['synthesis_gridsmajor_on']
+		self.gridminorOn=config['synthesis_gridsminor_on']		
 
 	def set_geographic_extent(self,synth):
 
@@ -271,7 +269,8 @@ class SynthPlot(object):
 								scale=self.windv_scale, 
 								scale_units='dots',
 								width=self.windv_width)
-			qk=grid_ax.quiverkey(Q,0.8,0.08,10,r'$10 \frac{m}{s}$')
+			qk=grid_ax.quiverkey(Q, 0.15, 0.1, 10, r'$10 \frac{m}{s}$', labelpos='W',
+				 					fontproperties={'weight': 'bold'})
 			grid_ax.set_xlim(self.extent['lx'],self.extent['rx'])
 			grid_ax.set_ylim(self.extent['by'], self.extent['ty'])			
 
@@ -307,7 +306,7 @@ class SynthPlot(object):
 								units='dots', 
 								scale=0.5, 
 								scale_units='dots')
-			qk=grid_ax.quiverkey(Q,0.95,0.8,10,r'$10 \frac{m}{s}$')
+			qk=grid_ax.quiverkey(Q, 0.95, 0.8, 10, r'$10 \frac{m}{s}$')
 
 	def add_flight_path(self,axis):
 
@@ -453,12 +452,15 @@ class SynthPlot(object):
 			g.set_xlim(extent2[0], extent2[1])
 			g.set_ylim(extent2[2], extent2[3])				
 
-			g.grid(True, which = 'major',linewidth=1)
-			g.grid(True, which = 'minor',alpha=0.5)
-			g.minorticks_on()
+			if self.gridmajorOn:
+				g.grid(True, which = 'major',linewidth=1)
 
-			ztext='MSL='+str(k)+'km'
-			g.text(	0.1, 0.08,
+			if self.gridminorOn:
+				g.grid(True, which = 'minor',alpha=0.5)
+				g.minorticks_on()
+
+			ztext=str(k)+'km MSL'
+			g.text(	0.05, 0.03,
 					ztext,
 					fontsize=self.zlevel_textsize,
 					horizontalalignment='left',
