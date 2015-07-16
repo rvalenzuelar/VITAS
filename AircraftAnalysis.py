@@ -112,25 +112,54 @@ class Synthesis(object):
 	def __init__(self,*args):
 
 		self.file= args[0]
-		self.X = self.read_synth('x')
-		self.Y = self.read_synth('y')
-		self.Z = self.read_synth('z')
-		self.U = self.read_synth('F2U')
-		self.V = self.read_synth('F2V')
-		self.WUP = self.read_synth('WUPF2')
-		self.WVA = self.read_synth('WVARF2')
-		self.VOR = self.read_synth('VORT2')
-		self.CON = self.read_synth('CONM2')
-		self.DBZ = self.read_synth('MAXDZ')
+		self.X = None
+		self.Y = None
+		self.Z = None
+		self.U = None
+		self.V = None
+		self.WUP = None
+		self.WVA = None
+		self.VOR = None
+		self.CON = None
+		self.DBZ = None
+		self.SPD = None
+		self.SPH = None
+		self.SPM = None
+		self.SPZ = None
+		self.LAT = None
+		self.LON = None
+		self.start = None
+		self.end = None
+
+
+	def set_fields(self,config):
+
+		fields=config['synthesis_field_name']
+
+		for field,value in fields.iteritems():
+			setattr(self,field,self.read_synth(value))
+
 		self.SPD = self.get_TotalWindSpeed(self.WVA)
 		self.SPH = self.get_HorizontalWindSpeed()
 		self.SPM = self.get_MeridionalWindSpeed(self.WVA)
 		self.SPZ = self.get_ZonalWindSpeed(self.WVA)
-		self.LAT = self.set_geoGrid('latitude')
-		self.LON = self.set_geoGrid('longitude')
+
+	def set_axes(self,config):
+
+		axes=config['synthesis_grid_name']
+
+		for axis,value in axes.iteritems():
+			setattr(self,axis,self.read_synth(value))
+
+		ref_point = [38.3191, -123.0729] # Bodega Bay
+		self.LAT = self.set_geoGrid('latitude',ref_point)
+		self.LON = self.set_geoGrid('longitude',ref_point)
+
+
+	def set_time(self):
+
 		self.start = self.read_time('start')
 		self.end = self.read_time('end')
-
 
 	def read_synth(self, var):
 
@@ -243,9 +272,8 @@ class Synthesis(object):
 		# close netCDF  file.
 		synth.close()
 
-	def set_geoGrid(self, geo_axis):
+	def set_geoGrid(self, geo_axis,ref_point):
 
-		ref_point = [38.3191, -123.0729] # Bodega Bay
 		geo_grid = []
 		if geo_axis == 'longitude':
 			for x in self.X:
