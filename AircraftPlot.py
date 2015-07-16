@@ -34,6 +34,7 @@ class SynthPlot(object):
 		self.flight={'lon':None, 'lat':None}
 		self.flightColor=None
 		self.flightWidth=None
+		self.flightStyle=None
 		self.flightPointColor=None
 		self.flightPointSize=None
 		self.geo_textsize=None
@@ -74,6 +75,7 @@ class SynthPlot(object):
 		self.coastWidth=config['coast_line_width']
 		self.flightColor=config['flight_line_color']
 		self.flightWidth=config['flight_line_width']
+		self.flightStyle=config['flight_line_style']				
 		self.flightPointColor=config['flight_point_color']
 		self.flightPointSize=config['flight_point_size']
 		self.terrainContours=config['terrain_contours']
@@ -313,7 +315,9 @@ class SynthPlot(object):
 		""" plot line """
 		x=self.flight['lon']
 		y= self.flight['lat']
-		axis.plot(x,y,color=self.flightColor,linewidth=self.flightWidth)
+		axis.plot(x,y,	color=self.flightColor,
+						linewidth=self.flightWidth,
+						linestyle=self.flightStyle)
 
 		""" add dots and text """
 		for i in range(len(x)):
