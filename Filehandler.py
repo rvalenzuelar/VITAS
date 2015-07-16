@@ -28,7 +28,10 @@ def set_working_files(**kwargs):
 
 	""" creates a synthesis object """
 	try:
-		SY=AA.Synthesis(synthfile)
+		SY=AA.Synthesis(synthfile)		
+		SY.set_fields(config)
+		SY.set_axes(config)
+		SY.set_time()
 	except RuntimeError:
 		print "Input Synth Error: check path or file name\n"
 		sys.exit()

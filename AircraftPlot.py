@@ -471,7 +471,7 @@ class SynthPlot(object):
 			self.horizontal['xminor'] = g.get_xticks(minor=True)			
 
 
-		 ''' add color bar '''
+		''' add color bar '''
 		plot_grids.cbar_axes[0].colorbar(im)
 		fig.suptitle(' Dual-Doppler Synthesis: '+ self.get_var_title(self.var) )
 
