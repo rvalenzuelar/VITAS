@@ -10,6 +10,7 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 from matplotlib.patches import Polygon
 from itertools import product
 from scipy.spatial import cKDTree
+from geographiclib.geodesic import Geodesic
 
 import Terrain 
 import matplotlib.pyplot as plt
@@ -318,16 +319,47 @@ class SynthPlot(object):
 		axis.plot(x,y,	color=self.flightColor,
 						linewidth=self.flightWidth,
 						linestyle=self.flightStyle)
+		
+		""" add dots and text """		
+		first=True
+		distance_from_p0=[]
+		for lon,lat in zip(x,y):
+			p1=[lat,lon]
+			if first:
+				p0=p1
+				first=False
+			else:
+				value=Geodesic.WGS84.Inverse(p0[0], p0[1],p1[0], p1[1])
+				distance_from_p0.append(value['s12']/1000) #[km]
 
-		""" add dots and text """
-		for i in range(len(x)):
-			if i%100 == 0:
-				prop={'fontsize':self.flightPointSize,'color':(1,1,1),
-						'horizontalalignment':'center',
-        					'verticalalignment':'center'}
-				axis.text(x[i],y[i],str(i/100),prop)
-				axis.plot(x[i],y[i],
-					marker='o',color=self.flightPointColor,markersize=self.flightPointSize)				
+		frequency=10 #[km]
+		endsearch=100 #[km]
+		target=range(0,endsearch,frequency)
+		search=np.asarray(distance_from_p0)
+		idxs=find_nearest2(search,target)
+
+		# for i in idxs[1:]:
+		# 	print distance_from_p0[i]
+
+		first=True
+		for i in idxs:
+			if first:
+				n=0
+				self.add_flight_dot(axis,y[n],x[n],n)
+				first=False
+			else:
+				n+=1
+				self.add_flight_dot(axis,y[i],x[i],n)
+
+	def add_flight_dot(self,axis,lat,lon,position):
+
+		prop={'fontsize':self.flightPointSize,'color':(1,1,1),
+				'horizontalalignment':'center',
+				'verticalalignment':'center'}			
+		axis.text(lon,lat,str(position),prop)
+		axis.plot(lon,lat,	marker='o',
+							color=self.flightPointColor,
+							markersize=self.flightPointSize)				
 
 	def add_coastline(self,axis):
 		x=self.coast['lon']
@@ -1049,6 +1081,19 @@ def find_nearest(array,value):
 
 	idx = (np.abs(array-value)).argmin()
 	return idx
+
+def find_nearest2(array,targetArray):
+
+	""" See stackoverflow answer from Bi Rico """
+
+	''' array must be sorted '''
+	idx = array.searchsorted(targetArray)
+	idx = np.clip(idx, 1, len(array)-1)
+	left = array[idx-1]
+	right = array[idx]
+	idx -= targetArray - left < right - targetArray
+	return idx
+
 
 def chop_horizontal(self, array):
 
