@@ -38,9 +38,9 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 	
 
 	met=StdTape.get_meteo(Synth.start, Synth.end)	
-	path=StdTape.get_path(Synth.start, Synth.end)	
-	
-	flight=AP.FlightPlot(meteo=met,path=path)
+	flight_path=StdTape.get_path(Synth.start, Synth.end)	
+	flight_name = Synth.file[-13:]
+	flight=AP.FlightPlot(meteo=met,name=flight_name,flightPath=flight_path)
 
 	lat=Synth.LAT
 	lon=Synth.LON

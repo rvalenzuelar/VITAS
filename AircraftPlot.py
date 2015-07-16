@@ -719,14 +719,14 @@ class FlightPlot(object):
 	def __init__(self,**kwargs):
 
 		self.met=None
-		self.path=None
+		self.flightPath=None
 		self.name=None
 
 		for key,value in kwargs.iteritems():
 			if key == 'meteo':
 				self.met=value
-			elif key == 'path':
-				self.path=value
+			elif key == 'flightPath':
+				self.flightPath=value
 			elif key == 'name':
 				self.name=value
 
@@ -841,7 +841,7 @@ class FlightPlot(object):
 		idx = np.where(synth_z==zlevel)
 		data = np.squeeze(synth[:,:,idx])
 
-		flgt_lats,flgt_lons=zip(*self.path)
+		flgt_lats,flgt_lons=zip(*self.flightPath)
 		flight_wspd=self.met['wspd']
 		flight_altitude=self.met['palt']
 
@@ -914,7 +914,7 @@ class FlightPlot(object):
 	
 
 		""" swap coordinates to (lon,lat)"""
-		flight_coord = [(t[1], t[0]) for t in self.path]
+		flight_coord = [(t[1], t[0]) for t in self.flightPath]
 		tree = cKDTree(flight_coord)
 		neigh = 15
 		dist, idx = tree.query(linesynth, k=neigh, eps=0, p=2, distance_upper_bound=0.1)
@@ -928,9 +928,17 @@ class FlightPlot(object):
 
 
 		""" make plots """
+
 		jet = plt.get_cmap('jet')
 		cNorm = colors.Normalize(vmin=np.amin(data), vmax=np.amax(data))
 		scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
+		synth_alt=str(int(zlevel[0]*1000))
+		flgt_alt=str(int(np.average(flgt_altitude)))
+		antext1='Synthesis alt: '+synth_alt+' m MSL'
+		antext2='Flight level alt: '+flgt_alt+' m MSL'
+		title1='Horizontal wind speed\n'+self.name
+		title2='Flight level and P3 synthesis comparison\n'+self.name
+
 
 		''' grid '''
 		plt.figure()
@@ -945,7 +953,8 @@ class FlightPlot(object):
 		plt.xlabel('X')
 		plt.ylabel('Y')
 		plt.colorbar(im)
-		plt.title('horizontal wind speed')
+		plt.annotate(antext1, xy=(0.1, 0.95), xycoords="axes fraction",fontsize=14)
+		plt.suptitle(title1)
 		plt.grid(which='major')
 		plt.draw()
 
@@ -965,7 +974,9 @@ class FlightPlot(object):
 		lns=ln1+ln2+ln3+ln4
 		labs=[l.get_label() for l in lns]
 		ax2.legend(lns,labs,numpoints=1,loc=4,prop={'size':10})
+		ax2.annotate(antext1, xy=(0.5, 0.9), xycoords="axes fraction",fontsize=14)
 		plt.grid(which='major')
+		plt.suptitle(title2)
 		plt.draw()
 
 
@@ -973,13 +984,17 @@ class FlightPlot(object):
 		plt.figure()
 		ax=plt.subplot(111)
 		ax.scatter(data_extract2,flgt_mean)
-		ax.plot([8, 20], [8, 20], color='k', linestyle='-', linewidth=2)		
+		ax.plot([8, 20], [8, 20], color='k', linestyle='-', linewidth=2)
+		ax.annotate(antext2, xy=(0.08, 0.9), xycoords="axes fraction",fontsize=14)
+		ax.annotate(antext1, xy=(0.08, 0.85), xycoords="axes fraction",fontsize=14)
 		ax.set_aspect(1)
 		ax.grid(which='major')
 		ax.set_xlim([8,20])
 		ax.set_ylim([8,20])
+		plt.suptitle(title2)
 		plt.xlabel('synthesis WSPD')
 		plt.ylabel('flight WSPD')
+
 		plt.draw()
 
 		# sys.exit()
