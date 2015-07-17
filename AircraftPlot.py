@@ -11,6 +11,7 @@ from matplotlib.patches import Polygon
 from itertools import product
 from scipy.spatial import cKDTree
 from geographiclib.geodesic import Geodesic
+from collections import Sequence
 
 import Terrain 
 import matplotlib.pyplot as plt
@@ -18,6 +19,7 @@ import matplotlib.colors as colors
 import matplotlib.cm as cmx
 import numpy as np
 import sys
+import math
 
 
 class SynthPlot(object):
@@ -39,6 +41,8 @@ class SynthPlot(object):
 		self.flightStyle=None
 		self.flightDotColor=None
 		self.flightDotSize=None
+		self.flight_track_distance=None
+		self.flight_dot_index=None
 		self.geo_textsize=None
 		self.gridmajorOn=False
 		self.gridminorOn=False
@@ -323,30 +327,29 @@ class SynthPlot(object):
 		
 		""" add dots and text """		
 		if self.flightDotSize:
-			distance_from_p0=get_distance_along_flight_track(x,y)
+			dist_from_p0=get_distance_along_flight_track(x,y)
 
 			frequency=10 #[km]
 			endsearch=100 #[km]
 			target=range(0,endsearch,frequency)
-			search=np.asarray(distance_from_p0)
+			search=np.asarray(dist_from_p0)
 			idxs=find_nearest2(search,target)
 
-			first=True
+			
 			for i in idxs:
-				if first:
-					n=0
-					self.add_flight_dot(axis,y[n],x[n],n)
-					first=False
-				else:
-					n+=1
-					self.add_flight_dot(axis,y[i],x[i],n)
+				value=round_to_closest_int(dist_from_p0[i],frequency)
+				self.add_flight_dot(axis,y[i],x[i],value)
+
+			self.flight_track_distance=dist_from_p0
+			self.flight_dot_index=idxs
 
 	def add_flight_dot(self,axis,lat,lon,position):
 
 		if not self.panel:
-			self.flightDotSize=6
+			self.flightDotSize=int(self.flightDotSize*0.5)
 
-		prop={'fontsize':self.flightDotSize,'color':(1,1,1),
+		fontsize=int(self.flightDotSize*0.8)
+		prop={'fontsize':fontsize,'color':(1,1,1),
 				'horizontalalignment':'center',
 				'verticalalignment':'center'}			
 		axis.text(lon,lat,str(position),prop)
@@ -763,7 +766,7 @@ class FlightPlot(object):
 			elif key == 'name':
 				self.name=value
 
-	def plot_meteo(self):
+	def plot_meteo(self,xaxis,dots):
 
 		varname={	0:{'var':'atemp','name': 'air temperature',
 									'loc':3,'ylim':None},
@@ -794,25 +797,28 @@ class FlightPlot(object):
 			loc=i[1]['loc']
 			ylim=i[1]['ylim']
 			if i[0] < 2:
-				axs[0].plot(self.met[var],label=name)
+				axs[0].plot(xaxis,self.met[var],label=name)
 				if ylim: axs[0].set_ylim(ylim)
 				if i[0]==1:
 					axs[0].grid(True)
 					axs[0].legend(loc=loc,frameon=False)
+			
 			else:
-				axs[i[0]-1].plot(self.met[var],label=name)
+				axs[i[0]-1].plot(xaxis,self.met[var],label=name)
 				if ylim: axs[i[0]-1].set_ylim(ylim)
 				axs[i[0]-1].grid(True)
 				axs[i[0]-1].annotate(name, 
 									fontsize=16,
 									xy=loc, 
 									xycoords='axes fraction')
+				if i[0]==8:
+					axs[i[0]-1].set_xlabel('Distance from beginning of flight [km]')
 
-
-		self.adjust_xaxis(axs)
+		new_xticks=[xaxis[i] for i in dots]
+		self.adjust_xaxis(axs,new_xticks)
 		self.adjust_yaxis(axs)
 		fig.suptitle('Flight level meteorology for '+self.name,y=0.95)
-		fig.subplots_adjust(bottom=0.04,top=0.9,
+		fig.subplots_adjust(bottom=0.08,top=0.9,
 											hspace=0,wspace=0.2)
 		plt.draw
 
@@ -839,14 +845,13 @@ class FlightPlot(object):
 				newlabels[-1]=''
 				axes[i].set_yticklabels(newlabels)
 
-	def adjust_xaxis(self,axes):
+	def adjust_xaxis(self,axes,new_xticks):
 
 		for i in [6,7,8]:
 			xticks=axes[i].get_xticks()
-			newlabels=[]
-			for x in xticks:
-				newlabels.append(str(int(x/100)))
-			axes[i].set_xticklabels(newlabels)
+			new_xticks = round_to_closest_int(new_xticks,10)
+			axes[i].set_xticks(new_xticks)
+
 
 	def compare_with_synth(self,**kwargs):
 
@@ -1089,7 +1094,6 @@ def find_nearest2(array,targetArray):
 	idx -= targetArray - left < right - targetArray
 	return idx
 
-
 def chop_horizontal(self, array):
 
 	zvalues=self.axesval['z']
@@ -1163,7 +1167,6 @@ def zoom_in(in_extent,center_point):
 		
 	return outext	
 
-
 def adjust_extent(self,ori_extent,orient,type_extent):
 
 	# print ori_extent
@@ -1193,7 +1196,7 @@ def adjust_extent(self,ori_extent,orient,type_extent):
 
 def get_distance_along_flight_track(x,y):
 	
-	distance_from_p0=[]
+	distance_from_p0=[0]
 	first=True
 	for lon,lat in zip(x,y):
 		p1=[lat,lon]
@@ -1205,3 +1208,25 @@ def get_distance_along_flight_track(x,y):
 			distance_from_p0.append(value['s12']/1000) #[km]
 
 	return distance_from_p0
+
+
+def round_to_closest_int(value,base):
+
+	if isinstance(value,Sequence):
+
+		r=[]
+		for v in value:
+			if v%base < 1:
+				r.append(int(v - v%base))
+			else:
+				r.append(int(v + (base - v%base)))
+
+		return r
+
+	else:
+
+		if value%base < 1:
+			r = value - value%base
+		else:
+			r = value + (base - value%base)
+		return int(r)

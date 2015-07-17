@@ -20,7 +20,7 @@ def plot_terrain(SynthPlot,**kwargs):
 	if slope:
 	 	Terrain.plot_slope_map(SynthPlot)
 
-def plot_flight_meteo(Synth,StdTape, **kwargs):
+def plot_flight_meteo(SynthPlot,Synth,StdTape, **kwargs):
 
 	meteo=kwargs['meteo']
 
@@ -28,7 +28,9 @@ def plot_flight_meteo(Synth,StdTape, **kwargs):
 		met=StdTape.get_meteo(Synth.start, Synth.end)	
 		flight_name = Synth.file[-13:]
 		flight=AP.FlightPlot(meteo=met, name=flight_name)
-		flight.plot_meteo()
+		flight_xaxis=SynthPlot.flight_track_distance
+		flight_dots=SynthPlot.flight_dot_index
+		flight.plot_meteo(flight_xaxis,flight_dots)
 		
 
 def compare_synth_flight(Synth,StdTape,**kwargs):

@@ -73,7 +73,7 @@ def main( config, args ):
 	Plotter.plot_terrain(P,terrain=terrain,slope=slope)
 
 	""" make flight level meteo plot """
-	Plotter.plot_flight_meteo(SYNTH,FLIGHT,meteo=meteo)
+	Plotter.plot_flight_meteo(P,SYNTH,FLIGHT,meteo=meteo)
 
 	""" compare synth and flight level """
 	if valid:
