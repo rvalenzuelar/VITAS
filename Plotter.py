@@ -92,6 +92,7 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	P.v_array=SYNTH.V
 	P.w_array=SYNTH.WVA
 	# P.w_array=SYNTH.WUP
+	P.file=SYNTH.file
 
 	""" general  geographic domain boundaries """
 	P.set_geographic_extent(SYNTH)
