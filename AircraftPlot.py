@@ -272,7 +272,7 @@ class SynthPlot(object):
 					self.sliceLine_setup(line)
 
 	def sliceLine_setup(self,line):
-		
+
 		plt.setp(line,	color=self.sliceLineColor,
 						linewidth=self.sliceLineWidth,
 						linestyle=self.sliceLineStyle)
@@ -641,7 +641,10 @@ class SynthPlot(object):
 
 		 # add color bar
 		plot_grids.cbar_axes[0].colorbar(im)
-		fig.suptitle(' Dual-Doppler Synthesis: '+self.get_var_title(self.var) )
+		# fig.suptitle(' Dual-Doppler Synthesis: '+self.get_var_title(self.var) )
+
+		titext='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)+'\n'
+		fig.suptitle(titext+self.file)
 
 		# show figure
 		plt.draw()
