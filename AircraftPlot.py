@@ -32,6 +32,7 @@ class SynthPlot(object):
 		self.coast={'lon':None, 'lat':None}
 		self.coastColor=None
 		self.coastWidth=None
+		self.coastStyle=None
 		self.extent={'lx':None,'rx':None,'by':None,'ty':None}
 		self.figure_size=None
 		self.file=None
@@ -84,6 +85,7 @@ class SynthPlot(object):
 		self.zoomDelta=config['zoom_del']
 		self.coastColor=config['coast_line_color']
 		self.coastWidth=config['coast_line_width']
+		self.coastStyle=config['coast_line_style']
 		self.flightColor=config['flight_line_color']
 		self.flightWidth=config['flight_line_width']
 		self.flightStyle=config['flight_line_style']				
@@ -378,7 +380,10 @@ class SynthPlot(object):
 	def add_coastline(self,axis):
 		x=self.coast['lon']
 		y=self.coast['lat']
-		axis.plot(x, y,color=self.coastColor,linewidth=self.coastWidth)
+		axis.plot(x, y,
+					color=self.coastColor,
+					linewidth=self.coastWidth,
+					linestyle=self.coastStyle)
 
 	def add_field(self,axis,**kwargs):
 
