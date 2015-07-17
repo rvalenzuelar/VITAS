@@ -108,25 +108,31 @@ folder_flight_level='~/folder_1/folder_2/.../folder_n'
 filepath_dtm ='~/folder_1/folder_2/.../folder_n/DTMfile.tif'
 zoom_center={'offshore':(38.6,-123.5),'onshore':(38.85,-123.25)}
 zoom_del={'x':1.2,'y':1.1}
-coast_line_color='blue'
-coast_line_width=3
+coast_line_color='black'
+coast_line_width=4
+coast_line_style='--'
 flight_line_color=(0,0,0)
-flight_line_width=2
+flight_line_width=1
 flight_line_style='none'
-flight_point_color='red'
-flight_point_size=15
+flight_dot_color='red'
+flight_dot_size=15
 terrain_contours=[200,600,1000]
 terrain_contours_color=[(0,0,0),(0.4,0.4,0.4),(0.6,0.6,0.6)]
 wind_vector_jump={'x':2,'y':2,'z':1}
 figure_size={'single':(8,8),'multi':(8,12),'vertical':(12,10)}
+section_slice_line_color=(0,0,0.5)
+section_slice_line_width=2
+section_slice_line_style='--'
 synthesis_field_name={'DBZ':'MAXDZ','U':'F2U','V':'F2V','WVA':'WVARF2','WUP':'WUPF2','VOR':'VORT2','CON':'CONM2'}
 synthesis_field_cmap_name={'DBZ':'nipy_spectral','U':'Accent','V':'Accent','WVA':'PRGn','WUP':'PRGn','VOR':'PuOr','CON':'RdBu_r'}
-synthesis_field_cmap_range={'DBZ':[0,45],'U':[-20,20],'V':[-10,30],'WVA':[-2,2],'WUP':[-2,2],'VOR':[-1,1],'CON':[-1,1]}
+synthesis_field_cmap_range={'DBZ':[0,40],'U':[-20,20],'V':[-10,30],'WVA':[-2,2],'WUP':[-2,2],'VOR':[-1,1],'CON':[-1,1]}
 synthesis_grid_name={'X':'x','Y':'y','Z':'z'}
-synthesis_gridsmajor_on=False
-synthesis_gridsminor_on=False
+synthesis_horizontal_gridmajor_on=False
+synthesis_horizontal_gridminor_on=False
+synthesis_vertical_gridmajor_on=False
+synthesis_vertical_gridminor_on=False
 ```
-Each variable contains a valid python object (string, integer, tuple, list, or dictionary) that agrees with the input argument of the [pyplot](http://matplotlib.org/api/pyplot_api.html) object being modified. For example:
+Each variable contains a valid python object (string, integer, tuple, list, or dictionary) that agrees with the input argument of the [matplotlib](http://matplotlib.org) object being modified. For example:
 
 ```code
 flight_line_color='red'
