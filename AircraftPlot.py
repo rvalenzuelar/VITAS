@@ -32,12 +32,13 @@ class SynthPlot(object):
 		self.coastWidth=None
 		self.extent={'lx':None,'rx':None,'by':None,'ty':None}
 		self.figure_size=None
+		self.file=None
 		self.flight={'lon':None, 'lat':None}
 		self.flightColor=None
 		self.flightWidth=None
 		self.flightStyle=None
-		self.flightPointColor=None
-		self.flightPointSize=None
+		self.flightDotColor=None
+		self.flightDotSize=None
 		self.geo_textsize=None
 		self.gridmajorOn=False
 		self.gridminorOn=False
@@ -77,8 +78,8 @@ class SynthPlot(object):
 		self.flightColor=config['flight_line_color']
 		self.flightWidth=config['flight_line_width']
 		self.flightStyle=config['flight_line_style']				
-		self.flightPointColor=config['flight_point_color']
-		self.flightPointSize=config['flight_point_size']
+		self.flightDotColor=config['flight_dot_color']
+		self.flightDotSize=config['flight_dot_size']
 		self.terrainContours=config['terrain_contours']
 		self.terrainContourColors=config['terrain_contours_color']
 		self.cmapName=config['synthesis_field_cmap_name']
@@ -321,45 +322,37 @@ class SynthPlot(object):
 						linestyle=self.flightStyle)
 		
 		""" add dots and text """		
-		first=True
-		distance_from_p0=[]
-		for lon,lat in zip(x,y):
-			p1=[lat,lon]
-			if first:
-				p0=p1
-				first=False
-			else:
-				value=Geodesic.WGS84.Inverse(p0[0], p0[1],p1[0], p1[1])
-				distance_from_p0.append(value['s12']/1000) #[km]
+		if self.flightDotSize:
+			distance_from_p0=get_distance_along_flight_track(x,y)
 
-		frequency=10 #[km]
-		endsearch=100 #[km]
-		target=range(0,endsearch,frequency)
-		search=np.asarray(distance_from_p0)
-		idxs=find_nearest2(search,target)
+			frequency=10 #[km]
+			endsearch=100 #[km]
+			target=range(0,endsearch,frequency)
+			search=np.asarray(distance_from_p0)
+			idxs=find_nearest2(search,target)
 
-		# for i in idxs[1:]:
-		# 	print distance_from_p0[i]
-
-		first=True
-		for i in idxs:
-			if first:
-				n=0
-				self.add_flight_dot(axis,y[n],x[n],n)
-				first=False
-			else:
-				n+=1
-				self.add_flight_dot(axis,y[i],x[i],n)
+			first=True
+			for i in idxs:
+				if first:
+					n=0
+					self.add_flight_dot(axis,y[n],x[n],n)
+					first=False
+				else:
+					n+=1
+					self.add_flight_dot(axis,y[i],x[i],n)
 
 	def add_flight_dot(self,axis,lat,lon,position):
 
-		prop={'fontsize':self.flightPointSize,'color':(1,1,1),
+		if not self.panel:
+			self.flightDotSize=6
+
+		prop={'fontsize':self.flightDotSize,'color':(1,1,1),
 				'horizontalalignment':'center',
 				'verticalalignment':'center'}			
 		axis.text(lon,lat,str(position),prop)
 		axis.plot(lon,lat,	marker='o',
-							color=self.flightPointColor,
-							markersize=self.flightPointSize)				
+							color=self.flightDotColor,
+							markersize=self.flightDotSize)				
 
 	def add_coastline(self,axis):
 		x=self.coast['lon']
@@ -508,12 +501,14 @@ class SynthPlot(object):
 			self.horizontal['xmajor'] = g.get_xticks(minor=False)
 			self.horizontal['xminor'] = g.get_xticks(minor=True)			
 
+			# g.subplots_adjust(bottom=0.04,top=0.95)
 
 		''' add color bar '''
 		plot_grids.cbar_axes[0].colorbar(im)
-		fig.suptitle(' Dual-Doppler Synthesis: '+ self.get_var_title(self.var) )
+		titext='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)+'\n'
+		fig.suptitle(titext+self.file)
 
-		plt.tight_layout()
+		# plt.tight_layout()
 		plt.draw()
 
 	def vertical_plane(self,**kwargs):
@@ -1196,3 +1191,17 @@ def adjust_extent(self,ori_extent,orient,type_extent):
 	
 	return out_extent
 
+def get_distance_along_flight_track(x,y):
+	
+	distance_from_p0=[]
+	first=True
+	for lon,lat in zip(x,y):
+		p1=[lat,lon]
+		if first:
+			p0=p1
+			first=False
+		else:
+			value=Geodesic.WGS84.Inverse(p0[0], p0[1],p1[0], p1[1])
+			distance_from_p0.append(value['s12']/1000) #[km]
+
+	return distance_from_p0
