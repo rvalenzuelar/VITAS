@@ -44,8 +44,10 @@ class SynthPlot(object):
 		self.flight_track_distance=None
 		self.flight_dot_index=None
 		self.geo_textsize=None
-		self.gridmajorOn=False
-		self.gridminorOn=False
+		self.horizontalGridMajorOn=False
+		self.horizontalGridMinorOn=False
+		self.verticalGridMajorOn=False
+		self.verticalGridMinorOn=False		
 		self.horizontal={'xminor':None,'xmajor':None,'yminor':None,'ymajor':None}
 		self.lats=None 
 		self.lons=None
@@ -55,6 +57,9 @@ class SynthPlot(object):
 		self.slice_type=None
 		self.slicen=None
 		self.sliceo=None
+		self.sliceLineColor=None
+		self.sliceLineWidth=None
+		self.sliceLineStyle=None
 		self.terrain=None
 		self.terrainContours=None
 		self.terrainContourColors=None
@@ -90,8 +95,13 @@ class SynthPlot(object):
 		self.cmapRange=config['synthesis_field_cmap_range']
 		self.wind_jump=config['wind_vector_jump']
 		self.figure_size=config['figure_size']
-		self.gridmajorOn=config['synthesis_gridsmajor_on']
-		self.gridminorOn=config['synthesis_gridsminor_on']		
+		self.horizontalGridMajorOn=config['synthesis_horizontal_gridmajor_on']
+		self.horizontalGridMinorOn=config['synthesis_horizontal_gridminor_on']
+		self.verticalGridMajorOn=config['synthesis_vertical_gridmajor_on']
+		self.verticalGridMinorOn=config['synthesis_vertical_gridminor_on']
+		self.sliceLineColor=config['section_slice_line_color']
+		self.sliceLineWidth=config['section_slice_line_width']
+		self.sliceLineStyle=config['section_slice_line_style']
 
 	def set_geographic_extent(self,synth):
 
@@ -222,8 +232,6 @@ class SynthPlot(object):
 
 	def add_slice_line(self,axis):
 
-		line_fmt='ro-'
-
 		if self.slice_type =='horizontal':
 			x0 = y0 = None
 			if self.slicem:
@@ -231,14 +239,16 @@ class SynthPlot(object):
 				y1=max(self.lats)
 				for value in self.slicem:
 					x0 = x1 = -value
-					axis.plot([x0,x1],[y0,y1],line_fmt)
+					line=axis.plot([x0,x1],[y0,y1])
+					self.sliceLine_setup(line)
 
 			if self.slicez:
 				x0=min(self.lons)
 				x1=max(self.lons)
 				for value in self.slicez:
 					y0 = y1 = value
-					axis.plot([x0,x1],[y0,y1],line_fmt)				
+					line=axis.plot([x0,x1],[y0,y1])
+					self.sliceLine_setup(line)
 
 		elif self.slice_type =='vertical':
 			x0=x1=y0=y1=None			
@@ -253,11 +263,19 @@ class SynthPlot(object):
 			x1=x1*self.scale
 			if all_same(self.zlevels):
 				y0 = y1 = self.zlevels[0]
-				axis.plot([x0,x1],[y0,y1],line_fmt)
+				line=axis.plot([x0,x1],[y0,y1])
+				self.sliceLine_setup(line)
 			else:
 				for value in self.zlevels:
 					y0 = y1 = value
-					axis.plot([x0,x1],[y0,y1],line_fmt)
+					line=axis.plot([x0,x1],[y0,y1])
+					self.sliceLine_setup(line)
+
+	def sliceLine_setup(self,line):
+		
+		plt.setp(line,	color=self.sliceLineColor,
+						linewidth=self.sliceLineWidth,
+						linestyle=self.sliceLineStyle)
 
 	def add_windvector(self,grid_ax,comp1,comp2):
 
@@ -409,7 +427,7 @@ class SynthPlot(object):
 		axis.set_xticks(major_ticks)                                                       
 		axis.set_xticks(minor_ticks, minor=True) 
 
-	def horizontal_plane(self ,**kwargs):
+	def horizontal_plane(self , **kwargs):
 
 		field_array=kwargs['field']
 		u_array=self.u_array
@@ -483,10 +501,10 @@ class SynthPlot(object):
 			g.set_xlim(extent2[0], extent2[1])
 			g.set_ylim(extent2[2], extent2[3])				
 
-			if self.gridmajorOn:
+			if self.horizontalGridMajorOn:
 				g.grid(True, which = 'major',linewidth=1)
 
-			if self.gridminorOn:
+			if self.horizontalGridMinorOn:
 				g.grid(True, which = 'minor',alpha=0.5)
 				g.minorticks_on()
 
@@ -598,7 +616,12 @@ class SynthPlot(object):
 			if p == 0:
 				self.match_horizontal_grid(g)
 
-			g.grid(True, which = 'major',linewidth=1)
+			if self.verticalGridMajorOn:
+				g.grid(True, which = 'major',linewidth=1)
+
+			if self.verticalGridMinorOn:
+				g.grid(True, which = 'minor',alpha=0.5)
+				g.minorticks_on()
 
 
 			self.adjust_ticklabels(g)
