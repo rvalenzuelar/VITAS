@@ -330,7 +330,7 @@ class SynthPlot(object):
 			dist_from_p0=get_distance_along_flight_track(x,y)
 
 			frequency=10 #[km]
-			endsearch=100 #[km]
+			endsearch=int(dist_from_p0[-1]) #[km]
 			target=range(0,endsearch,frequency)
 			search=np.asarray(dist_from_p0)
 			idxs=find_nearest2(search,target)
@@ -390,8 +390,7 @@ class SynthPlot(object):
 			lats=profaxis[::-1]*self.scale
 			profile=profile[::-1]
 			verts=zip(lats,profile)+[(lats[-1],0)]
-		poly=Polygon(verts,fc='0.9',ec='0.5')
-		# print verts
+		poly=Polygon(verts,facecolor=(0.7,0.7,0.7),edgecolor='none')
 		axis.add_patch(poly)
 
 	def match_horizontal_grid(self,axis):
