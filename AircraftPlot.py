@@ -93,6 +93,8 @@ class SynthPlot(object):
 		self.flightDotSize=config['flight_dot_size']
 		self.terrainContours=config['terrain_contours']
 		self.terrainContourColors=config['terrain_contours_color']
+		self.terrainProfileFacecolor=config['terrain_profile_facecolor']
+		self.terrainProfileEdgecolor=config['terrain_profile_edgecolor']
 		self.cmapName=config['synthesis_field_cmap_name']
 		self.cmapRange=config['synthesis_field_cmap_range']
 		self.wind_jump=config['wind_vector_jump']
@@ -104,6 +106,7 @@ class SynthPlot(object):
 		self.sliceLineColor=config['section_slice_line_color']
 		self.sliceLineWidth=config['section_slice_line_width']
 		self.sliceLineStyle=config['section_slice_line_style']
+
 
 	def set_geographic_extent(self,synth):
 
@@ -413,7 +416,9 @@ class SynthPlot(object):
 			lats=profaxis[::-1]*self.scale
 			profile=profile[::-1]
 			verts=zip(lats,profile)+[(lats[-1],0)]
-		poly=Polygon(verts,facecolor=(0.7,0.7,0.7),edgecolor='none')
+		fc=self.terrainProfileFacecolor
+		ec=self.terrainProfileEdgecolor
+		poly=Polygon(verts,facecolor=fc,edgecolor=ec)
 		axis.add_patch(poly)
 
 	def match_horizontal_grid(self,axis):
