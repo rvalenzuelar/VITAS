@@ -69,10 +69,12 @@ class SynthPlot(object):
 		self.var=None
 		self.w_array=[]
 		self.wind=None
-		self.wind_jump=None
-		self.windb_size=None
+		self.windv_jump=None
+		self.windv_color=None
 		self.windv_scale=None
 		self.windv_width=None
+		self.windv_edgecolor=None
+		self.windv_linewidth=None
 		self.zlevel_textsize=None
 		self.zlevels=[]
 		self.zoomCenter=None
@@ -97,7 +99,10 @@ class SynthPlot(object):
 		self.terrainProfileEdgecolor=config['terrain_profile_edgecolor']
 		self.cmapName=config['synthesis_field_cmap_name']
 		self.cmapRange=config['synthesis_field_cmap_range']
-		self.wind_jump=config['wind_vector_jump']
+		self.windv_jump=config['wind_vector_jump']
+		self.windv_color=config['wind_vector_color']
+		self.windv_edgecolor=config['wind_vector_edgecolor']
+		self.windv_linewidth=config['wind_vector_linewidth']
 		self.figure_size=config['figure_size']
 		self.horizontalGridMajorOn=config['synthesis_horizontal_gridmajor_on']
 		self.horizontalGridMinorOn=config['synthesis_horizontal_gridminor_on']
@@ -145,16 +150,14 @@ class SynthPlot(object):
 		"""
 		if option == 'single':			
 			self.rows_cols=(1,1)
-			self.windb_size=6.5
 			self.zlevel_textsize=16
 			self.windv_scale=0.5
 			self.windv_width=2
 
 		elif option == 'multi':
 			self.rows_cols=(3,2)
-			self.windb_size=5
-			self.wind_jump['x']=self.wind_jump['x']+3
-			self.wind_jump['y']=self.wind_jump['y']+3
+			self.windv_jump['x']=self.windv_jump['x']+3
+			self.windv_jump['y']=self.windv_jump['y']+3
 			self.zlevel_textsize=12
 			self.windv_scale=0.5
 			self.windv_width=2
@@ -169,7 +172,6 @@ class SynthPlot(object):
 			elif self.sliceo=='zonal':
 				rows=len(self.slicez)
 			self.rows_cols=(rows,cols)
-			self.windb_size=5
 			self.geo_textsize=12
 			self.windv_scale=0.5
 			self.windv_width=2
@@ -286,8 +288,8 @@ class SynthPlot(object):
 
 		if self.slice_type == 'horizontal':
 
-			xjump=self.wind_jump['x']
-			yjump=self.wind_jump['y']
+			xjump=self.windv_jump['x']
+			yjump=self.windv_jump['y']
 
 			x=resample(self.lons,res=xjump)
 			y=resample(self.lats,res=yjump)
@@ -299,7 +301,11 @@ class SynthPlot(object):
 								units='dots', 
 								scale=self.windv_scale, 
 								scale_units='dots',
-								width=self.windv_width)
+								width=self.windv_width,
+								color=self.windv_color,
+								linewidth=self.windv_linewidth,
+								edgecolor=self.windv_edgecolor)
+
 			qk=grid_ax.quiverkey(Q, 0.15, 0.1, 10, r'$10 \frac{m}{s}$', labelpos='W',
 				 					fontproperties={'weight': 'bold'})
 			grid_ax.set_xlim(self.extent['lx'],self.extent['rx'])
@@ -327,7 +333,7 @@ class SynthPlot(object):
 				x=resample(lons,res=xjump)
 
 			zvalues=self.axesval['z']
-			zjump=self.wind_jump['z']
+			zjump=self.windv_jump['z']
 			y=resample(zvalues,res=zjump)
 
 			hor= resample(comp1,xres=xjump,yres=zjump)
@@ -336,7 +342,11 @@ class SynthPlot(object):
 			Q=grid_ax.quiver(x*self.scale,y, hor, ver,
 								units='dots', 
 								scale=0.5, 
-								scale_units='dots')
+								scale_units='dots',
+								width=self.windv_width,
+								color=self.windv_color,
+								linewidth=self.windv_linewidth,
+								edgecolor=self.windv_edgecolor)
 			qk=grid_ax.quiverkey(Q, 0.95, 0.8, 10, r'$10 \frac{m}{s}$')
 
 	def add_flight_path(self,axis):
@@ -1057,13 +1067,13 @@ class FlightPlot(object):
 		plt.figure()
 		ax=plt.subplot(111)
 		ax.scatter(data_extract2,flgt_mean)
-		ax.plot([8, 20], [8, 20], color='k', linestyle='-', linewidth=2)
+		ax.plot([0, 20], [0, 20], color='k', linestyle='-', linewidth=2)
 		ax.annotate(antext2, xy=(0.08, 0.9), xycoords="axes fraction",fontsize=14)
 		ax.annotate(antext1, xy=(0.08, 0.85), xycoords="axes fraction",fontsize=14)
 		ax.set_aspect(1)
 		ax.grid(which='major')
-		ax.set_xlim([8,20])
-		ax.set_ylim([8,20])
+		ax.set_xlim([0,20])
+		ax.set_ylim([0,20])
 		plt.suptitle(title2)
 		plt.xlabel('synthesis WSPD')
 		plt.ylabel('flight WSPD')
