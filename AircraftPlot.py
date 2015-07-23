@@ -369,7 +369,7 @@ class SynthPlot(object):
 	def add_flight_dot(self,axis,lat,lon,position):
 
 		if not self.panel:
-			self.flightDotSize=int(self.flightDotSize*0.5)
+			self.flightDotSize=8
 
 		fontsize=int(self.flightDotSize*0.8)
 		prop={'fontsize':fontsize,'color':(1,1,1),
