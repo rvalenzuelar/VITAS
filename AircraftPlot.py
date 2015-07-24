@@ -40,6 +40,7 @@ class SynthPlot(object):
 		self.flightColor=None
 		self.flightWidth=None
 		self.flightStyle=None
+		self.flightDotOn=False
 		self.flightDotColor=None
 		self.flightDotSize=None
 		self.flight_track_distance=None
@@ -83,35 +84,35 @@ class SynthPlot(object):
 
 	def config(self,config):
 
-		self.zoomCenter=config['zoom_center']
-		self.zoomDelta=config['zoom_del']
-		self.coastColor=config['coast_line_color']
-		self.coastWidth=config['coast_line_width']
-		self.coastStyle=config['coast_line_style']
-		self.flightColor=config['flight_line_color']
-		self.flightWidth=config['flight_line_width']
-		self.flightStyle=config['flight_line_style']				
-		self.flightDotColor=config['flight_dot_color']
-		self.flightDotSize=config['flight_dot_size']
-		self.terrainContours=config['terrain_contours']
-		self.terrainContourColors=config['terrain_contours_color']
-		self.terrainProfileFacecolor=config['terrain_profile_facecolor']
-		self.terrainProfileEdgecolor=config['terrain_profile_edgecolor']
 		self.cmapName=config['synthesis_field_cmap_name']
 		self.cmapRange=config['synthesis_field_cmap_range']
-		self.windv_jump=config['wind_vector_jump']
-		self.windv_color=config['wind_vector_color']
-		self.windv_edgecolor=config['wind_vector_edgecolor']
-		self.windv_linewidth=config['wind_vector_linewidth']
+		self.coastColor=config['coast_line_color']
+		self.coastStyle=config['coast_line_style']
+		self.coastWidth=config['coast_line_width']
 		self.figure_size=config['figure_size']
+		self.flightColor=config['flight_line_color']
+		self.flightDotColor=config['flight_dot_color']
+		self.flightDotOn=config['flight_dot_on']				
+		self.flightDotSize=config['flight_dot_size']
+		self.flightStyle=config['flight_line_style']				
+		self.flightWidth=config['flight_line_width']
 		self.horizontalGridMajorOn=config['synthesis_horizontal_gridmajor_on']
 		self.horizontalGridMinorOn=config['synthesis_horizontal_gridminor_on']
+		self.sliceLineColor=config['section_slice_line_color']
+		self.sliceLineStyle=config['section_slice_line_style']
+		self.sliceLineWidth=config['section_slice_line_width']
+		self.terrainContourColors=config['terrain_contours_color']
+		self.terrainContours=config['terrain_contours']
+		self.terrainProfileEdgecolor=config['terrain_profile_edgecolor']
+		self.terrainProfileFacecolor=config['terrain_profile_facecolor']
 		self.verticalGridMajorOn=config['synthesis_vertical_gridmajor_on']
 		self.verticalGridMinorOn=config['synthesis_vertical_gridminor_on']
-		self.sliceLineColor=config['section_slice_line_color']
-		self.sliceLineWidth=config['section_slice_line_width']
-		self.sliceLineStyle=config['section_slice_line_style']
-
+		self.windv_color=config['wind_vector_color']
+		self.windv_edgecolor=config['wind_vector_edgecolor']
+		self.windv_jump=config['wind_vector_jump']
+		self.windv_linewidth=config['wind_vector_linewidth']
+		self.zoomCenter=config['zoom_center']
+		self.zoomDelta=config['zoom_del']
 
 	def set_geographic_extent(self,synth):
 
@@ -163,8 +164,8 @@ class SynthPlot(object):
 			self.windv_width=2
 
 		elif option == 'vertical':
-			if self.var == 'SPH':
-				cols=2
+			if self.var == 'SPD':
+				cols=3 #(U,V,W)
 			else:
 				cols=1
 			if self.sliceo=='meridional':
@@ -357,24 +358,25 @@ class SynthPlot(object):
 		axis.plot(x,y,	color=self.flightColor,
 						linewidth=self.flightWidth,
 						linestyle=self.flightStyle)
-		
-		""" add dots and text """		
-		if self.flightDotSize:
-			dist_from_p0=get_distance_along_flight_track(x,y)
 
-			frequency=10 #[km]
-			endsearch=int(dist_from_p0[-1]) #[km]
-			target=range(0,endsearch,frequency)
-			search=np.asarray(dist_from_p0)
-			idxs=find_nearest2(search,target)
+		if self.flightDotOn:		
+			""" add dots and text """		
+			if self.flightDotSize:
+				dist_from_p0=get_distance_along_flight_track(x,y)
 
-			
-			for i in idxs:
-				value=round_to_closest_int(dist_from_p0[i],frequency)
-				self.add_flight_dot(axis,y[i],x[i],value)
+				frequency=10 #[km]
+				endsearch=int(dist_from_p0[-1]) #[km]
+				target=range(0,endsearch,frequency)
+				search=np.asarray(dist_from_p0)
+				idxs=find_nearest2(search,target)
 
-			self.flight_track_distance=dist_from_p0
-			self.flight_dot_index=idxs
+				
+				for i in idxs:
+					value=round_to_closest_int(dist_from_p0[i],frequency)
+					self.add_flight_dot(axis,y[i],x[i],value)
+
+				self.flight_track_distance=dist_from_p0
+				self.flight_dot_index=idxs
 
 	def add_flight_dot(self,axis,lat,lon,position):
 
@@ -484,11 +486,8 @@ class SynthPlot(object):
 
 		''' if zoomOpt is false then extent1=extent2 '''			
 		if self.zoomOpt:
-			if self.zoomOpt[0] == 'offshore':
-				center=(38.6,-123.5)
-			elif self.zoomOpt[0] == 'onshore':
-				center=(38.85,-123.25)
-			extent2=zoom_in(extent1,center)
+			opt=self.zoomOpt[0]
+			extent2=zoom_in(self,extent1,self.zoomCenter[opt])
 		else:
 			extent2=extent1
 
@@ -555,6 +554,7 @@ class SynthPlot(object):
 
 		field_array=kwargs['field']
 		self.sliceo=kwargs['sliceo']
+
 		u_array=self.u_array
 		v_array=self.v_array
 		w_array=self.w_array
@@ -587,21 +587,20 @@ class SynthPlot(object):
 
 		''' if zoomOpt is false then extent1=extent2 '''			
 		if self.zoomOpt:
-			if self.zoomOpt[0] == 'offshore':
-				center=(38.6,-123.5)
-			elif self.zoomOpt[0] == 'onshore':
-				center=(38.85,-123.25)
-			extent2=zoom_in(extent1,center)
+			opt=self.zoomOpt[0]
+			extent2=zoom_in(self,extent1,self.zoomCenter[opt])
 		else:
 			extent2=extent1
 
+		''' scale for horizontal axis'''
 		self.scale=20
+
+		''' adjust vertical extent '''
 		if self.sliceo=='meridional':
 			extent3=adjust_extent(self,extent1,'meridional','data')
 			extent4=adjust_extent(self,extent2,'meridional','detail')
 			horizontalComp=vComp
 			geo_axis='Lon: '
-
 		elif self.sliceo=='zonal':
 			extent3=adjust_extent(self,extent1,'zonal','data')
 			extent4=adjust_extent(self,extent2,'zonal','detail')			
@@ -633,8 +632,11 @@ class SynthPlot(object):
 			g.set_xlim(extent4[0], extent4[1])
 			g.set_ylim(extent4[2], extent4[3])	
 
+			# print self.horizontal['xmajor']
 			if p == 0:
 				self.match_horizontal_grid(g)
+
+			self.adjust_ticklabels(g)
 
 			if self.verticalGridMajorOn:
 				g.grid(True, which = 'major',linewidth=1)
@@ -642,9 +644,6 @@ class SynthPlot(object):
 			if self.verticalGridMinorOn:
 				g.grid(True, which = 'minor',alpha=0.5)
 				g.minorticks_on()
-
-
-			self.adjust_ticklabels(g)
 
 			if self.sliceo=='meridional':
 				geotext=geo_axis+str(self.slicem[p])
@@ -671,18 +670,17 @@ class SynthPlot(object):
 	
 	def vertical_plane_velocity(self,**kwargs):
 
-		spm_array=kwargs['fieldM'] # V-W component
-		spz_array=kwargs['fieldZ'] # U-W component
+
 		self.sliceo=kwargs['sliceo']
 
-		u_array=self.u_array
-		v_array=self.v_array
-		w_array=self.w_array
+		U=self.u_array
+		V=self.v_array
+		W=self.w_array
 
 		self.slice_type='vertical'
 		self.set_panel(self.slice_type)
-		self.set_colormap(self.var)
 
+		figsize=self.figure_size['vertical']
 		fig = plt.figure(figsize=(self.figure_size))
 
 		plot_grids=ImageGrid( fig,111,
@@ -695,52 +693,48 @@ class SynthPlot(object):
 								cbar_mode="single",
 								aspect=True)
 
-		spm_array=self.shrink(spm_array,xmask=self.maskLon,ymask=self.maskLat)
-		spz_array=self.shrink(spz_array,xmask=self.maskLon,ymask=self.maskLat)
-		u_array=self.shrink(u_array,xmask=self.maskLon,ymask=self.maskLat)
-		v_array=self.shrink(v_array,xmask=self.maskLon,ymask=self.maskLat)
-		w_array=self.shrink(w_array,xmask=self.maskLon,ymask=self.maskLat)
+		UComp  = self.get_slices(U)
+		VComp  = self.get_slices(V)
+		WComp  = self.get_slices(W)
+		profiles = Terrain.get_altitude_profile(self)
 
-		spm_group = self.get_slices(spm_array)
-		spz_group = self.get_slices(spz_array)
-		uComp  = self.get_slices(u_array)
-		vComp  = self.get_slices(v_array)
-		wComp  = self.get_slices(w_array)
+		''' field extent '''
+		extent1=self.get_extent()
 
-		self.minz=0.25
-		self.maxz=5.0
-		zvalues=self.axesval['z']
-		self.zmask= np.logical_and(zvalues >= self.minz, zvalues <= self.maxz)
+		''' if zoomOpt is false then extent1=extent2 '''			
+		if self.zoomOpt:
+			opt=self.zoomOpt[0]
+			extent2=zoom_in(self,extent1,self.zoomCenter[opt])
+		else:
+			extent2=extent1
 
-		self.scale=10
-		if  self.sliceo=='meridional':
-			self.extentv['lx']=self.extent['by']*self.scale
-			self.extentv['rx']=self.extent['ty']*self.scale
-			self.extentv['ty']=self.maxz
-			self.extentv['by']=self.minz
-			hComp=vComp
+		''' scale for horizontal axis'''
+		self.scale=20
+
+		''' adjust vertical extent '''
+		if self.sliceo=='meridional':
+			extent3=adjust_extent(self,extent1,'meridional','data')
+			extent4=adjust_extent(self,extent2,'meridional','detail')
 			geo_axis='Lon: '
-			n=len(self.slicem)
-			sliceVal=[x for pair in zip(self.slicem,self.slicem) for x in pair]
 		elif self.sliceo=='zonal':
-			self.extentv['lx']=self.extent['lx']*self.scale
-			self.extentv['rx']=self.extent['rx']*self.scale
-			self.extentv['ty']=self.maxz
-			self.extentv['by']=self.minz
-			hComp=uComp
+			extent3=adjust_extent(self,extent1,'zonal','data')
+			extent4=adjust_extent(self,extent2,'zonal','detail')			
 			geo_axis='Lat: '
-			n=len(self.slicez)
-			sliceVal=[x for pair in zip(self.slicez,self.slicez) for x in pair]
-		sph_group=[]
-		for s in range(n):
-			sph_group.append(spm_group[s])
-			sph_group.append(spz_group[s])
-		
-		group=zip(plot_grids,sph_group)
+
+
+		"""creates iterator group """
+		group=zip(plot_grids,
+					UComp,
+					VComp,
+					WComp,
+					profiles['altitude'],profiles['axis'])
 
 		# make gridded plot
 		p=0
-		for g,s in group:
+
+		# CHECK HOW TO PLOT THIS
+		
+		for g,u,v,w,p in group:
 
 			s=s[: ,self.zmask]
 			# hcomp=hcomp[: ,self.zmask]
@@ -1188,13 +1182,13 @@ def all_same(array):
 
 	return b
 
-def zoom_in(in_extent,center_point):
+def zoom_in(synthplot,in_extent,center_point):
 
 	y,x=center_point
 	inext=in_extent
 	outext=[None,None,None,None]
-	delx=1.2 #[deg]
-	dely=1.1 #[deg]
+	delx=synthplot.zoomDelta['x'] #[deg]
+	dely=synthplot.zoomDelta['y'] #[deg]
 
 	if x<inext[0] or x>inext[1] or y<inext[2] or y>inext[3]:
 		print "Zoom center point out of geographic extention boundaries"
@@ -1253,7 +1247,6 @@ def get_distance_along_flight_track(x,y):
 			distance_from_p0.append(value['s12']/1000) #[km]
 
 	return distance_from_p0
-
 
 def round_to_closest_int(value,base):
 
