@@ -2,7 +2,7 @@
 VIsualization Tool for Aircraft Synthesis
 --------------------------------------------
 
-VITAS is build to create plots that support the analysis
+`VITAS` is aimed to create plots that support the analysis
 of dual-Doppler radar synthesis derived from airborne platforms. The code is being developed and therefore is changing constantly. 
 
 The current version is a python script working as command line tool. Hopefully, in 
