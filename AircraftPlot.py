@@ -21,7 +21,6 @@ import numpy as np
 import sys
 import math
 
-
 class SynthPlot(object):
 
 	def __init__(self):
@@ -83,36 +82,39 @@ class SynthPlot(object):
 		self.zoomOpt=None
 
 	def config(self,config):
-
-		self.cmapName=config['synthesis_field_cmap_name']
-		self.cmapRange=config['synthesis_field_cmap_range']
-		self.coastColor=config['coast_line_color']
-		self.coastStyle=config['coast_line_style']
-		self.coastWidth=config['coast_line_width']
-		self.figure_size=config['figure_size']
-		self.flightColor=config['flight_line_color']
-		self.flightDotColor=config['flight_dot_color']
-		self.flightDotOn=config['flight_dot_on']				
-		self.flightDotSize=config['flight_dot_size']
-		self.flightStyle=config['flight_line_style']				
-		self.flightWidth=config['flight_line_width']
-		self.horizontalGridMajorOn=config['synthesis_horizontal_gridmajor_on']
-		self.horizontalGridMinorOn=config['synthesis_horizontal_gridminor_on']
-		self.sliceLineColor=config['section_slice_line_color']
-		self.sliceLineStyle=config['section_slice_line_style']
-		self.sliceLineWidth=config['section_slice_line_width']
-		self.terrainContourColors=config['terrain_contours_color']
-		self.terrainContours=config['terrain_contours']
-		self.terrainProfileEdgecolor=config['terrain_profile_edgecolor']
-		self.terrainProfileFacecolor=config['terrain_profile_facecolor']
-		self.verticalGridMajorOn=config['synthesis_vertical_gridmajor_on']
-		self.verticalGridMinorOn=config['synthesis_vertical_gridminor_on']
-		self.windv_color=config['wind_vector_color']
-		self.windv_edgecolor=config['wind_vector_edgecolor']
-		self.windv_jump=config['wind_vector_jump']
-		self.windv_linewidth=config['wind_vector_linewidth']
-		self.zoomCenter=config['zoom_center']
-		self.zoomDelta=config['zoom_del']
+		try:
+			self.cmapName=config['synthesis_field_cmap_name']
+			self.cmapRange=config['synthesis_field_cmap_range']
+			self.coastColor=config['coast_line_color']
+			self.coastStyle=config['coast_line_style']
+			self.coastWidth=config['coast_line_width']
+			self.figure_size=config['figure_size']
+			self.flightColor=config['flight_line_color']
+			self.flightDotColor=config['flight_dot_color']
+			self.flightDotOn=config['flight_dot_on']				
+			self.flightDotSize=config['flight_dot_size']
+			self.flightStyle=config['flight_line_style']				
+			self.flightWidth=config['flight_line_width']
+			self.horizontalGridMajorOn=config['synthesis_horizontal_gridmajor_on']
+			self.horizontalGridMinorOn=config['synthesis_horizontal_gridminor_on']
+			self.sliceLineColor=config['section_slice_line_color']
+			self.sliceLineStyle=config['section_slice_line_style']
+			self.sliceLineWidth=config['section_slice_line_width']
+			self.terrainContourColors=config['terrain_contours_color']
+			self.terrainContours=config['terrain_contours']
+			self.terrainProfileEdgecolor=config['terrain_profile_edgecolor']
+			self.terrainProfileFacecolor=config['terrain_profile_facecolor']
+			self.verticalGridMajorOn=config['synthesis_vertical_gridmajor_on']
+			self.verticalGridMinorOn=config['synthesis_vertical_gridminor_on']
+			self.windv_color=config['wind_vector_color']
+			self.windv_edgecolor=config['wind_vector_edgecolor']
+			self.windv_jump=config['wind_vector_jump']
+			self.windv_linewidth=config['wind_vector_linewidth']
+			self.zoomCenter=config['zoom_center']
+			self.zoomDelta=config['zoom_del']
+		except KeyError as e:
+			print "Please add the "+e.args[0]+" key to vitas.config\n"
+			sys.exit()
 
 	def set_geographic_extent(self,synth):
 
@@ -632,7 +634,6 @@ class SynthPlot(object):
 			g.set_xlim(extent4[0], extent4[1])
 			g.set_ylim(extent4[2], extent4[3])	
 
-			# print self.horizontal['xmajor']
 			if p == 0:
 				self.match_horizontal_grid(g)
 
@@ -724,63 +725,52 @@ class SynthPlot(object):
 
 		"""creates iterator group """
 		group=zip(plot_grids,
-					UComp,
-					VComp,
-					WComp,
+					zip(UComp,VComp,WComp),
 					profiles['altitude'],profiles['axis'])
 
 		# make gridded plot
 		p=0
-
-		# CHECK HOW TO PLOT THIS
 		
-		for g,u,v,w,p in group:
+		for g,field,p in group:
 
-			s=s[: ,self.zmask]
-			# hcomp=hcomp[: ,self.zmask]
-			# wcomp=wcomp[: ,self.zmask]
+			im=self.add_field(g,array=field.T,name=self.var,ext=extent3)
 
-			im = g.imshow(s.T,
-							interpolation='none',
-							origin='lower',
-							extent=self.extent_vertical,
-							vmin=self.cmap['range'][0],
-							vmax=self.cmap['range'][1],
-							cmap=self.cmap['name'])
-
-			# self.add_windvector(g,hcomp,wcomp)
+			self.add_terrain_profile(g,prof,profax)
 
 			self.add_slice_line(g)
 
-			g.grid(True, which = 'major',linewidth=1)
-			g.grid(True, which = 'minor',alpha=0.5)
-			# g.minorticks_on()
+			g.set_xlim(extent4[0], extent4[1])
+			g.set_ylim(extent4[2], extent4[3])	
 
-			self.adjust_ticklabels(g)
+			# if p == 0:
+			# 	self.match_horizontal_grid(g)
 
-			if p%2 ==0:
-				geotext=geo_axis+str(sliceVal[p])
-				g.text(	0.03, 0.9,
-						geotext,
-						fontsize=self.zlevel_textsize,
-						horizontalalignment='left',
-						verticalalignment='center',
-						transform=g.transAxes)
-			if p==0:
-				g.text(	0.95, 0.9,
-						'V-W',
-						fontsize=self.zlevel_textsize,
-						horizontalalignment='right',
-						verticalalignment='center',
-						transform=g.transAxes)								
-			if p==1:
-				g.text(	0.95, 0.9,
-						'U-W',
-						fontsize=self.zlevel_textsize,
-						horizontalalignment='right',
-						verticalalignment='center',
-						transform=g.transAxes)				
-			p+=1
+			# self.adjust_ticklabels(g)
+
+
+			# if p%2 ==0:
+			# 	geotext=geo_axis+str(sliceVal[p])
+			# 	g.text(	0.03, 0.9,
+			# 			geotext,
+			# 			fontsize=self.zlevel_textsize,
+			# 			horizontalalignment='left',
+			# 			verticalalignment='center',
+			# 			transform=g.transAxes)
+			# if p==0:
+			# 	g.text(	0.95, 0.9,
+			# 			'V-W',
+			# 			fontsize=self.zlevel_textsize,
+			# 			horizontalalignment='right',
+			# 			verticalalignment='center',
+			# 			transform=g.transAxes)								
+			# if p==1:
+			# 	g.text(	0.95, 0.9,
+			# 			'U-W',
+			# 			fontsize=self.zlevel_textsize,
+			# 			horizontalalignment='right',
+			# 			verticalalignment='center',
+			# 			transform=g.transAxes)				
+			# p+=1
 
 		 # add color bar
 		plot_grids.cbar_axes[0].colorbar(im)
