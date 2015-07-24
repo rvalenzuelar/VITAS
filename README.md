@@ -100,7 +100,7 @@ Validation options:
 Config file
 --------
 
-A configuration file named `vitas.config` has to be created in the VITAS folder. This file is meant for personalize VITAS and contains the following parameters that are read by VITAS :
+A configuration file named `vitas.config` has to be created in the `VITAS` folder. This file is meant to personalize VITAS and contains the following parameters that are read by VITAS :
 
 ```code
 folder_synthesis='~/folder_1/folder_2/.../folder_n'
