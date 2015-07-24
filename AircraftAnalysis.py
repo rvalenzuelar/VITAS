@@ -122,10 +122,6 @@ class Synthesis(object):
 		self.VOR = None
 		self.CON = None
 		self.DBZ = None
-		self.SPD = None
-		self.SPH = None
-		self.SPM = None
-		self.SPZ = None
 		self.LAT = None
 		self.LON = None
 		self.start = None
@@ -139,10 +135,6 @@ class Synthesis(object):
 		for field,value in fields.iteritems():
 			setattr(self,field,self.read_synth(value))
 
-		self.SPD = self.get_TotalWindSpeed(self.WVA)
-		self.SPH = self.get_HorizontalWindSpeed()
-		self.SPM = self.get_MeridionalWindSpeed(self.WVA)
-		self.SPZ = self.get_ZonalWindSpeed(self.WVA)
 
 	def set_axes(self,config):
 
@@ -299,19 +291,5 @@ class Synthesis(object):
 			print "Error in geo_axis name"
 			exit()
 
-	def get_TotalWindSpeed(self,W):
 
-		return np.sqrt(self.U**2+self.V**2+W**2)
-			
-	def get_HorizontalWindSpeed(self):
-
-		return np.sqrt(self.U**2+self.V**2)
-
-	def get_MeridionalWindSpeed(self,W):
-
-		return np.sqrt(self.V**2+W**2)
-
-	def get_ZonalWindSpeed(self,W):
-
-		return np.sqrt(self.U**2+W**2)
 
