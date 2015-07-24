@@ -32,7 +32,7 @@ $ conda install [name of the module]
 
 Modules that are not located in the conda database can be installed with binstar.
 
-VITAS is being developed in a Linux (Ubuntu and RedHat 6) environment so Windows/OSX tests are necessary.
+`VITAS` is being developed in a Linux (Ubuntu and RedHat 6) environment so Windows/OSX tests are necessary.
 
 
 Help Menu
