@@ -8,6 +8,7 @@ from os import getcwd
 import sys
 import AircraftPlot as AP
 import Terrain
+import numpy as np
 
 def plot_terrain(SynthPlot,**kwargs):
 
@@ -81,10 +82,6 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	except TypeError:
 		P.slicez=None
 
-	""" get array """
-	if P.var == 'SPD':
-		P.var = 'SPH' # horizontal proyection
-	array=getattr(SYNTH , P.var)		
 
 	""" set common variables """
 	P.axesval['x']=SYNTH.X
@@ -106,24 +103,43 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	""" coast line """
 	P.set_coastline()
 
+	""" get array """
+	if P.var == 'SPD':
+		array=get_HorizontalWindSpeed(P.u_array,P.v_array)
+	else:
+		array=getattr(SYNTH , P.var)		
+
+
 	""" make horizontal plane plot """
 	P.horizontal_plane(field=array)
 	
 	""" make vertical plane plots """		
 	if P.slicem:
-		if P.var == 'SPH' :
-			P.vertical_plane_velocity(	fieldM=SYNTH.SPM, # meridional component
-										fieldZ=SYNTH.SPZ,
-										sliceo='meridional') # zonal component)
-		else:
+		if P.var != 'SPH' :
 			P.vertical_plane(field=array,sliceo='meridional')	
+		else:
+			P.vertical_plane_velocity(sliceo='meridional') # zonal component)
 
 	if P.slicez:
-		if P.var == 'SPH' :
-			P.vertical_plane_velocity(	fieldM=SYNTH.SPM, # meridional component
-										fieldZ=SYNTH.SPZ,
-										sliceo='zonal') # zonal component)
-		else:
+		if P.var != 'SPH' :
 			P.vertical_plane(field=array,sliceo='zonal')	
+		else:
+			P.vertical_plane_velocity(sliceo='zonal') # zonal component)
 
 	return P
+
+def get_TotalWindSpeed(U,V,W):
+
+	return np.sqrt(U**2 + V**2 + W**2)
+		
+def get_HorizontalWindSpeed(U,V):
+
+	return np.sqrt(U**2 + V**2)
+
+def get_MeridionalWindSpeed(V,W):
+
+	return np.sqrt(V**2 + W**2)
+
+def get_ZonalWindSpeed(U,W):
+
+	return np.sqrt(U**2 + W**2)
