@@ -11,7 +11,7 @@ the future the code will become an installable python module. Also, it is limite
 Installation
 ----------------
 
-Copy the repository to your local computer (for example to your home folder). Then, within the vitas folder call `./start_plotting` with the options described in the help menu.
+Copy the repository to your local computer (for example to your home folder). Then, within the `VITAS` folder call `./start_plotting` with the options described in the help menu.
 
 There are several python modules that are required:
 
