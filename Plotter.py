@@ -89,8 +89,10 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	P.axesval['z']=SYNTH.Z
 	P.u_array=SYNTH.U
 	P.v_array=SYNTH.V
-	P.w_array=SYNTH.WVA
-	# P.w_array=SYNTH.WUP
+	if P.windv_verticalComp=='WVA':
+		P.w_array=SYNTH.WVA
+	elif P.windv_verticalComp=='WUP':
+		P.w_array=SYNTH.WUP
 	P.file=SYNTH.file
 
 	""" general  geographic domain boundaries """
@@ -113,18 +115,23 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	""" make horizontal plane plot """
 	P.horizontal_plane(field=array)
 	
-	""" make vertical plane plots """		
+	""" make vertical plane plots """
+	velocity_fields=['SPD','WVA','WUP']
 	if P.slicem:
-		if P.var != 'SPH' :
+		if P.var not in velocity_fields:
 			P.vertical_plane(field=array,sliceo='meridional')	
 		else:
-			P.vertical_plane_velocity(sliceo='meridional') # zonal component)
+			P.vertical_plane(spd='u',sliceo='meridional')
+			P.vertical_plane(spd='v',sliceo='meridional')
+			P.vertical_plane(spd='w',sliceo='meridional')
 
 	if P.slicez:
-		if P.var != 'SPH' :
+		if P.var not in velocity_fields:
 			P.vertical_plane(field=array,sliceo='zonal')	
 		else:
-			P.vertical_plane_velocity(sliceo='zonal') # zonal component)
+			P.vertical_plane(spd='u',sliceo='zonal')
+			P.vertical_plane(spd='v',sliceo='zonal')
+			P.vertical_plane(spd='w',sliceo='zonal')
 
 	return P
 

@@ -106,6 +106,7 @@ class SynthPlot(object):
 			self.terrainProfileFacecolor=config['terrain_profile_facecolor']
 			self.verticalGridMajorOn=config['synthesis_vertical_gridmajor_on']
 			self.verticalGridMinorOn=config['synthesis_vertical_gridminor_on']
+			self.windv_verticalComp=config['wind_vector_vertical_component']
 			self.windv_color=config['wind_vector_color']
 			self.windv_edgecolor=config['wind_vector_edgecolor']
 			self.windv_jump=config['wind_vector_jump']
@@ -145,7 +146,14 @@ class SynthPlot(object):
 		self.flight['lat']=fp[0]
 		self.flight['lon']=fp[1]
 
-	def set_panel(self,option):
+	def set_panel(self,**kwargs):
+
+		isWind=False
+		for key,value in kwargs.iteritems():
+			if key == 'option':
+				option=value
+			elif key == 'wind':
+				isWind=value
 
 		"""
 		set some plotting values and stores
@@ -166,8 +174,8 @@ class SynthPlot(object):
 			self.windv_width=2
 
 		elif option == 'vertical':
-			if self.var == 'SPD':
-				cols=3 #(U,V,W)
+			if self.var == 'SPD' and not isWind:
+				cols=2 #(U,V)
 			else:
 				cols=1
 			if self.sliceo=='meridional':
@@ -201,14 +209,13 @@ class SynthPlot(object):
 
 	def get_var_title(self,var):
 		var_title={	'DBZ': 'Reflectivity factor [dBZ]',
-					'SPD': 'Total wind speed [m/s]',
-					'SPH': 'Horizontal wind speed [m/s]',
-					'VOR': 'Vorticity',
-					'CON': 'Convergence',
+					'SPD': 'Horizontal wind speed [m/s]',
 					'U': 'wind u-component [m/s]',
-					'V': 'wind v-component [m/s]',
-					'WVA': 'wind w-component [m/s] (variational)',
-					'WUP': 'wind w-component [m/s] (integration)'}
+					'V': 'wind v-component[m/s]',
+					'VOR': 'Vorticity [1/s]',
+					'CON': 'Convergence [1/s]',
+					'WVA': 'wind w-component (variational) [m/s]',
+					'WUP': 'wind w-component (vertical integration) [m/s]'}
 		title=var_title[var]
 		
 		if self.slice_type == 'vertical' and self.sliceo == 'zonal':
@@ -464,10 +471,10 @@ class SynthPlot(object):
 			v_array.mask=w_array.mask
 
 		if self.panel:
-			self.set_panel('single')
+			self.set_panel(option='single')
 			figsize=self.figure_size['single']
 		else:
-			self.set_panel('multi')
+			self.set_panel(option='multi')
 			figsize=self.figure_size['multi']
 
 		self.slice_type='horizontal'
@@ -504,7 +511,6 @@ class SynthPlot(object):
 
 		# make gridded plot
 		for g,k,field,u,v in group:
-
 
 			self.add_coastline(g)
 			self.add_flight_path(g)
@@ -554,15 +560,23 @@ class SynthPlot(object):
 
 	def vertical_plane(self,**kwargs):
 
-		field_array=kwargs['field']
-		self.sliceo=kwargs['sliceo']
+		field_array=None
+		for key,value in kwargs.iteritems():
+			if key == 'field':
+				isWind=False			
+				field_array=value
+			if key == 'spd':
+				isWind=True
+				windname=value
+			elif key == 'sliceo':
+				self.sliceo=value
 
 		u_array=self.u_array
 		v_array=self.v_array
 		w_array=self.w_array
 
 		self.slice_type='vertical'
-		self.set_panel(self.slice_type)		
+		self.set_panel(option=self.slice_type,wind=isWind)		
 
 		figsize=self.figure_size['vertical']
 		fig = plt.figure(figsize=figsize)
@@ -578,11 +592,27 @@ class SynthPlot(object):
 								aspect=True)
 
 		""" get list with slices """
-		field_group = self.get_slices(field_array)
 		uComp  = self.get_slices(u_array)
 		vComp  = self.get_slices(v_array)
 		wComp  = self.get_slices(w_array)
 		profiles = Terrain.get_altitude_profile(self)
+
+		if isWind:
+			if windname == 'u':
+				field_group = uComp
+				colorName='U'
+				varName=colorName
+			elif windname == 'v':
+				field_group = vComp
+				colorName='V'
+				varName=colorName
+			elif windname == 'w':
+				field_group = wComp
+				colorName=self.var
+				varName=self.var
+		else:
+			field_group = self.get_slices(field_array)
+			varName=self.var
 
 		''' field extent '''
 		extent1=self.get_extent()
@@ -622,11 +652,14 @@ class SynthPlot(object):
 
 		for g,field,h_comp,w_comp,prof,profax in group:
 
-			im=self.add_field(g,array=field.T,name=self.var,ext=extent3)
+			if isWind:
+				im=self.add_field(g,array=field.T,name=colorName,ext=extent3)
+			else:
+				im=self.add_field(g,array=field.T,name=self.var,ext=extent3)
 
 			self.add_terrain_profile(g,prof,profax)
 
-			if self.wind:
+			if self.wind and not isWind:
 				self.add_windvector(g,h_comp.T,w_comp.T)
 
 			self.add_slice_line(g)
@@ -663,121 +696,12 @@ class SynthPlot(object):
 		plot_grids.cbar_axes[0].colorbar(im)
 		# fig.suptitle(' Dual-Doppler Synthesis: '+self.get_var_title(self.var) )
 
-		titext='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)+'\n'
+		titext='Dual-Doppler Synthesis: '+ self.get_var_title(varName)+'\n'
 		fig.suptitle(titext+self.file)
 
 		# show figure
 		plt.draw()
 	
-	def vertical_plane_velocity(self,**kwargs):
-
-
-		self.sliceo=kwargs['sliceo']
-
-		U=self.u_array
-		V=self.v_array
-		W=self.w_array
-
-		self.slice_type='vertical'
-		self.set_panel(self.slice_type)
-
-		figsize=self.figure_size['vertical']
-		fig = plt.figure(figsize=(self.figure_size))
-
-		plot_grids=ImageGrid( fig,111,
-								nrows_ncols = self.rows_cols,
-								axes_pad = 0.0,
-								add_all = True,
-								share_all=False,
-								label_mode = "L",
-								cbar_location = "top",
-								cbar_mode="single",
-								aspect=True)
-
-		UComp  = self.get_slices(U)
-		VComp  = self.get_slices(V)
-		WComp  = self.get_slices(W)
-		profiles = Terrain.get_altitude_profile(self)
-
-		''' field extent '''
-		extent1=self.get_extent()
-
-		''' if zoomOpt is false then extent1=extent2 '''			
-		if self.zoomOpt:
-			opt=self.zoomOpt[0]
-			extent2=zoom_in(self,extent1,self.zoomCenter[opt])
-		else:
-			extent2=extent1
-
-		''' scale for horizontal axis'''
-		self.scale=20
-
-		''' adjust vertical extent '''
-		if self.sliceo=='meridional':
-			extent3=adjust_extent(self,extent1,'meridional','data')
-			extent4=adjust_extent(self,extent2,'meridional','detail')
-			geo_axis='Lon: '
-		elif self.sliceo=='zonal':
-			extent3=adjust_extent(self,extent1,'zonal','data')
-			extent4=adjust_extent(self,extent2,'zonal','detail')			
-			geo_axis='Lat: '
-
-
-		"""creates iterator group """
-		group=zip(plot_grids,
-					zip(UComp,VComp,WComp),
-					profiles['altitude'],profiles['axis'])
-
-		# make gridded plot
-		p=0
-		
-		for g,field,p in group:
-
-			im=self.add_field(g,array=field.T,name=self.var,ext=extent3)
-
-			self.add_terrain_profile(g,prof,profax)
-
-			self.add_slice_line(g)
-
-			g.set_xlim(extent4[0], extent4[1])
-			g.set_ylim(extent4[2], extent4[3])	
-
-			# if p == 0:
-			# 	self.match_horizontal_grid(g)
-
-			# self.adjust_ticklabels(g)
-
-
-			# if p%2 ==0:
-			# 	geotext=geo_axis+str(sliceVal[p])
-			# 	g.text(	0.03, 0.9,
-			# 			geotext,
-			# 			fontsize=self.zlevel_textsize,
-			# 			horizontalalignment='left',
-			# 			verticalalignment='center',
-			# 			transform=g.transAxes)
-			# if p==0:
-			# 	g.text(	0.95, 0.9,
-			# 			'V-W',
-			# 			fontsize=self.zlevel_textsize,
-			# 			horizontalalignment='right',
-			# 			verticalalignment='center',
-			# 			transform=g.transAxes)								
-			# if p==1:
-			# 	g.text(	0.95, 0.9,
-			# 			'U-W',
-			# 			fontsize=self.zlevel_textsize,
-			# 			horizontalalignment='right',
-			# 			verticalalignment='center',
-			# 			transform=g.transAxes)				
-			# p+=1
-
-		 # add color bar
-		plot_grids.cbar_axes[0].colorbar(im)
-		fig.suptitle(' Dual-Doppler Synthesis: '+self.get_var_title(self.var) )
-
-		# show figure
-		plt.draw()	
 
 class FlightPlot(object):
 
