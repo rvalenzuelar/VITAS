@@ -972,16 +972,18 @@ class FlightPlot(object):
 
 
 		''' scatter '''
+		x_range=[0, 40]
+		y_range=[0, 40]
 		plt.figure()
 		ax=plt.subplot(111)
 		ax.scatter(data_extract2,flgt_mean)
-		ax.plot([0, 20], [0, 20], color='k', linestyle='-', linewidth=2)
+		ax.plot(x_range, y_range, color='k', linestyle='-', linewidth=2)
 		ax.annotate(antext2, xy=(0.08, 0.9), xycoords="axes fraction",fontsize=14)
 		ax.annotate(antext1, xy=(0.08, 0.85), xycoords="axes fraction",fontsize=14)
 		ax.set_aspect(1)
 		ax.grid(which='major')
-		ax.set_xlim([0,20])
-		ax.set_ylim([0,20])
+		ax.set_xlim(x_range)
+		ax.set_ylim(y_range)
 		plt.suptitle(title2)
 		plt.xlabel('synthesis WSPD')
 		plt.ylabel('flight WSPD')

@@ -50,7 +50,7 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 	z=Synth.Z
 
 	""" synthesis horizontal velocity"""
-	array=Synth.SPH
+	array=get_HorizontalWindSpeed(Synth.U,Synth.V)
 
 	flight.compare_with_synth(array=array,x=lon,y=lat,z=z,level=z[level],zoom=zoomOpt[0])
 	
