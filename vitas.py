@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-# Read netCDF file with pseudo-dual Doppler 
-# synthesis and plot variables
-#
+# Initialize VITAS
 #
 # Raul Valenzuela
 # July, 2015
