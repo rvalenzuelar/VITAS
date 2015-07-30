@@ -11,7 +11,7 @@ the future the code will become an installable python module. Also, it is limite
 Installation
 ----------------
 
-Copy the repository to your local computer (for example to your home folder). Then, within the `VITAS` folder call `./start_plotting` with the options described in the help menu.
+Copy the repository to your local computer (for example to your home folder). Then, within the `VITAS` folder call `./vitas.py` with the options described in the help menu.
 
 There are several python modules that are required:
 
@@ -41,11 +41,11 @@ Help Menu
 Help about how to use the script can be obtained by:
 
 ```code
-$./start_plotting.py -h
+$./vitas.py -h
 ```
 which prints
 ```code
-usage: start_plotting.py [--help] [--ced file] [--std file] [--panel num]
+usage: vitas.py [--help] [--ced file] [--std file] [--panel num]
                          [--zoomin str] [--wind] [--mask]
                          [--all | --field STR [STR ...]] [--print_shapes]
                          [--print_global_atts] [--print_axis STR [STR ...]]
@@ -163,7 +163,7 @@ Examples
 Calling a single panel of DBZ with wind vectors and offshore zoom in (defined within the code):
 
 ```code
-$ ./start_plotting.py -c c03/leg01.cdf -s 010123I.nc -f DBZ -p 1 --wind -z offshore
+$ ./vitas.py -c c03/leg01.cdf -s 010123I.nc -f DBZ -p 1 --wind -z offshore
 ```
 ![alt tag](https://github.com/rvalenzuelar/vitas/blob/master/figure_example1.png)
 
@@ -174,7 +174,7 @@ Adding the option `--meteo` produces the following additional plot:
 Changing the panel number gives different altitudes of analyses. With no panel option `-p`, VITAS plots six default panels:
 
 ```code
-$ ./start_plotting.py -c c03/leg01.cdf -s 010123I.nc -f DBZ --wind -z offshore
+$ ./vitas.py -c c03/leg01.cdf -s 010123I.nc -f DBZ --wind -z offshore
 ```
 ![alt tag](https://github.com/rvalenzuelar/vitas/blob/master/figure_example3.png)
 
