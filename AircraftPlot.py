@@ -75,6 +75,7 @@ class SynthPlot(object):
 		self.windv_width=None
 		self.windv_edgecolor=None
 		self.windv_linewidth=None
+		self.windv_magnitude=None
 		self.zlevel_textsize=None
 		self.zlevels=[]
 		self.zoomCenter=None
@@ -111,6 +112,8 @@ class SynthPlot(object):
 			self.windv_edgecolor=config['wind_vector_edgecolor']
 			self.windv_jump=config['wind_vector_jump']
 			self.windv_linewidth=config['wind_vector_linewidth']
+			self.windv_magnitude=config['wind_vector_magnitude']
+			self.windv_scale=config['wind_vector_scale']
 			self.zoomCenter=config['zoom_center']
 			self.zoomDelta=config['zoom_del']
 		except KeyError as e:
@@ -162,7 +165,6 @@ class SynthPlot(object):
 		if option == 'single':			
 			self.rows_cols=(1,1)
 			self.zlevel_textsize=16
-			self.windv_scale=0.5
 			self.windv_width=2
 
 		elif option == 'multi':
@@ -170,7 +172,6 @@ class SynthPlot(object):
 			self.windv_jump['x']=self.windv_jump['x']+3
 			self.windv_jump['y']=self.windv_jump['y']+3
 			self.zlevel_textsize=12
-			self.windv_scale=0.5
 			self.windv_width=2
 
 		elif option == 'vertical':
@@ -184,7 +185,6 @@ class SynthPlot(object):
 				rows=len(self.slicez)
 			self.rows_cols=(rows,cols)
 			self.geo_textsize=12
-			self.windv_scale=0.5
 			self.windv_width=2
 
 	def get_slices(self,array):
@@ -315,8 +315,8 @@ class SynthPlot(object):
 								color=self.windv_color,
 								linewidth=self.windv_linewidth,
 								edgecolor=self.windv_edgecolor)
-
-			qk=grid_ax.quiverkey(Q, 0.15, 0.1, 10, r'$10 \frac{m}{s}$', labelpos='W',
+			symbol = '$'+str(self.windv_magnitude)+r'\frac{m}{s}$'
+			qk=grid_ax.quiverkey(Q, 0.15, 0.1, self.windv_magnitude, symbol, labelpos='W',
 				 					fontproperties={'weight': 'bold'})
 			grid_ax.set_xlim(self.extent['lx'],self.extent['rx'])
 			grid_ax.set_ylim(self.extent['by'], self.extent['ty'])			
