@@ -55,8 +55,7 @@ def start():
 							metavar='str',
 							nargs=1,
 							default=None,
-							choices=['offshore','onshore'],
-							help="zoom-in over a offshore|onshore flight leg")	
+							help="zoom-in over an area specified in vitas.config zoom_center")	
 	plot_options.add_argument('--wind', '-w',
 							action='store_true',
 							help="include wind vectors")	
