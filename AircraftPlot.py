@@ -700,7 +700,9 @@ class SynthPlot(object):
 		# fig.suptitle(' Dual-Doppler Synthesis: '+self.get_var_title(self.var) )
 
 		titext='Dual-Doppler Synthesis: '+ self.get_var_title(varName)+'\n'
-		fig.suptitle(titext+self.file)
+		line_start='\nStart time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC'
+		line_end='\nEnd time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'		
+		fig.suptitle(titext+self.file+line_start+line_end)
 
 		# show figure
 		plt.draw()
