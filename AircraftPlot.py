@@ -61,6 +61,8 @@ class SynthPlot(object):
 		self.sliceLineColor=None
 		self.sliceLineWidth=None
 		self.sliceLineStyle=None
+		self.synth_start=None
+		self.synth_end=None
 		self.terrain=None
 		self.terrainContours=None
 		self.terrainContourColors=None
@@ -422,7 +424,6 @@ class SynthPlot(object):
 						vmin=self.cmapRange[name][0],
 						vmax=self.cmapRange[name][1],
 						cmap=self.cmapName[name])
-
 		return im
 
 	def add_terrain_profile(self,axis,profile,profaxis):
@@ -553,7 +554,9 @@ class SynthPlot(object):
 		''' add color bar '''
 		plot_grids.cbar_axes[0].colorbar(im)
 		titext='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)+'\n'
-		fig.suptitle(titext+self.file)
+		line_start='\nStart time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC'
+		line_end='\nEnd time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'
+		fig.suptitle(titext+self.file+line_start+line_end)
 
 		# plt.tight_layout()
 		plt.draw()

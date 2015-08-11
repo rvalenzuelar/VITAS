@@ -82,6 +82,9 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	except TypeError:
 		P.slicez=None
 
+	""" synthesis time """
+	P.synth_start=SYNTH.start
+	P.synth_end=SYNTH.end
 
 	""" set common variables """
 	P.axesval['x']=SYNTH.X

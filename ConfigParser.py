@@ -16,11 +16,12 @@ def start():
 
 	config={}
 	for line in input_config:
-		key, value = line.split("=")
-		if not value:
-			print "Please set the value of: "+key
-		else:
-			config[key.strip()] = ast.literal_eval(value.strip())
+		if line:
+			key, value = line.split("=")
+			if not value:
+				print "Please set the value of: "+key
+			else:
+				config[key.strip()] = ast.literal_eval(value.strip())
 
 	synthpath=config['folder_synthesis']
 	stdpath=config['folder_flight_level']
