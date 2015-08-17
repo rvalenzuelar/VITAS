@@ -28,7 +28,7 @@ def plot_flight_meteo(SynthPlot,Synth,StdTape, **kwargs):
 	if meteo:
 		met=StdTape.get_meteo(Synth.start, Synth.end)	
 		flight_name = Synth.file[-13:]
-		flight=AP.FlightPlot(meteo=met, name=flight_name)
+		flight=AP.FlightPlot(meteo=met, name=flight_name, time=[Synth.start, Synth.end])
 		flight_xaxis=SynthPlot.flight_track_distance
 		flight_dots=SynthPlot.flight_dot_index
 		flight.plot_meteo(flight_xaxis,flight_dots)

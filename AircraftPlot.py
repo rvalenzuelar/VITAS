@@ -716,6 +716,7 @@ class FlightPlot(object):
 		self.met=None
 		self.flightPath=None
 		self.name=None
+		self.time=None
 
 		for key,value in kwargs.iteritems():
 			if key == 'meteo':
@@ -724,6 +725,8 @@ class FlightPlot(object):
 				self.flightPath=value
 			elif key == 'name':
 				self.name=value
+			elif key == 'time':
+				self.time=value
 
 	def plot_meteo(self,xaxis,dots):
 
@@ -746,7 +749,7 @@ class FlightPlot(object):
 					7:{'var':'jwlwc','name':'liquid water content',
 							'loc':(0.05,0.9),'ylim':None,'fmt':False},
 					8:{'var':'wvert','name':'vertical velocity',
-							'loc':(0.05,0.9),'ylim':None,'fmt':True},
+							'loc':(0.05,0.9),'ylim':[-2,4],'fmt':True},
 					9:{'var':'palt','name': 'pressure alt',
 							'loc':(0.05,0.9),'ylim':None,'fmt':True}}
 
@@ -759,7 +762,6 @@ class FlightPlot(object):
 			name	=	i[1]['name']
 			loc		=	i[1]['loc']
 			ylim	=	i[1]['ylim']
-			fmt		=	i[1]['fmt']
 			ax		=	axs[item-1]
 			if item < 2: # air temp and dew point in the same plot
 				axs[0].plot(xaxis,self.met[var],label=name)
@@ -768,9 +770,6 @@ class FlightPlot(object):
 					axs[0].grid(True)
 					axs[0].legend(loc=loc,frameon=False)
 			else:
-				if fmt: 
-					formatter = FuncFormatter(fmt_integer)
-					ax.yaxis.set_major_formatter(formatter)
 				ax.plot(xaxis,self.met[var],label=name)
 				if item == 6: 
 					ax2 = ax.twinx()
@@ -788,21 +787,29 @@ class FlightPlot(object):
 
 		new_xticks=[xaxis[i] for i in dots]
 		self.adjust_xaxis(axs,new_xticks)
-		self.adjust_yaxis(axs)
-		fig.suptitle('Flight level meteorology for '+self.name,y=0.95)
+		self.adjust_yaxis(axs) # --> it's affecting formatter
+		l1='Flight level meteorology for '+self.name
+		l2='\nStart time: '+self.time[0].strftime('%Y-%m-%d %H:%M')+' UTC'
+		l3='\nEnd time: '+self.time[1].strftime('%Y-%m-%d %H:%M')+' UTC'
+		fig.suptitle(l1+l2+l3,y=0.98)
 		fig.subplots_adjust(bottom=0.08,top=0.9,
-											hspace=0,wspace=0.2)
+							hspace=0,wspace=0.2)
 		plt.draw
 
 	def adjust_yaxis(self,axes):
 
 		for i in range(9):
-
 			newlabels=[]
 			yticks=axes[i].get_yticks()
-			for y in yticks:
-				newlabels.append(str(y))
 
+			""" make list of new ticklabels """
+			for y in yticks:
+				if i in [2,6]:
+					newlabels.append(str(y))
+				else:
+					newlabels.append("{:.0f}".format(y))
+
+			""" delete overlapping ticklabels """
 			if i in [0,1,2]:
 				newlabels[0]=''
 				axes[i].set_yticklabels(newlabels)
@@ -1142,18 +1149,13 @@ def zoom_in(synthplot,in_extent,center_point):
 
 def adjust_extent(self,ori_extent,orient,type_extent):
 
-	# print ori_extent
-
 	out_extent=[None,None,None,None]
-
 	if orient == 'meridional':
 		out_extent[0]=ori_extent[2] *self.scale
 		out_extent[1]=ori_extent[3] *self.scale
 	elif orient == 'zonal':
 		out_extent[0]=ori_extent[0] *self.scale
 		out_extent[1]=ori_extent[1] *self.scale
-
-	# print out_extent
 		
 	if type_extent=='data':
 		zvalues=self.axesval['z']		
@@ -1162,8 +1164,6 @@ def adjust_extent(self,ori_extent,orient,type_extent):
 	elif type_extent=='detail':
 		out_extent[2]=0.0
 		out_extent[3]=5.0			
-
-	# print out_extent
 	
 	return out_extent
 
@@ -1185,23 +1185,16 @@ def get_distance_along_flight_track(x,y):
 def round_to_closest_int(value,base):
 
 	if isinstance(value,Sequence):
-
 		r=[]
 		for v in value:
 			if v%base < 1:
 				r.append(int(v - v%base))
 			else:
 				r.append(int(v + (base - v%base)))
-
 		return r
-
 	else:
-
 		if value%base < 1:
 			r = value - value%base
 		else:
 			r = value + (base - value%base)
 		return int(r)
-
-def fmt_integer(x,pos):
-	return '%1.3f' % (x)
