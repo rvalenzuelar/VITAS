@@ -12,6 +12,7 @@ from itertools import product
 from scipy.spatial import cKDTree
 from geographiclib.geodesic import Geodesic
 from collections import Sequence
+from matplotlib.ticker import FuncFormatter
 
 import Terrain 
 import matplotlib.pyplot as plt
@@ -726,51 +727,64 @@ class FlightPlot(object):
 
 	def plot_meteo(self,xaxis,dots):
 
+		topo=Terrain.get_topo(lats=self.met['lats'], lons=self.met['lons'])
+
 		varname={	0:{'var':'atemp','name': 'air temperature',
-									'loc':3,'ylim':None},
-							1:{'var':'dewp','name': 'dew point temp',
-									'loc':3,'ylim':None},
-							4:{'var':'relh','name':'relative humidity',
-									'loc':(0.05,0.05),'ylim':[80,101]},							
-							7:{'var':'jwlwc','name':'liquid water content',
-									'loc':(0.05,0.9),'ylim':None},
-							2:{'var':'wdir','name':'wind direction',
-									'loc':(0.05,0.9),'ylim':None},
-							5:{'var':'wspd','name': 'wind speed',
-									'loc':(0.05,0.9),'ylim':None},
-							8:{'var':'wvert','name':'vertical velocity',
-									'loc':(0.05,0.9),'ylim':None},
-							3:{'var':'apres','name': 'air pressure',
-									'loc':(0.05,0.9),'ylim':None},
-							6:{'var':'galt','name': 'geopotential alt',
-									'loc':(0.05,0.9),'ylim':None},
-							9:{'var':'palt','name': 'pressure alt',
-									'loc':(0.05,0.9),'ylim':None}}
+							'loc':3,'ylim':None,'fmt':False},
+					1:{'var':'dewp','name': 'dew point temp',
+							'loc':3,'ylim':None,'fmt':False},
+					2:{'var':'wdir','name':'wind direction',
+							'loc':(0.05,0.9),'ylim':None,'fmt':True},							
+					3:{'var':'apres','name': 'air pressure',
+							'loc':(0.05,0.9),'ylim':None,'fmt':False},						
+					4:{'var':'relh','name':'relative humidity',
+							'loc':(0.05,0.05),'ylim':[80,101],'fmt':True},							
+					5:{'var':'wspd','name': 'wind speed',
+							'loc':(0.05,0.9),'ylim':None,'fmt':True},
+					6:{'var':'galt','name': 'geopotential alt',
+							'loc':(0.05,0.9),'ylim':None,'fmt':True},
+					7:{'var':'jwlwc','name':'liquid water content',
+							'loc':(0.05,0.9),'ylim':None,'fmt':False},
+					8:{'var':'wvert','name':'vertical velocity',
+							'loc':(0.05,0.9),'ylim':None,'fmt':True},
+					9:{'var':'palt','name': 'pressure alt',
+							'loc':(0.05,0.9),'ylim':None,'fmt':True}}
+
 
 		fig, ax = plt.subplots(3,3, sharex=True,figsize=(15,10))
 		axs=ax.ravel()
-		for i in varname.items():			
-			var=i[1]['var']
-			name=i[1]['name']
-			loc=i[1]['loc']
-			ylim=i[1]['ylim']
-			if i[0] < 2:
+		for i in varname.items():
+			item	=	i[0]			
+			var		=	i[1]['var']
+			name	=	i[1]['name']
+			loc		=	i[1]['loc']
+			ylim	=	i[1]['ylim']
+			fmt		=	i[1]['fmt']
+			ax		=	axs[item-1]
+			if item < 2: # air temp and dew point in the same plot
 				axs[0].plot(xaxis,self.met[var],label=name)
 				if ylim: axs[0].set_ylim(ylim)
-				if i[0]==1:
+				if item == 1:
 					axs[0].grid(True)
 					axs[0].legend(loc=loc,frameon=False)
-			
 			else:
-				axs[i[0]-1].plot(xaxis,self.met[var],label=name)
-				if ylim: axs[i[0]-1].set_ylim(ylim)
-				axs[i[0]-1].grid(True)
-				axs[i[0]-1].annotate(name, 
-									fontsize=16,
+				if fmt: 
+					formatter = FuncFormatter(fmt_integer)
+					ax.yaxis.set_major_formatter(formatter)
+				ax.plot(xaxis,self.met[var],label=name)
+				if item == 6: 
+					ax2 = ax.twinx()
+					ax2.plot(xaxis,topo,'r')
+					ax2.set_ylabel('topography [m]', color='r')
+					for tl in ax2.get_yticklabels():
+						tl.set_color('r')
+				if ylim: ax.set_ylim(ylim)
+				ax.grid(True)
+				ax.annotate(name, fontsize=16,
 									xy=loc, 
 									xycoords='axes fraction')
-				if i[0]==8:
-					axs[i[0]-1].set_xlabel('Distance from beginning of flight [km]')
+				if item == 8:
+					ax.set_xlabel('Distance from beginning of flight [km]')
 
 		new_xticks=[xaxis[i] for i in dots]
 		self.adjust_xaxis(axs,new_xticks)
@@ -846,7 +860,6 @@ class FlightPlot(object):
 		synth_lats = np.asarray(around(synth_lats,4))
 		synth_lons = np.asarray(around(synth_lons,4))
 
-
 		idx_lat=[]
 		idx_lon=[]
 		for lat,lon in zip(flgt_lats,flgt_lons):
@@ -880,7 +893,8 @@ class FlightPlot(object):
 		dist, idx = tree.query(linesynth, k=neigh, eps=0, p=2, distance_upper_bound=0.1)
 
 		""" convert to one-column array """
-		data = data.reshape(121*131,1)
+		grid_shape=data.shape
+		data = data.reshape(grid_shape[0]*grid_shape[1],1)
 
 		""" gets the center point """
 		idx_split=zip(*idx)
@@ -897,7 +911,6 @@ class FlightPlot(object):
 		""" save center points of line """
 		line_center=[]
 		line_neighbors=[]
-		grid_shape=(121,131)
 		for i in idx:
 			value=np.unravel_index(i[0], grid_shape)
 			line_center.append(value)
@@ -1189,3 +1202,6 @@ def round_to_closest_int(value,base):
 		else:
 			r = value + (base - value%base)
 		return int(r)
+
+def fmt_integer(x,pos):
+	return '%1.3f' % (x)

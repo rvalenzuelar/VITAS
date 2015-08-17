@@ -97,14 +97,14 @@ class Stdtape(object):
 		met['wspd']	=self.df.ix[start:end]['wspd'].values
 		met['wdir']	=self.df.ix[start:end]['wdir'].values
 		met['wvert']=self.df.ix[start:end]['wvert'].values
-		atemp=self.df.ix[start:end]['atemp'].values
-		dewp=self.df.ix[start:end]['dewp'].values
-		met['atemp']=atemp		
-		met['dewp']	= dewp
-		met['relh']	= Thermodyn.relative_humidity(atemp,dewp)
+		met['atemp'] =self.df.ix[start:end]['atemp'].values
+		met['dewp'] = self.df.ix[start:end]['dewp'].values
+		met['relh']	= Thermodyn.relative_humidity(met['atemp'] ,met['dewp'] )
 		met['galt'] = self.df.ix[start:end]['galt'].values
 		met['palt'] = self.df.ix[start:end]['palt'].values
-		
+		met['lats'] = self.df.ix[start:end]['lats'].values
+		met['lons'] = self.df.ix[start:end]['lons'].values
+
 		return met
 
 

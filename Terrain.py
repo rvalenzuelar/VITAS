@@ -7,6 +7,10 @@
 
 from os.path import isfile
 from mpl_toolkits.axes_grid1 import ImageGrid
+from scipy.spatial import cKDTree
+from itertools import product
+import AircraftPlot as ap
+
 import tempfile
 import os
 import gdal
@@ -253,9 +257,7 @@ def get_altitude_profile(Plot):
 
 	dem_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
 	dtm=get_data(dem_file)
-
 	data=dtm['array']
-
 	altitude=[]
 	if Plot.sliceo=='zonal':		
 		geoax=dtm['yg']
@@ -269,19 +271,49 @@ def get_altitude_profile(Plot):
 		for coord in Plot.slicem:
 			idx=find_nearest(geoax,-coord)
 			altitude.append(data[:,idx])
-
-
 	axis=[]
 	for a in altitude:
 		axis.append(plotax)
-
-	# print profiles
-	# exit()
 	prof={}
 	prof['altitude']=altitude
 	prof['axis']=axis
-
 	return prof
+
+def get_topo(**kwargs):
+	lats=kwargs['lats']
+	lons=kwargs['lons']
+
+	dem_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
+	dtm=get_data(dem_file)
+
+	data=dtm['array']
+	yg=dtm['yg']
+	xg=dtm['xg']
+	
+	idx_lat=[]
+	idx_lon=[]
+	for lat,lon in zip(lats,lons):
+		idx_lat.append(ap.find_index_recursively(array=yg,value=lat,decimals=4))
+		idx_lon.append(ap.find_index_recursively(array=xg,value=lon,decimals=4))
+
+	""" filter out repeated indexes """
+	indexes_filtered=[]
+	first=True
+	for val in zip(idx_lon,idx_lat):
+		if first:
+			val_foo=val
+			indexes_filtered.append(val)
+			first=False
+		elif val!=val_foo:
+			indexes_filtered.append(val)
+			val_foo=val
+	
+	""" save topo points """
+	altitude=[]
+	for x,y in zip(idx_lon,idx_lat):
+		altitude.append(data[y,x])	
+	
+	return altitude
 
 def find_nearest(array,value):
 
