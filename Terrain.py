@@ -9,7 +9,7 @@ from os.path import isfile
 from mpl_toolkits.axes_grid1 import ImageGrid
 from scipy.spatial import cKDTree
 from itertools import product
-import AircraftPlot as ap
+import Radardata as rd
 
 import tempfile
 import os
@@ -293,8 +293,8 @@ def get_topo(**kwargs):
 	idx_lat=[]
 	idx_lon=[]
 	for lat,lon in zip(lats,lons):
-		idx_lat.append(ap.find_index_recursively(array=yg,value=lat,decimals=4))
-		idx_lon.append(ap.find_index_recursively(array=xg,value=lon,decimals=4))
+		idx_lat.append(rd.find_index_recursively(array=yg,value=lat,decimals=4))
+		idx_lon.append(rd.find_index_recursively(array=xg,value=lon,decimals=4))
 
 	""" filter out repeated indexes """
 	indexes_filtered=[]
