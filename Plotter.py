@@ -6,8 +6,8 @@
 
 from os import getcwd
 import sys
-import AircraftPlot as AP
-import FlightLevel as FL
+import Radardata as rd
+import Flightdata as fd
 import Terrain
 import numpy as np
 
@@ -29,7 +29,7 @@ def plot_flight_meteo(SynthPlot,Synth,StdTape, **kwargs):
 	if meteo:
 		met=StdTape.get_meteo(Synth.start, Synth.end)	
 		flight_name = Synth.file[-13:]
-		flight=FL.FlightPlot(meteo=met, name=flight_name, time=[Synth.start, Synth.end])
+		flight=fd.FlightPlot(meteo=met, name=flight_name, time=[Synth.start, Synth.end])
 		flight_xaxis=SynthPlot.flight_track_distance
 		flight_dots=SynthPlot.flight_dot_index
 		flight.plot_meteo(flight_xaxis,flight_dots)
@@ -44,7 +44,7 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 	met=StdTape.get_meteo(Synth.start, Synth.end)	
 	flight_path=StdTape.get_path(Synth.start, Synth.end)	
 	flight_name = Synth.file[-13:]
-	flight=FL.FlightPlot(meteo=met,name=flight_name,flightPath=flight_path)
+	flight=fd.FlightPlot(meteo=met,name=flight_name,flightPath=flight_path)
 
 	lat=Synth.LAT
 	lon=Synth.LON
@@ -59,7 +59,7 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 
 	"""creates synthesis plot instance """
-	P=AP.SynthPlot()
+	P=rd.SynthPlot()
 
 	"""set variables """
 	P.var = kwargs['var']

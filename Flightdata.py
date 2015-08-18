@@ -85,8 +85,8 @@ class FlightPlot(object):
 					ax.set_xlabel('Distance from beginning of flight [km]')
 
 		new_xticks=[xaxis[i] for i in dots]
-		self.adjust_xaxis(axs,new_xticks)
-		self.adjust_yaxis(axs) # --> it's affecting formatter
+		adjust_xaxis(axs,new_xticks)
+		adjust_yaxis(axs) # --> it's affecting formatter
 		l1='Flight level meteorology for '+self.name
 		l2='\nStart time: '+self.time[0].strftime('%Y-%m-%d %H:%M')+' UTC'
 		l3='\nEnd time: '+self.time[1].strftime('%Y-%m-%d %H:%M')+' UTC'
@@ -94,41 +94,6 @@ class FlightPlot(object):
 		fig.subplots_adjust(bottom=0.08,top=0.9,
 							hspace=0,wspace=0.2)
 		plt.draw
-
-	def adjust_yaxis(self,axes):
-
-		for i in range(9):
-			newlabels=[]
-			yticks=axes[i].get_yticks()
-
-			""" make list of new ticklabels """
-			for y in yticks:
-				if i in [2,6]:
-					newlabels.append(str(y))
-				else:
-					newlabels.append("{:.0f}".format(y))
-
-			""" delete overlapping ticklabels """
-			if i in [0,1,2]:
-				newlabels[0]=''
-				axes[i].set_yticklabels(newlabels)
-			elif i in [3,4,5]:
-				newlabels[0]=''
-				newlabels[-1]=''
-				axes[i].set_yticklabels(newlabels)
-			elif i == 6:
-				newlabels[-2]=''
-				axes[i].set_yticklabels(newlabels)
-			elif i in [7,8]:
-				newlabels[-1]=''
-				axes[i].set_yticklabels(newlabels)
-
-	def adjust_xaxis(self,axes,new_xticks):
-
-		for i in [6,7,8]:
-			xticks=axes[i].get_xticks()
-			new_xticks = round_to_closest_int(new_xticks,10)
-			axes[i].set_xticks(new_xticks)
 
 
 	def compare_with_synth(self,**kwargs):
@@ -313,3 +278,38 @@ class FlightPlot(object):
 		plt.ylabel('flight WSPD')
 
 		plt.draw()
+
+def adjust_yaxis(axes):
+
+	for i in range(9):
+		newlabels=[]
+		yticks=axes[i].get_yticks()
+
+		""" make list of new ticklabels """
+		for y in yticks:
+			if i in [2,6]:
+				newlabels.append(str(y))
+			else:
+				newlabels.append("{:.0f}".format(y))
+
+		""" delete overlapping ticklabels """
+		if i in [0,1,2]:
+			newlabels[0]=''
+			axes[i].set_yticklabels(newlabels)
+		elif i in [3,4,5]:
+			newlabels[0]=''
+			newlabels[-1]=''
+			axes[i].set_yticklabels(newlabels)
+		elif i == 6:
+			newlabels[-2]=''
+			axes[i].set_yticklabels(newlabels)
+		elif i in [7,8]:
+			newlabels[-1]=''
+			axes[i].set_yticklabels(newlabels)
+
+def adjust_xaxis(axes,new_xticks):
+
+	for i in [6,7,8]:
+		xticks=axes[i].get_xticks()
+		new_xticks = round_to_closest_int(new_xticks,10)
+		axes[i].set_xticks(new_xticks)
