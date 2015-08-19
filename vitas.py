@@ -28,8 +28,11 @@ def main( config, args ):
 	valid=args.valid
 
 
-	""" retrieves synthesis and flight level objects """
-	SYNTH,FLIGHT,DTM=fh.set_working_files(cedfile=cedfile,stdfile=stdfile,
+	""" retrieves synthesis and flight instances
+		from AircraftAnalysis
+	"""
+	SYNTH,FLIGHT,TERRAIN=fh.set_working_files(cedfile=cedfile,
+											stdfile=stdfile,
 											config=config)
 
 	""" print shape of attribute arrays """
@@ -56,22 +59,25 @@ def main( config, args ):
 	print "Synthesis end time :%s\n" % SYNTH.end
 
 	""" make synthesis plots """
-	for f in plotFields:
-		P=Plotter.plot_synth(SYNTH,FLIGHT,DTM,
-							var=f,
-							wind=args.wind,
-							panel=args.panel,
-							slicem = args.slicem,
-							slicez = args.slicez,
-							zoomIn=args.zoomin,
-							mask = args.mask,
-							config=config)
+	if plotFields:
+		for f in plotFields:
+			P=Plotter.plot_synth(SYNTH,FLIGHT,TERRAIN,
+								var=f,
+								wind=args.wind,
+								panel=args.panel,
+								slicem = args.slicem,
+								slicez = args.slicez,
+								zoomIn=args.zoomin,
+								mask = args.mask,
+								config=config)
 
 	""" make terrain plots """
-	Plotter.plot_terrain(P,terrain=terrain,slope=slope)
+	if terrain or slope:
+		Plotter.plot_terrain(P,terrain=terrain,slope=slope)
 
 	""" make flight level meteo plot """
-	Plotter.plot_flight_meteo(P,SYNTH,FLIGHT,meteo=meteo)
+	if meteo:
+		Plotter.plot_flight_meteo(SYNTH,FLIGHT)
 
 	""" compare synth and flight level """
 	if valid:

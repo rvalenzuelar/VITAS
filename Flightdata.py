@@ -1,10 +1,20 @@
 
+'''
+***************************************
+	Class for plotting flight level
+	data
+
+	Raul Valenzuela
+	August, 2015
+*************************************** 
+'''
 
 
-import Common
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
+import Terrain
 
+from Common import *
 from itertools import product
 from scipy.spatial import cKDTree
 

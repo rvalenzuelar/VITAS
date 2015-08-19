@@ -365,23 +365,17 @@ class SynthPlot(object):
 						linestyle=self.flightStyle)
 
 		if self.flightDotOn:		
-			""" add dots and text """		
-			if self.flightDotSize:
-				dist_from_p0=get_distance_along_flight_track(x,y)
+			""" add dots and text """
+			frequency=10 # [km]
+			[dist_from_p0,idxs] = get_distance_along_flight_track(lon=x, lat=y, 
+																ticks_every=frequency)
+			
+			for i in idxs:
+				value=round_to_closest_int(dist_from_p0[i],frequency)
+				self.add_flight_dot(axis,y[i],x[i],value)
 
-				frequency=10 #[km]
-				endsearch=int(dist_from_p0[-1]) #[km]
-				target=range(0,endsearch,frequency)
-				search=np.asarray(dist_from_p0)
-				idxs=find_nearest2(search,target)
-
-				
-				for i in idxs:
-					value=round_to_closest_int(dist_from_p0[i],frequency)
-					self.add_flight_dot(axis,y[i],x[i],value)
-
-				self.flight_track_distance=dist_from_p0
-				self.flight_dot_index=idxs
+			self.flight_track_distance=dist_from_p0
+			self.flight_dot_index=idxs
 
 	def add_flight_dot(self,axis,lat,lon,position):
 

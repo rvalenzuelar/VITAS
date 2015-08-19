@@ -5,7 +5,7 @@
 # July 2015
 
 
-import Terrain as tr
+import Terrain as TR
 import AircraftAnalysis as AA 
 import sys
 
@@ -28,26 +28,26 @@ def set_working_files(**kwargs):
 
 	""" creates a synthesis object """
 	try:
-		SY=AA.Synthesis(synthfile)		
-		SY.set_fields(config)
-		SY.set_axes(config)
-		SY.set_time()
+		SYNTH=AA.Synthesis(synthfile)		
+		SYNTH.set_fields(config)
+		SYNTH.set_axes(config)
+		SYNTH.set_time()
 	except RuntimeError:
 		print "Input Synth Error: check path or file name\n"
 		sys.exit()
 
 	""" creates a std tape object """
 	try:
-		ST=AA.Stdtape(flightfile)
+		FLIGHT=AA.Flight(flightfile)
 	except RuntimeError:
 		print "Input Flight Error: check path or file name\n"
 		sys.exit()
 
 	""" creates terrain object """
 	try:
-		TR=tr.Terrain(dtmfile)
+		TERRAIN=TR.Terrain(dtmfile)
 	except RuntimeError:
 		print "Input Flight Error: check path or file name\n"
 		sys.exit()	
 
-	return SY,ST,TR
+	return SYNTH,FLIGHT,TERRAIN

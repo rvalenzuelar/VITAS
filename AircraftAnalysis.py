@@ -24,7 +24,7 @@ import numpy as np
 import subprocess
 import Thermodyn
 
-class Stdtape(object):
+class Flight(object):
 	def __init__(self, *args):
 
 		self.file= args[0]

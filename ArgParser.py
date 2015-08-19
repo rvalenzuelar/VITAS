@@ -73,7 +73,7 @@ def start():
 							metavar='STR',
 							nargs='+',
 							choices=['DBZ','SPD','CON','VOR','U','V','WVA','WUP'],
-							default=['DBZ','SPD','CON','VOR'],
+							default=None,
 							help="specify radar field(s) to be plotted")	
 
 	""" Print Options """

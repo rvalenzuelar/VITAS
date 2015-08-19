@@ -2,13 +2,18 @@
 '''
 ***************************************
 	Common functions used
-	by AircraftPlot and Flightlevel
-*************************************** '''
+	by Radardata.py and Flightdata.py
+
+	Raul Valenzuela
+	August, 2015
+*************************************** 
+'''
 
 import numpy as np
+import matplotlib.pyplot as plt
+
 from geographiclib.geodesic import Geodesic
 from collections import Sequence
-import matplotlib.pyplot as plt
 
 
 def find_index_recursively(**kwargs):
@@ -156,7 +161,10 @@ def adjust_extent(self,ori_extent,orient,type_extent):
 	
 	return out_extent
 
-def get_distance_along_flight_track(x,y):
+def get_distance_along_flight_track(**kwargs):
+	
+	x=kwargs['lon']
+	y=kwargs['lat']
 	
 	distance_from_p0=[0]
 	first=True
@@ -168,8 +176,16 @@ def get_distance_along_flight_track(x,y):
 		else:
 			value=Geodesic.WGS84.Inverse(p0[0], p0[1],p1[0], p1[1])
 			distance_from_p0.append(value['s12']/1000) #[km]
-
-	return distance_from_p0
+			
+	if kwargs['ticks_every']:
+		frequency=kwargs['ticks_every'] #[km]
+		endsearch=int(distance_from_p0[-1]) #[km]
+		target=range(0,endsearch,frequency)
+		search=np.asarray(distance_from_p0)
+		idxs=find_nearest2(search,target)
+		return [distance_from_p0,idxs]
+	else:
+		return distance_from_p0
 
 def round_to_closest_int(value,base):
 
