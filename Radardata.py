@@ -1,9 +1,10 @@
-# Module for dual-Doppler plotting of NOAA P-3 tail radar.
-#
-#
-# Raul Valenzuela
-# June, 2015
-#
+"""
+Module for dual-Doppler plotting of NOAA P-3 tail radar.
+
+Raul Valenzuela
+June, 2015
+
+"""
 
 import Terrain 
 import sys
