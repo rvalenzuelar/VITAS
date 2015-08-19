@@ -14,6 +14,7 @@ import matplotlib.colors as colors
 import matplotlib.cm as cmx
 import pandas as pd
 import Terrain
+import numpy as np
 
 from Common import *
 from itertools import product
@@ -290,15 +291,54 @@ class FlightPlot(object):
 
 		plt.draw()
 
-	def print_correlation_matrix(self,data):
-
+	def print_covariance_matrix(self,data):
 
 		met=data[['atemp','dewp','jwlwc','wdir','wspd','wvert']]
+		print "Covariance matrix"
+		print "------------------------\n"
+		print met.cov()
+		print "------------------------\n"
 
+	def print_correlation_matrix(self,data):
+
+		met=data[['atemp','dewp','jwlwc','wdir','wspd','wvert']]
+		print "Correlation matrix"
+		print "------------------------\n"
 		print met.corr()
-		met.wspd.plot()
-		pd.rolling_std(met.wspd,20).plot()
+		print "------------------------\n"
 
+	def plot_statistics(self,data):
+
+		met=data[['atemp','dewp','jwlwc','wdir','wspd','wvert']]
+		x1 = met.wspd
+		x2 = pd.rolling_std(met.wspd,60,center=True)
+		fig,ax = plt.subplots()
+		ax.plot(x1)
+		ax2 = ax.twinx()
+		ax2.plot(x2,'-r')
+		plt.draw()
+
+		u_comp,v_comp = get_wind_components(met.wspd,met.wdir)
+		w_comp=met.wvert
+		fig,(ax1,ax2,ax3) = plt.subplots(3,sharex=True)
+		ax1.plot(u_comp)
+		add_text_to(ax1,0.1,0.9,'u-comp')
+		ax1.grid(True)
+		ax2.plot(v_comp,'r')
+		add_text_to(ax2,0.1,0.9,'v-comp')
+		ax2.grid(True)
+		ax3.plot(w_comp,'g')
+		add_text_to(ax3,0.1,0.9,'w-comp')
+		ax3.grid(True)
+		plt.draw()
+		fig.subplots_adjust(hspace=0)
+		
+
+def add_text_to(ax,x,y,text):
+		axtxt=ax.twinx()
+		axtxt.text(x,y,text,transform=axtxt.transAxes)	
+		axtxt.set_frame_on(False)
+		axtxt.axes.get_yaxis().set_visible(False)	
 
 def adjust_yaxis(axes):
 
@@ -334,3 +374,9 @@ def adjust_xaxis(axes,new_xticks):
 		xticks=axes[i].get_xticks()
 		new_xticks = round_to_closest_int(new_xticks,10)
 		axes[i].set_xticks(new_xticks)
+
+def get_wind_components(wspd,wdir):
+	deg2rad=np.pi/180
+	u = -wspd*np.sin(wdir*deg2rad)
+	v = -wspd*np.cos(wdir*deg2rad)
+	return u,v
