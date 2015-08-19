@@ -83,6 +83,9 @@ def main( config, args ):
 	if valid:
 		Plotter.compare_synth_flight(SYNTH,FLIGHT,level=valid,zoomin=args.zoomin)
 
+	# if turbulence:
+	Plotter.print_correlation(SYNTH,FLIGHT)
+
 	# plt.show(block=False)	
 	plt.show()
 
