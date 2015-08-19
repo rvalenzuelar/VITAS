@@ -12,6 +12,7 @@
 
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
+import pandas as pd
 import Terrain
 
 from Common import *
@@ -295,7 +296,8 @@ class FlightPlot(object):
 		met=data[['atemp','dewp','jwlwc','wdir','wspd','wvert']]
 
 		print met.corr()
-
+		met.wspd.plot()
+		pd.rolling_std(met.wspd,20).plot()
 
 
 def adjust_yaxis(axes):
