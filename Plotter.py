@@ -42,12 +42,26 @@ def plot_flight_meteo(SYNTH,FLIGHT, **kwargs):
 	flight.plot_meteo(flight_xaxis,flight_dots)
 		
 
+def print_covariance(SYNTH,FLIGHT):
+
+	flight_name = SYNTH.file[-13:]
+	data = FLIGHT.get_meteo_dataframe(SYNTH.start, SYNTH.end)
+	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
+	flight.print_covariance_matrix(data)
+
 def print_correlation(SYNTH,FLIGHT):
 
 	flight_name = SYNTH.file[-13:]
 	data = FLIGHT.get_meteo_dataframe(SYNTH.start, SYNTH.end)
 	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
 	flight.print_correlation_matrix(data)
+
+def plot_statistics(SYNTH,FLIGHT):
+
+	flight_name = SYNTH.file[-13:]
+	data = FLIGHT.get_meteo_dataframe(SYNTH.start, SYNTH.end)
+	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
+	flight.plot_statistics(data)
 
 def compare_synth_flight(Synth,StdTape,**kwargs):
 
