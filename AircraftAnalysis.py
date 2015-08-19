@@ -1,20 +1,21 @@
-#
-# Module for dual-Doppler analisis of NOAA P-3 tail radar.
-#
-# Included classes:
-#
-# Stdtape:
-#	Stdtape files contains flight level information, where
-#	latitude and longitude coordinates are corrected
-#	using GPS+INS
-#
-# Synthesis:
-#	Reads a CEDRIC file with the dual-Doppler 
-#	synthesis.
-#
-# Raul Valenzuela
-# June, 2015
-#
+"""
+Module for dual-Doppler analisis of NOAA P-3 tail radar.
+
+Included classes:
+
+Flight:
+	Stdtape files contains flight level information, where
+	latitude and longitude coordinates are corrected
+	using GPS+INS
+
+Synthesis:
+	Reads a CEDRIC file with the dual-Doppler 
+	synthesis.
+
+Raul Valenzuela
+June, 2015
+
+"""
 
 from netCDF4 import Dataset
 from geographiclib.geodesic import Geodesic
@@ -39,7 +40,6 @@ class Flight(object):
 		self.WSPD = self.read_stdtape('WIND_SPD')
 		self.WDIR = self.read_stdtape('WIND_DIR')
 		self.WVERT = self.read_stdtape('VERT_WIND')
-
 		self.DATETIME = self.read_stdtape('DATETIME')
 
 
@@ -106,6 +106,13 @@ class Flight(object):
 		met['lons'] = self.df.ix[start:end]['lons'].values
 
 		return met
+
+	def get_meteo_dataframe(self,start_time, end_time):
+
+		start = self.df.index.searchsorted(start_time)
+		end = self.df.index.searchsorted(end_time)
+		
+		return self.df[start:end]
 
 
 class Synthesis(object):
