@@ -26,18 +26,28 @@ def plot_terrain(SynthPlot,**kwargs):
 
 def plot_flight_meteo(SYNTH,FLIGHT, **kwargs):
 
+
 	""" flight path from standard tape """
 	fpath=FLIGHT.get_path(SYNTH.start, SYNTH.end)
 	fp=zip(*fpath)
 	x = fp[1] # longitude
 	y = fp[0] # latitude
-	[flight_xaxis,flight_dots] = cm.get_distance_along_flight_track(lon=x,lat=y,ticks_every=10)
+	frequency=10 #[km]
+	[flight_xaxis,flight_dots] = cm.get_distance_along_flight_track(lon=x,lat=y,
+																	ticks_every=frequency)
 
 	met = FLIGHT.get_meteo(SYNTH.start, SYNTH.end)	
 	flight_name = SYNTH.file[-13:]
 	flight = fd.FlightPlot(meteo=met, name=flight_name, time=[SYNTH.start, SYNTH.end])
 	flight.plot_meteo(flight_xaxis,flight_dots)
 		
+
+def print_correlation(SYNTH,FLIGHT):
+
+	flight_name = SYNTH.file[-13:]
+	data = FLIGHT.get_meteo_dataframe(SYNTH.start, SYNTH.end)
+	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
+	flight.print_correlation_matrix(data)
 
 def compare_synth_flight(Synth,StdTape,**kwargs):
 
