@@ -289,6 +289,15 @@ class FlightPlot(object):
 
 		plt.draw()
 
+	def print_correlation_matrix(self,data):
+
+
+		met=data[['atemp','dewp','jwlwc','wdir','wspd','wvert']]
+
+		print met.corr()
+
+
+
 def adjust_yaxis(axes):
 
 	for i in range(9):
