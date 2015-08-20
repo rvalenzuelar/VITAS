@@ -42,8 +42,7 @@ class Flight(object):
 		self.WVERT = self.read_stdtape('VERT_WIND')
 		self.DATETIME = self.read_stdtape('DATETIME')
 
-
-		'''creates dictionary '''
+		''' creates dictionary '''
 		dict_stdtape={}
 		dict_stdtape['lats']=self.LAT
 		dict_stdtape['lons']=self.LON
@@ -57,7 +56,7 @@ class Flight(object):
 		dict_stdtape['wdir']=self.WDIR
 		dict_stdtape['wvert']=self.WVERT
 
-		''' pandas dataframe for standar tape '''
+		''' package standard tape into a pandas DataFrame instance'''
 		self.df=pd.DataFrame(data=dict_stdtape,index=self.DATETIME)
 
 	def read_stdtape(self,var):
