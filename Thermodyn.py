@@ -31,12 +31,18 @@ class meteo(object):
 			elif key == 'Pa':
 				self.pressure = value/100 # [hPa]
 
+		''' constants '''
+		self.cp =1004	 # [J K-1 kg-1] specific heat at const press dry air
+		self.Lv =2.25E6 # [J kg-1] latent heat of evaporation
+		self.Rd= 287 # [J K-1 kg-1] gas constant for dry air
+		self.p0 = 1000.0 # [hPa] mean sea level pressure 
+
 def parse_args(**kwargs):
 
 	return meteo(**kwargs)
 
 def sat_wv_press(**kwargs):
-	"""  sat water vapor pressure = f(T) [mb]
+	"""  sat_wv_press = f(C[K]) [mb]
 		valid for liquid water and -50°C<T<50°C
 		error within 1%
 		Lowe, 1977, JAM
@@ -66,7 +72,7 @@ def sat_wv_press(**kwargs):
 		print "Error: check input arguments\n"
 
 def sat_mix_ratio(**kwargs):
-	"""  sat mixing ratio = f(T,pressure) [kg/kg]
+	"""  sat_mix_ratio = f(C,hPa {mb}) [kg/kg]
 		Saucier, 1989, p.11
 		Bohren and Albrecht, 1998, p.186
 	"""
@@ -81,26 +87,27 @@ def sat_mix_ratio(**kwargs):
 		print "Error: check input arguments\n"
 
 def relative_humidity(**kwargs):
-	""" 	relative_humidity = f(T,Dewp) 
+	""" 	relative_humidity = f(C,Dewp) [%]
 		Lawrence, 2005, BAMS
 	"""
 	meteo=parse_args(**kwargs)	
-	try:
+	check_C=hasattr(meteo,'C')
+	check_dewp=hasattr(meteo,'Dewp')		
+	if check_C and check_dewp:
 		relh = np.asarray(100-5*(meteo.C- meteo.Dewp)) #[%]
 		relh[relh>100.0] = 100.0
 		return relh	
-	except AttributeError:
-		print 'Make sure using T instead of Tk'
+	else:
+		print "Error: check input arguments\n"
 
 def theta(**kwargs):
-	""" theta = f(T,pressure)
+	""" theta = f(C {K}, hPa {mb}) [K]
 	"""
-	p0 = 1000.0 # [hPa]
-	c = 0.286
 	meteo=parse_args(**kwargs)	
+	c = meteo.Rd/meteo.cp 
 	check_C=hasattr(meteo,'C')
 	check_K=hasattr(meteo,'K')
-	quotient=np.divide(p0,meteo.pressure)
+	quotient=np.divide(meteo.p0,meteo.pressure)
 	if check_K:
 		return meteo.K*np.power(quotient,c) # [K]
 	elif check_C:
@@ -110,8 +117,7 @@ def theta(**kwargs):
 		print "Error: check input arguments\n"
 
 def virtual_temp(**kwargs):
-	"""  Tv = f(C, mixing_ratio) [°C]
-		Tv = f(K, mixing_ratio) [K]
+	"""  Tv = f(C{K}, mixing_ratio) [C] or [K]
 		Thetav = f(theta, mixing_ratio) [K]
 		Saucier, 1989, p.12
 	"""
@@ -128,3 +134,25 @@ def virtual_temp(**kwargs):
 		return meteo.theta*(1+0.61*meteo.mixing_ratio)
 	else:
 		print "Error: check input arguments\n"
+
+def theta_equiv(**kwargs):
+	"""  theta_equiv = f(C{K}, hPa{mb}) [K]
+		Saucier, 1989, p.14
+		Wallace&Hobbs, 2006, p.85
+	"""
+	meteo=parse_args(**kwargs)	
+	check_C=hasattr(meteo,'C')
+	check_K=hasattr(meteo,'K')	
+	check_p=hasattr(meteo,'pressure')
+	if check_K and check_p:
+		Tc=meteo.K-273.15
+		satmixr=sat_mix_ratio(C=Tc, hPa=meteo.pressure)
+		th=theta(K=meteo.K, hPa=meteo.pressure)
+		exp=np.exp( np.divide( meteo.Lv*satmixr, meteo.cp*meteo.K ) )
+		return th*exp
+	elif check_C and check_p:
+		satmixr=sat_mix_ratio(C=meteo.C, hPa=meteo.pressure)
+		th=theta(C=meteo.C, hPa=meteo.pressure)
+		Tk=meteo.C+273.15
+		exp=np.exp( np.divide( meteo.Lv*satmixr, meteo.cp*Tk ) )
+		return th*exp		
