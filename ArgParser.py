@@ -30,18 +30,21 @@ def start():
 							action='help',
 							help='shows this help message and exit')
 
-	""" Mandatory Arguments """
-	group_mandatory=parser.add_argument_group('Input files')
-	group_mandatory.add_argument('--ced','-c',
+	""" Input files """
+	group_input=parser.add_argument_group('Input files')
+	group_input.add_argument('--ced','-c',
 							metavar='file',
 							required=False,
 							help=	"netCDF CEDRIC synthesis with format CaseName/LegName." \
 									"\nExample: c03/leg01.cdf")
-	group_mandatory.add_argument('--std','-s' ,
+	group_input.add_argument('--std','-s' ,
 							metavar='file',
 							required=False,
 							help=	"netCDF NOAA-P3 standard tape file using RAF format." \
 									"\nExample: 010123I.nc")
+	group_input.add_argument('--print_list_synth',
+							action='store_true',
+							help="print list with synthesis availables")
 	
 	""" Plot Options """
 	plot_options=parser.add_argument_group('Plot options')
