@@ -12,13 +12,18 @@
 
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
+import matplotlib.pyplot as plt
+
 import pandas as pd
 import Terrain
 import numpy as np
+import seaborn as sns 
 
-from Common import *
 from itertools import product
 from scipy.spatial import cKDTree
+
+''' set color codes in seaborn '''
+sns.set_color_codes()
 
 class FlightPlot(object):
 
@@ -293,7 +298,7 @@ class FlightPlot(object):
 
 	def print_covariance_matrix(self,data):
 
-		met=data[['atemp','dewp','jwlwc','wdir','wspd','wvert']]
+		met=data[['atemp','dewp','jwlwc','wdir','wspd','wvert','theta','thetav','thetaeq']]
 		print "Covariance matrix"
 		print "------------------------\n"
 		print met.cov()
@@ -301,44 +306,109 @@ class FlightPlot(object):
 
 	def print_correlation_matrix(self,data):
 
-		met=data[['atemp','dewp','jwlwc','wdir','wspd','wvert']]
+		met=data[['atemp','dewp','jwlwc','wdir','wspd','wvert','theta','thetav','thetaeq']]
 		print "Correlation matrix"
 		print "------------------------\n"
 		print met.corr()
 		print "------------------------\n"
 
-	def plot_statistics(self,data):
+	def plot_wind_comp_var(self,data,xaxis):
 
-		met=data[['atemp','dewp','jwlwc','wdir','wspd','wvert']]
-		x1 = met.wspd
-		x2 = pd.rolling_std(met.wspd,60,center=True)
-		fig,ax = plt.subplots()
-		ax.plot(x1)
-		ax2 = ax.twinx()
-		ax2.plot(x2,'-r')
+		met=data[['wdir','wspd','wvert']]
+
+		''' wind components and their variance'''
+		u_comp,v_comp = get_wind_components(met.wspd,met.wdir)
+		w_comp=met.wvert
+		u_var = pd.rolling_var(u_comp,60,center=True)
+		v_var = pd.rolling_var(v_comp,60,center=True)
+		w_var = pd.rolling_var(w_comp,60,center=True)
+		fig,(ax1,ax2,ax3) = plt.subplots(3,sharex=True)
+		fs=14
+		xpos=0.02
+		ypos=0.9
+
+		''' u '''
+		ax1.plot(xaxis, u_comp)
+		add_text_to(ax1,xpos,ypos,'u-comp',fontsize=fs,color='b')
+		add_text_to(ax1,0.95-xpos,ypos,'u-var',fontsize=fs,color='r')
+		add_second_y_in(ax1,u_var,xaxis=xaxis)
+		''' v '''
+		ax2.plot(xaxis, v_comp)
+		add_text_to(ax2,xpos,ypos,'v-comp',fontsize=fs,color='b')
+		add_text_to(ax2,0.95-xpos,ypos,'v-var',fontsize=fs,color='r')
+		add_second_y_in(ax2,v_var,xaxis=xaxis)
+		''' w '''
+		ax3.plot(xaxis, w_comp)
+		add_text_to(ax3,xpos,ypos,'w-comp',fontsize=fs,color='b')
+		add_text_to(ax3,0.95-xpos,ypos,'w-var',fontsize=fs,color='r')
+		add_second_y_in(ax3,w_var,xaxis=xaxis)
+		
+		fig.subplots_adjust(hspace=0.1)
 		plt.draw()
+
+	def plot_tke(self,data,xaxis):
+
+		met=data[['wdir','wspd','wvert','lats','lons']]
+		topo=np.asarray(Terrain.get_topo(lats=met['lats'], lons=met['lons']))
 
 		u_comp,v_comp = get_wind_components(met.wspd,met.wdir)
 		w_comp=met.wvert
-		fig,(ax1,ax2,ax3) = plt.subplots(3,sharex=True)
-		ax1.plot(u_comp)
-		add_text_to(ax1,0.1,0.9,'u-comp')
-		ax1.grid(True)
-		ax2.plot(v_comp,'r')
-		add_text_to(ax2,0.1,0.9,'v-comp')
-		ax2.grid(True)
-		ax3.plot(w_comp,'g')
-		add_text_to(ax3,0.1,0.9,'w-comp')
-		ax3.grid(True)
-		plt.draw()
-		fig.subplots_adjust(hspace=0)
-		
+		u_var = pd.rolling_var(u_comp,60,center=True)
+		v_var = pd.rolling_var(v_comp,60,center=True)
+		w_var = pd.rolling_var(w_comp,60,center=True)
 
-def add_text_to(ax,x,y,text):
+		tke = 0.5*(u_var+v_var+w_var)
+		plt.figure()
+		plt.plot(xaxis,tke)
+		ax=plt.gca()
+		ax.set_ylim([0,10])
+		plt.xlabel('distance')
+		plt.ylabel('TKE [m2 s-2]')
+		add_second_y_in(ax,topo,xaxis=xaxis)
+		plt.draw()
+
+	def plot_vertical_heat_flux(self,data,xdata):
+
+		met=data[['theta','wvert','lats','lons']]
+		topo=np.asarray(Terrain.get_topo(lats=met['lats'], lons=met['lons']))
+		
+		v_heatflux = pd.rolling_cov(met.wvert, met.theta, 60, center=True)
+
+		plt.figure()
+		plt.plot(xdata,v_heatflux)
+		ax=plt.gca()
+		ax.set_ylim([-0.5,0.5])
+		ax.set_ylabel('Vertical heat flux [K m s-1]',color='b',fontsize=15)
+		ax.set_xlabel('Distance from flight start [km]',fontsize=15)
+		add_second_y_in(ax,topo,xaxis=xdata, color='r',label='Topography [m]')
+		plt.draw()
+
+def add_text_to(ax,x,y,text,**kwargs):
+
+		fs=kwargs['fontsize']
+		co=kwargs['color']
 		axtxt=ax.twinx()
-		axtxt.text(x,y,text,transform=axtxt.transAxes)	
+		axtxt.text(x,y,text,transform=axtxt.transAxes,size=fs,color=co)	
 		axtxt.set_frame_on(False)
 		axtxt.axes.get_yaxis().set_visible(False)	
+
+def add_second_y_in(ax,data,**kwargs):
+		
+		axt = ax.twinx()
+		if kwargs:
+			for key, value in kwargs.iteritems():
+				if key == 'xaxis':
+					x=value
+				elif key == 'color':
+					co=value
+				elif key == 'label':
+					lb=value
+			axt.plot(x,data,co)
+			axt.set_ylabel(lb,color=co,fontsize=15)
+		else:
+			axt.plot(data)
+
+		axt.grid(False)
 
 def adjust_yaxis(axes):
 

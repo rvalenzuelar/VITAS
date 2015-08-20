@@ -26,20 +26,11 @@ def plot_terrain(SynthPlot,**kwargs):
 
 def plot_flight_meteo(SYNTH,FLIGHT, **kwargs):
 
-
-	""" flight path from standard tape """
-	fpath=FLIGHT.get_path(SYNTH.start, SYNTH.end)
-	fp=zip(*fpath)
-	x = fp[1] # longitude
-	y = fp[0] # latitude
-	frequency=10 #[km]
-	[flight_xaxis,flight_dots] = cm.get_distance_along_flight_track(lon=x,lat=y,
-																	ticks_every=frequency)
-
+	flight_xaxis, flight_xticks =get_xaxis(SYNTH,FLIGHT)
 	met = FLIGHT.get_meteo(SYNTH.start, SYNTH.end)	
 	flight_name = SYNTH.file[-13:]
 	flight = fd.FlightPlot(meteo=met, name=flight_name, time=[SYNTH.start, SYNTH.end])
-	flight.plot_meteo(flight_xaxis,flight_dots)
+	flight.plot_meteo(flight_xaxis,flight_xticks)
 		
 
 def print_covariance(SYNTH,FLIGHT):
@@ -56,19 +47,46 @@ def print_correlation(SYNTH,FLIGHT):
 	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
 	flight.print_correlation_matrix(data)
 
-def plot_statistics(SYNTH,FLIGHT):
+def plot_wind_comp_var(SYNTH,FLIGHT):
 
+	flight_xaxis, _ =get_xaxis(SYNTH,FLIGHT)
 	flight_name = SYNTH.file[-13:]
 	data = FLIGHT.get_meteo(SYNTH.start, SYNTH.end)
 	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
-	flight.plot_statistics(data)
+	flight.plot_wind_comp_var(data, flight_xaxis)
+
+def plot_tke(SYNTH,FLIGHT):
+
+	flight_xaxis, _ =get_xaxis(SYNTH,FLIGHT)
+	flight_name = SYNTH.file[-13:]
+	data = FLIGHT.get_meteo(SYNTH.start, SYNTH.end)
+	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
+	flight.plot_tke(data,flight_xaxis)	
+
+def plot_vertical_heat_flux(SYNTH,FLIGHT):
+
+	flight_xaxis, _ =get_xaxis(SYNTH,FLIGHT)
+	flight_name = SYNTH.file[-13:]
+	data = FLIGHT.get_meteo(SYNTH.start, SYNTH.end)
+	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
+	flight.plot_vertical_heat_flux(data,flight_xaxis)	
+
+def get_xaxis(SYNTH,FLIGHT):
+	""" flight path from standard tape """
+	fpath=FLIGHT.get_path(SYNTH.start, SYNTH.end)
+	fp=zip(*fpath)
+	x = fp[1] # longitude
+	y = fp[0] # latitude
+	frequency=10 #[km]
+	[flight_xaxis, flight_xticks] = cm.get_distance_along_flight_track(lon=x,lat=y,
+															ticks_every=frequency)
+	return flight_xaxis,flight_xticks
 
 def compare_synth_flight(Synth,StdTape,**kwargs):
 
 	level = kwargs['level']
 	zoomOpt = kwargs['zoomin']
 	
-
 	met=StdTape.get_meteo(Synth.start, Synth.end)	
 	flight_path=StdTape.get_path(Synth.start, Synth.end)	
 	flight_name = Synth.file[-13:]
