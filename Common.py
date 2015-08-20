@@ -10,7 +10,6 @@
 '''
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from geographiclib.geodesic import Geodesic
 from collections import Sequence
