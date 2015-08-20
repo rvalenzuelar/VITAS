@@ -23,7 +23,7 @@ import pandas as pd
 import datetime
 import numpy as np
 import subprocess
-import Thermodyn
+import Thermodyn as thermo
 
 class Flight(object):
 	def __init__(self, *args):
@@ -90,29 +90,30 @@ class Flight(object):
 
 		start = self.df.index.searchsorted(start_time)
 		end = self.df.index.searchsorted(end_time)
+		meteo=self.df[start:end].copy()
+
+		''' add relative humidity '''
+		temp = meteo.atemp.values
+		dewp = meteo.dewp.values
+		relh = thermo.relative_humidity(C=temp,Dewp=dewp) # [%]
+		meteo.loc[:,'relh'] = pd.Series(relh,index=meteo.index)
+
+		''' add theta '''
+		pres = meteo.apres.values
+		theta = thermo.theta(C=temp,hPa=pres)
+		meteo.loc[:,'theta'] = pd.Series(theta,index=meteo.index)	
+
+		''' add thetav '''
+		satmixr=thermo.sat_mix_ratio(C=temp,hPa=pres)
+		mixr=relh*satmixr/100
+		thetav = thermo.virtual_temp(theta=theta,mixing_ratio=mixr)
+		meteo.loc[:,'thetav'] = pd.Series(thetav,index=meteo.index)	
+
+		''' add thetae '''
+		thetaeq = thermo.theta_equiv(C=temp,hPa=pres)
+		meteo.loc[:,'thetaeq'] = pd.Series(thetaeq,index=meteo.index)	
 		
-		met={}
-		met['apres']=self.df.ix[start:end]['apres'].values
-		met['jwlwc']=self.df.ix[start:end]['jwlwc'].values
-		met['wspd']	=self.df.ix[start:end]['wspd'].values
-		met['wdir']	=self.df.ix[start:end]['wdir'].values
-		met['wvert']=self.df.ix[start:end]['wvert'].values
-		met['atemp'] =self.df.ix[start:end]['atemp'].values
-		met['dewp'] = self.df.ix[start:end]['dewp'].values
-		met['relh']	= Thermodyn.relative_humidity(met['atemp'] ,met['dewp'] )
-		met['galt'] = self.df.ix[start:end]['galt'].values
-		met['palt'] = self.df.ix[start:end]['palt'].values
-		met['lats'] = self.df.ix[start:end]['lats'].values
-		met['lons'] = self.df.ix[start:end]['lons'].values
-
-		return met
-
-	def get_meteo_dataframe(self,start_time, end_time):
-
-		start = self.df.index.searchsorted(start_time)
-		end = self.df.index.searchsorted(end_time)
-		
-		return self.df[start:end]
+		return meteo
 
 
 class Synthesis(object):
