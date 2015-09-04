@@ -12,9 +12,13 @@ import sys
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import ImageGrid
 from matplotlib.patches import Polygon
-from Common import *
+from matplotlib import colors
 
+import Common as cm  
+import matplotlib.pyplot as plt
+import seaborn as sns
 
+sns.set_style("white")
 
 class SynthPlot(object):
 
@@ -109,6 +113,7 @@ class SynthPlot(object):
 			self.windv_edgecolor=config['wind_vector_edgecolor']
 			self.windv_jump=config['wind_vector_jump']
 			self.windv_linewidth=config['wind_vector_linewidth']
+			self.windv_width=config['wind_vector_width']
 			self.windv_magnitude=config['wind_vector_magnitude']
 			self.windv_scale=config['wind_vector_scale']
 			self.zoomCenter=config['zoom_center']
@@ -162,14 +167,12 @@ class SynthPlot(object):
 		if option == 'single':			
 			self.rows_cols=(1,1)
 			self.zlevel_textsize=16
-			self.windv_width=2
 
 		elif option == 'multi':
 			self.rows_cols=(3,2)
 			self.windv_jump['x']=self.windv_jump['x']+3
 			self.windv_jump['y']=self.windv_jump['y']+3
 			self.zlevel_textsize=12
-			self.windv_width=2
 
 		elif option == 'vertical':
 			if self.var == 'SPD' and not isWind:
@@ -182,16 +185,15 @@ class SynthPlot(object):
 				rows=len(self.slicez)
 			self.rows_cols=(rows,cols)
 			self.geo_textsize=12
-			self.windv_width=2
 
 	def get_slices(self,array):
 
 		if self.slice_type == 'horizontal':
-			slice_group  = chop_horizontal(self,array)
+			slice_group  = cm.chop_horizontal(self,array)
 			return slice_group
 
 		elif self.slice_type == 'vertical':
-			slice_group = chop_vertical(self,array)
+			slice_group = cm.chop_vertical(self,array)
 			return slice_group
 
 	def get_extent(self):
@@ -298,11 +300,11 @@ class SynthPlot(object):
 			xjump=self.windv_jump['x']
 			yjump=self.windv_jump['y']
 
-			x=resample(self.lons,res=xjump)
-			y=resample(self.lats,res=yjump)
+			x=cm.resample(self.lons,res=xjump)
+			y=cm.resample(self.lats,res=yjump)
 
-			uu=resample(comp1,xres=xjump,yres=yjump)
-			vv=resample(comp2,xres=xjump,yres=yjump)
+			uu=cm.resample(comp1,xres=xjump,yres=yjump)
+			vv=cm.resample(comp2,xres=xjump,yres=yjump)
 
 			Q=grid_ax.quiver(x,y,uu,vv, 
 								units='dots', 
@@ -311,7 +313,9 @@ class SynthPlot(object):
 								width=self.windv_width,
 								color=self.windv_color,
 								linewidth=self.windv_linewidth,
-								edgecolor=self.windv_edgecolor)
+								edgecolor=self.windv_edgecolor,
+								headwidth=3,
+								headlength=5)
 			symbol = '$'+str(self.windv_magnitude)+r'\frac{m}{s}$'
 			qk=grid_ax.quiverkey(Q, 0.15, 0.1, self.windv_magnitude, symbol, labelpos='W',
 				 					fontproperties={'weight': 'bold'})
@@ -334,17 +338,17 @@ class SynthPlot(object):
 			xjump=2
 			if self.sliceo=='meridional':
 				lats=self.lats
-				x=resample(lats,res=xjump)
+				x=cm.resample(lats,res=xjump)
 			elif self.sliceo=='zonal':		
 				lons=self.lons
-				x=resample(lons,res=xjump)
+				x=cm.resample(lons,res=xjump)
 
 			zvalues=self.axesval['z']
 			zjump=self.windv_jump['z']
-			y=resample(zvalues,res=zjump)
+			y=cm.resample(zvalues,res=zjump)
 
-			hor= resample(comp1,xres=xjump,yres=zjump)
-			ver= resample(comp2,xres=xjump,yres=zjump)
+			hor= cm.resample(comp1,xres=xjump,yres=zjump)
+			ver= cm.resample(comp2,xres=xjump,yres=zjump)
 
 			Q=grid_ax.quiver(x*self.scale,y, hor, ver,
 								units='dots', 
@@ -368,11 +372,11 @@ class SynthPlot(object):
 		if self.flightDotOn:		
 			""" add dots and text """
 			frequency=10 # [km]
-			[dist_from_p0,idxs] = get_distance_along_flight_track(lon=x, lat=y, 
+			[dist_from_p0,idxs] = cm.get_distance_along_flight_track(lon=x, lat=y, 
 																ticks_every=frequency)
 			
 			for i in idxs:
-				value=round_to_closest_int(dist_from_p0[i],frequency)
+				value=cm.round_to_closest_int(dist_from_p0[i],frequency)
 				self.add_flight_dot(axis,y[i],x[i],value)
 
 			self.flight_track_distance=dist_from_p0
@@ -403,17 +407,28 @@ class SynthPlot(object):
 	def add_field(self,axis,**kwargs):
 
 		array=kwargs['array']
-		name=kwargs['name']
+		field=kwargs['field']
 		extent=kwargs['ext']
+
+		''' make a color map of fixed colors '''
+		snsmap=sns.color_palette(self.cmapName[field], 24)
+		cmap = colors.ListedColormap(snsmap[2:])
+
+		vdelta=5
+		vmin=self.cmapRange[field][0]
+		vmax=self.cmapRange[field][1]
+		bounds=range(vmin, vmax+vdelta, vdelta)
+		norm = colors.BoundaryNorm(bounds, cmap.N)
 
 		im = axis.imshow(array,
 						interpolation='none',
 						origin='lower',
 						extent=extent,
-						vmin=self.cmapRange[name][0],
-						vmax=self.cmapRange[name][1],
-						cmap=self.cmapName[name])
-		return im
+						vmin=vmin,
+						vmax=vmax,
+						cmap=cmap,
+						norm=norm)
+		return im,cmap,norm
 
 	def add_terrain_profile(self,axis,profile,profaxis):
 
@@ -486,7 +501,7 @@ class SynthPlot(object):
 		''' if zoomOpt is false then extent1=extent2 '''			
 		if self.zoomOpt:
 			opt=self.zoomOpt[0]
-			extent2=zoom_in(self,extent1,self.zoomCenter[opt])
+			extent2=cm.zoom_in(self,extent1,self.zoomCenter[opt])
 		else:
 			extent2=extent1
 
@@ -504,10 +519,10 @@ class SynthPlot(object):
 
 			self.add_coastline(g)
 			self.add_flight_path(g)
-			im=self.add_field(g,array=field.T,name=self.var,ext=extent1)
+			im, cmap, norm=self.add_field(g,array=field.T,field=self.var,ext=extent1)
 
 			if self.terrain.file:
-				Terrain.add_contour(g,self)
+				Terrain.add_contour(g,k,self)
 
 			if self.wind:
 				self.add_windvector(g,u.T,v.T)
@@ -541,7 +556,7 @@ class SynthPlot(object):
 			# g.subplots_adjust(bottom=0.04,top=0.95)
 
 		''' add color bar '''
-		plot_grids.cbar_axes[0].colorbar(im)
+		plot_grids.cbar_axes[0].colorbar(im,cmap=cmap, norm=norm)
 		titext='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)+'\n'
 		line_start='\nStart time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC'
 		line_end='\nEnd time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'
@@ -612,7 +627,7 @@ class SynthPlot(object):
 		''' if zoomOpt is false then extent1=extent2 '''			
 		if self.zoomOpt:
 			opt=self.zoomOpt[0]
-			extent2=zoom_in(self,extent1,self.zoomCenter[opt])
+			extent2=cm.zoom_in(self,extent1,self.zoomCenter[opt])
 		else:
 			extent2=extent1
 

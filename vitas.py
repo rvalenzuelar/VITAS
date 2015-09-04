@@ -40,6 +40,7 @@ def main( config, args ):
 		usr_input = raw_input('\nIndicate directory: ')
 		out=os.listdir(synth_folder+'/'+usr_input)
 		print "\nSyntheses available:"
+		out.sort()
 		for f in out:
 			if f[-3:]=='cdf': print f
 		print '\n'
@@ -107,15 +108,15 @@ def main( config, args ):
 	
 	# Plotter.plot_wind_comp_var(SYNTH,FLIGHT)
 
-	# Plotter.plot_tke(SYNTH,FLIGHT)
+	Plotter.plot_tke(SYNTH,FLIGHT)
 
 	Plotter.plot_vertical_heat_flux(SYNTH,FLIGHT)
 
 	''' use this one with ipython '''
-	plt.show(block=False)	
+	# plt.show(block=False)	
 
 	''' use this one with the shell '''
-	# plt.show()
+	plt.show(block=False)
 
 """call main function """
 if __name__ == "__main__":

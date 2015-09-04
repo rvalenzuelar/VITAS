@@ -10,12 +10,14 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 from scipy.spatial import cKDTree
 from itertools import product
 import Radardata as rd
+import Common as cm 
 
 import tempfile
 import os
 import gdal
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 class Terrain(object):
 	def __init__(self,filepath):
@@ -27,7 +29,7 @@ class Terrain(object):
 		self.array=None
 
 
-def add_contour(axis,Plot):
+def add_contour(axis,z,Plot):
 
 	if not Plot.terrain.array:
 		dtm=make_array(Plot.terrain.file,Plot)
@@ -35,12 +37,23 @@ def add_contour(axis,Plot):
 	else:
 		dtm=Plot.terrain.array
 
-	cont=axis.contour(dtm['xg'],dtm['yg'],dtm['data'],
-					levels=Plot.terrainContours,
-					colors=Plot.terrainContourColors,
-					linewidths=2)
+	# cont=axis.contour(dtm['xg'],dtm['yg'],dtm['data'],
+	# 				levels=Plot.terrainContours,
+	# 				colors=Plot.terrainContourColors,
+	# 				linewidths=2)
 	
-	axis.clabel(cont,[200,600,1000],fmt='%.0f',fontsize=12,inline_spacing=2)	
+	delta=200 #[m]
+	start_contour = int(z*1000) #[m]
+	ncontours = 8
+	end_contour = int(start_contour+ncontours*delta)
+	levels = range(start_contour, end_contour, delta)
+	palette = sns.color_palette("Greys_r", len(levels)+2)
+	colors = palette[2:]
+	cont=axis.contourf(dtm['xg'],dtm['yg'],dtm['data'],
+					levels=levels,
+					colors=colors)
+
+	# axis.clabel(cont, Plot.terrainContours ,fmt='%.0f',fontsize=12,inline_spacing=2)	
 
 def plot_altitude_mask(axis,S,dtm):
 
@@ -293,8 +306,8 @@ def get_topo(**kwargs):
 	idx_lat=[]
 	idx_lon=[]
 	for lat,lon in zip(lats,lons):
-		idx_lat.append(rd.find_index_recursively(array=yg,value=lat,decimals=4))
-		idx_lon.append(rd.find_index_recursively(array=xg,value=lon,decimals=4))
+		idx_lat.append(cm.find_index_recursively(array=yg,value=lat,decimals=4))
+		idx_lon.append(cm.find_index_recursively(array=xg,value=lon,decimals=4))
 
 	""" filter out repeated indexes """
 	indexes_filtered=[]
