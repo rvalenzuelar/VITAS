@@ -9,13 +9,13 @@
 *************************************** 
 '''
 
+import Terrain
 
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
 import matplotlib.pyplot as plt
-
+import Common as cm 
 import pandas as pd
-import Terrain
 import numpy as np
 import seaborn as sns 
 
@@ -364,7 +364,7 @@ class FlightPlot(object):
 		ax.set_ylim([0,10])
 		plt.xlabel('distance')
 		plt.ylabel('TKE [m2 s-2]')
-		add_second_y_in(ax,topo,xaxis=xaxis)
+		add_second_y_in(ax,topo,xaxis=xaxis,color='g',label='Topography [m]')
 		plt.draw()
 
 	def plot_vertical_heat_flux(self,data,xdata):
@@ -442,7 +442,7 @@ def adjust_xaxis(axes,new_xticks):
 
 	for i in [6,7,8]:
 		xticks=axes[i].get_xticks()
-		new_xticks = round_to_closest_int(new_xticks,10)
+		new_xticks = cm.round_to_closest_int(new_xticks,10)
 		axes[i].set_xticks(new_xticks)
 
 def get_wind_components(wspd,wdir):
