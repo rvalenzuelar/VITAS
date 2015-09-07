@@ -21,6 +21,7 @@ import seaborn as sns
 
 from itertools import product
 from scipy.spatial import cKDTree
+import statsmodels.api as sm
 
 ''' set color codes in seaborn '''
 sns.set_color_codes()
@@ -135,24 +136,25 @@ class FlightPlot(object):
 		synth_z=kwargs['z']
 		zlevel=kwargs['level']
 		zoom=kwargs['zoom']
+		flightmet = kwargs['met'] # flight level meteo field used for comparison
 
 		idx = np.where(synth_z==zlevel)
 		data = np.squeeze(synth[:,:,idx])
 
 		flgt_lats,flgt_lons=zip(*self.flightPath)
-		flight_wspd=self.met['wspd']
+		flight_wspd=self.met[flightmet]
 		flight_altitude=self.met['palt']
 
-		flgt_lats = np.asarray(around(flgt_lats,4))
-		flgt_lons = np.asarray(around(flgt_lons,4))
-		synth_lats = np.asarray(around(synth_lats,4))
-		synth_lons = np.asarray(around(synth_lons,4))
+		flgt_lats = np.asarray(cm.around(flgt_lats,4))
+		flgt_lons = np.asarray(cm.around(flgt_lons,4))
+		synth_lats = np.asarray(cm.around(synth_lats,4))
+		synth_lons = np.asarray(cm.around(synth_lons,4))
 
 		idx_lat=[]
 		idx_lon=[]
 		for lat,lon in zip(flgt_lats,flgt_lons):
-			idx_lat.append(find_index_recursively(array=synth_lats,value=lat,decimals=4))
-			idx_lon.append(find_index_recursively(array=synth_lons,value=lon,decimals=4))
+			idx_lat.append(cm.find_index_recursively(array=synth_lats,value=lat,decimals=4))
+			idx_lon.append(cm.find_index_recursively(array=synth_lons,value=lon,decimals=4))
 
 		""" filter out repeated indexes """
 		indexes_filtered=[]
@@ -231,15 +233,21 @@ class FlightPlot(object):
 		scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
 		synth_alt=str(int(zlevel[0]*1000))
 		flgt_alt=str(int(np.average(flgt_altitude)))
+
+		if flightmet == 'wspd':
+			windtype = 'Horizontal'
+		elif flightmet == 'wvert':
+			windtype = 'Vertical'
+
 		antext1='Synthesis alt: '+synth_alt+' m MSL'
 		antext2='Flight level alt: '+flgt_alt+' m MSL'
-		title1='Horizontal wind speed\n'+self.name
-		title2='Flight level and P3 synthesis comparison\n'+self.name
+		title1=windtype +' wind speed\n'+self.name
+		title2='Flight level and P3 synthesis comparison - '+windtype+' wind speed\n'+self.name
 
 
 		''' grid '''
 		plt.figure()
-		im=plt.imshow(data.T,	interpolation='none',origin='lower')
+		im=plt.imshow(data.T, interpolation='none',origin='lower',cmap='jet')
 		for p,val in zip(line_center,data_extract2):
 			colorVal=scalarMap.to_rgba(val)
 			plt.plot(p[0],p[1],color=colorVal,marker='s',markersize=6,linestyle='none')
@@ -278,21 +286,51 @@ class FlightPlot(object):
 
 
 		''' scatter '''
-		x_range=[0, 40]
-		y_range=[0, 40]
-		plt.figure()
-		ax=plt.subplot(111)
-		ax.scatter(data_extract2,flgt_mean)
-		ax.plot(x_range, y_range, color='k', linestyle='-', linewidth=2)
-		ax.annotate(antext2, xy=(0.08, 0.9), xycoords="axes fraction",fontsize=14)
-		ax.annotate(antext1, xy=(0.08, 0.85), xycoords="axes fraction",fontsize=14)
+		# fig,ax=plt.subplots(figsize=(8.5,8.5))
+		fig,ax=plt.subplots()
+		x=np.asarray(flgt_mean)
+		y=np.asarray(data_extract2)
+		ax.scatter(x,y)
+		#----------
+		# 1:1 line
+		#==========
+		maxx=np.nanmax(x)
+		minx=np.nanmin(x)
+		maxy=np.nanmax(y)
+		miny=np.nanmin(y)
+		mmax=np.max([maxx,maxy])
+		mmin=np.min([minx,miny])
+		x1to1=np.linspace(-30,30,3)
+		y1to1=x1to1
+		ax.plot(x1to1, y1to1, color='k', linestyle='-', linewidth=2)
+		#-------------
+		# regression
+		#=============
+		xs = x[~np.isnan(y)]
+		ys = y[~np.isnan(y)]
+		# xs = sm.add_constant(xs) # add intercept, otherwise is zero
+		model=sm.OLS(ys,xs)
+		result=model.fit()
+		c=0
+		m=result.params[0]
+		xr=np.linspace(-30,30,3)
+		yr=c+m*xr
+		ax.plot(xr, yr, color='r', linestyle=':', linewidth=2)
+		#--------------
+		r2=np.round(result.rsquared,decimals=2)
+		m=np.round(m,decimals=2)
+		antext3="R-sqr: "+str(r2)
+		antext4="Y = "+str(m)+" * X"
+		textstr = antext2+'\n'+antext1+'\n'+antext3+'\n'+antext4
+		ax.text(0.5, 0.05, textstr, transform=ax.transAxes, fontsize=14,
+				verticalalignment='bottom')
 		ax.set_aspect(1)
 		ax.grid(which='major')
-		ax.set_xlim(x_range)
-		ax.set_ylim(y_range)
+		ax.set_xlim([mmin*0.95, mmax*1.05])
+		ax.set_ylim([mmin*0.95, mmax*1.05])
 		plt.suptitle(title2)
-		plt.xlabel('synthesis WSPD')
-		plt.ylabel('flight WSPD')
+		plt.xlabel('flight')
+		plt.ylabel('synthesis')
 
 		plt.draw()
 

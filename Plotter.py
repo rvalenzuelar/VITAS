@@ -99,7 +99,8 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 	""" synthesis horizontal velocity"""
 	array=get_HorizontalWindSpeed(Synth.U,Synth.V)
 
-	flight.compare_with_synth(array=array,x=lon,y=lat,z=z,level=z[level],zoom=zoomOpt[0])
+	flight.compare_with_synth(array=array,met='wspd',x=lon,y=lat,z=z,level=z[level],zoom=zoomOpt[0])
+	flight.compare_with_synth(array=Synth.WUP,met='wvert',x=lon,y=lat,z=z,level=z[level],zoom=zoomOpt[0])
 	
 
 def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):

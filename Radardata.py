@@ -87,6 +87,7 @@ class SynthPlot(object):
 		try:
 			self.cmapName=config['synthesis_field_cmap_name']
 			self.cmapRange=config['synthesis_field_cmap_range']
+			self.cmapDelta=config['synthesis_field_cmap_delta']
 			self.coastColor=config['coast_line_color']
 			self.coastStyle=config['coast_line_style']
 			self.coastWidth=config['coast_line_width']
@@ -414,7 +415,7 @@ class SynthPlot(object):
 		snsmap=sns.color_palette(self.cmapName[field], 24)
 		cmap = colors.ListedColormap(snsmap[2:])
 
-		vdelta=5
+		vdelta=self.cmapDelta[field]
 		vmin=self.cmapRange[field][0]
 		vmax=self.cmapRange[field][1]
 		bounds=range(vmin, vmax+vdelta, vdelta)

@@ -108,15 +108,15 @@ def main( config, args ):
 	
 	# Plotter.plot_wind_comp_var(SYNTH,FLIGHT)
 
-	Plotter.plot_tke(SYNTH,FLIGHT)
+	# Plotter.plot_tke(SYNTH,FLIGHT)
 
-	Plotter.plot_vertical_heat_flux(SYNTH,FLIGHT)
+	# Plotter.plot_vertical_heat_flux(SYNTH,FLIGHT)
 
 	''' use this one with ipython '''
 	# plt.show(block=False)	
 
 	''' use this one with the shell '''
-	plt.show(block=False)
+	plt.show()
 
 """call main function """
 if __name__ == "__main__":
