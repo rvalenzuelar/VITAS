@@ -12,6 +12,8 @@ import Flightdata as fd
 import Terrain
 import numpy as np
 import Common as cm
+import matplotlib.pyplot as plt
+
 
 def plot_terrain(SynthPlot,**kwargs):
 
@@ -102,6 +104,36 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 	flight.compare_with_synth(array=array,met='wspd',x=lon,y=lat,z=z,level=z[level],zoom=zoomOpt[0])
 	flight.compare_with_synth(array=Synth.WUP,met='wvert',x=lon,y=lat,z=z,level=z[level],zoom=zoomOpt[0])
 	
+
+def make_profile_from_field(SYNTH,**kwargs):
+
+	field = kwargs['field']
+	U = SYNTH.U
+	V = SYNTH.V
+	LAT=SYNTH.LAT
+	LON=SYNTH.LON
+	Z=SYNTH.Z
+
+	# BBY
+	# lon=-123.07;lat=38.31
+	lon=-123.09;lat=38.3
+	lat_idx=cm.find_index_recursively(array=LAT,value=lat,decimals=2)
+	lon_idx=cm.find_index_recursively(array=LON,value=lon,decimals=2)
+
+	uprof = U[lon_idx,lat_idx,:]
+	vprof = V[lon_idx,lat_idx,:]
+
+	print Z
+	print uprof
+	print vprof
+	# spdprof=np.sqrt(np.power(uprof,2)+np.power(vprof,2))
+	spdprof=np.sqrt(uprof**2+vprof**2)
+	fig,ax=plt.subplots()
+	ax.plot(uprof,Z,'-o',label='U')
+	ax.plot(vprof,Z,'-o',label='V')
+	ax.plot(spdprof,Z,'-o',label='SPD')
+	ax.set_ylim([0,5])
+	plt.draw()
 
 def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 

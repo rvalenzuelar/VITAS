@@ -18,6 +18,8 @@ import Common as cm
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+import numpy as np
+
 sns.set_style("white")
 
 class SynthPlot(object):
@@ -278,7 +280,7 @@ class SynthPlot(object):
 			
 			x0=x0*self.scale
 			x1=x1*self.scale
-			if all_same(self.zlevels):
+			if cm.all_same(self.zlevels):
 				y0 = y1 = self.zlevels[0]
 				line=axis.plot([x0,x1],[y0,y1])
 				self.sliceLine_setup(line)
@@ -520,7 +522,7 @@ class SynthPlot(object):
 
 			self.add_coastline(g)
 			self.add_flight_path(g)
-			im, cmap, norm=self.add_field(g,array=field.T,field=self.var,ext=extent1)
+			im, cmap, norm = self.add_field(g,array=field.T,field=self.var,ext=extent1)
 
 			if self.terrain.file:
 				Terrain.add_contour(g,k,self)
@@ -533,6 +535,13 @@ class SynthPlot(object):
 
 			g.set_xlim(extent2[0], extent2[1])
 			g.set_ylim(extent2[2], extent2[3])				
+
+			''' BBY '''
+			# lon=-123.07; lat=38.31
+			lon=-123.09;lat=38.3
+			lat_idx=cm.find_index_recursively(array=self.lats,value=lat,decimals=2)
+			lon_idx=cm.find_index_recursively(array=self.lons,value=lon,decimals=2)			
+			g.plot(self.lons[lon_idx],self.lats[lat_idx],'o')
 
 			if self.horizontalGridMajorOn:
 				g.grid(True, which = 'major',linewidth=1)
@@ -616,8 +625,8 @@ class SynthPlot(object):
 				varName=colorName
 			elif windname == 'w':
 				field_group = wComp
-				colorName=self.var
-				varName=self.var
+				colorName='WVA'
+				varName=colorName
 		else:
 			field_group = self.get_slices(field_array)
 			varName=self.var
@@ -637,13 +646,13 @@ class SynthPlot(object):
 
 		''' adjust vertical extent '''
 		if self.sliceo=='meridional':
-			extent3=adjust_extent(self,extent1,'meridional','data')
-			extent4=adjust_extent(self,extent2,'meridional','detail')
+			extent3=cm.adjust_extent(self,extent1,'meridional','data')
+			extent4=cm.adjust_extent(self,extent2,'meridional','detail')
 			horizontalComp=vComp
 			geo_axis='Lon: '
 		elif self.sliceo=='zonal':
-			extent3=adjust_extent(self,extent1,'zonal','data')
-			extent4=adjust_extent(self,extent2,'zonal','detail')			
+			extent3=cm.adjust_extent(self,extent1,'zonal','data')
+			extent4=cm.adjust_extent(self,extent2,'zonal','detail')			
 			horizontalComp=uComp
 			geo_axis='Lat: '
 
@@ -661,9 +670,9 @@ class SynthPlot(object):
 		for g,field,h_comp,w_comp,prof,profax in group:
 
 			if isWind:
-				im=self.add_field(g,array=field.T,name=colorName,ext=extent3)
+				im, cmap, norm = self.add_field(g,array=field.T,field=varName,name=colorName,ext=extent3)
 			else:
-				im=self.add_field(g,array=field.T,name=self.var,ext=extent3)
+				im, cmap, norm = self.add_field(g,array=field.T,field=varName,name=self.var,ext=extent3)
 
 			self.add_terrain_profile(g,prof,profax)
 
@@ -700,10 +709,10 @@ class SynthPlot(object):
 					transform=g.transAxes)
 			p+=1
 
-		 # add color bar
-		plot_grids.cbar_axes[0].colorbar(im)
-		# fig.suptitle(' Dual-Doppler Synthesis: '+self.get_var_title(self.var) )
+		# add color bar
+		plot_grids.cbar_axes[0].colorbar(im,cmap=cmap, norm=norm)
 
+		# add title
 		titext='Dual-Doppler Synthesis: '+ self.get_var_title(varName)+'\n'
 		line_start='\nStart time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC'
 		line_end='\nEnd time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'		
@@ -713,6 +722,7 @@ class SynthPlot(object):
 		plt.draw()
 	
 
+	# def profile_field(self , **kwargs):
 
 
 

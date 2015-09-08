@@ -112,11 +112,14 @@ def main( config, args ):
 
 	# Plotter.plot_vertical_heat_flux(SYNTH,FLIGHT)
 
+	Plotter.make_profile_from_field(SYNTH,field='DBZ')
+
+
 	''' use this one with ipython '''
-	# plt.show(block=False)	
+	plt.show(block=False)	
 
 	''' use this one with the shell '''
-	plt.show()
+	# plt.show()
 
 """call main function """
 if __name__ == "__main__":
