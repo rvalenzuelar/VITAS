@@ -13,7 +13,12 @@ import Terrain
 import numpy as np
 import Common as cm
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+import datetime
 
+from plotWindprof import get_filenames,make_arrays
+
+import seaborn as sns
 
 def plot_terrain(SynthPlot,**kwargs):
 
@@ -108,32 +113,58 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 def make_profile_from_field(SYNTH,**kwargs):
 
 	field = kwargs['field']
+	loc=kwargs['location']
 	U = SYNTH.U
 	V = SYNTH.V
 	LAT=SYNTH.LAT
 	LON=SYNTH.LON
 	Z=SYNTH.Z
+	st=SYNTH.start
+	en=SYNTH.end
 
-	# BBY
-	# lon=-123.07;lat=38.31
-	lon=-123.09;lat=38.3
-	lat_idx=cm.find_index_recursively(array=LAT,value=lat,decimals=2)
-	lon_idx=cm.find_index_recursively(array=LON,value=lon,decimals=2)
-
+	''' synthesis '''
+	lat_idx=cm.find_index_recursively(array=LAT,value=loc.lat,decimals=2)
+	lon_idx=cm.find_index_recursively(array=LON,value=loc.lon,decimals=2)
 	uprof = U[lon_idx,lat_idx,:]
 	vprof = V[lon_idx,lat_idx,:]
+	sprofspd=np.sqrt(uprof**2+vprof**2)
+	sprofdir=270. - ( np.arctan2(vprof,uprof) * 180./np.pi )
 
-	print Z
-	print uprof
-	print vprof
-	# spdprof=np.sqrt(np.power(uprof,2)+np.power(vprof,2))
-	spdprof=np.sqrt(uprof**2+vprof**2)
-	fig,ax=plt.subplots()
-	ax.plot(uprof,Z,'-o',label='U')
-	ax.plot(vprof,Z,'-o',label='V')
-	ax.plot(spdprof,Z,'-o',label='SPD')
-	ax.set_ylim([0,5])
-	plt.draw()
+	''' wind profiler '''
+	case='3'
+	wpfiles = get_filenames(case)
+	wspd,wdir,time,hgt = make_arrays(files= wpfiles, resolution='coarse',surface=False)
+	idx = time.index(datetime.datetime(st.year, st.month, st.day, st.hour, 0))
+	wprofspd = wspd[:,idx]
+	wprofdir = wdir[:,idx]
+
+
+	''' profile '''
+	with sns.axes_style("darkgrid"):
+		fig,ax=plt.subplots(1,2, figsize=(9,9), sharey=True)
+		
+		n=0
+		hl1=ax[n].plot(sprofspd,Z,'-o',label='P3-SYNTH (250 m)')
+		hl2=ax[n].plot(wprofspd,hgt,'-o',label='WPROF-COARSE (100 m)')
+		ax[n].set_xlabel('wind speed [m s-1]')
+		ax[n].set_ylabel('height AGL [km]')
+		lns = hl1 + hl2
+		labs = [l.get_label() for l in lns]
+		ax[n].legend(lns, labs, loc=0)
+
+		n=1
+		ax[n].plot(sprofdir,Z,'-o',label='P3-SYNTH')
+		ax[n].plot(wprofdir,hgt,'-o',label='WPROF')
+		ax[n].set_xlabel('wind direction [deg]')
+		ax[n].invert_xaxis()
+		t1='Comparison between P3-synthesis and BBY wind profiler'
+		t2='\nDate: ' + st.strftime('%Y-%m-%d')
+		t3='\nSynthesis time: ' + st.strftime('%H:%M') + ' to ' + en.strftime('%H:%M UTC') 
+		t4='\nWind profiler time: ' + time[idx].strftime('%H:%M') + ' to ' + time[idx+1].strftime('%H:%M UTC') 
+		fig.suptitle(t1+t2+t3+t4)
+		plt.ylim([0,5])
+		
+		plt.draw()
 
 def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 
@@ -152,6 +183,9 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 
 	""" terrain array """
 	P.terrain = DTM
+
+	""" geographic locations """
+	P.locations=kwargs['locations']
 
 	try:
 		P.slicem=sorted(kwargs['slicem'],reverse=True)
