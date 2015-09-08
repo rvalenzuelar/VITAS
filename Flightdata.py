@@ -246,7 +246,7 @@ class FlightPlot(object):
 
 
 		''' grid '''
-		plt.figure()
+		plt.figure(figsize=(8,7))
 		im=plt.imshow(data.T, interpolation='none',origin='lower',cmap='jet')
 		for p,val in zip(line_center,data_extract2):
 			colorVal=scalarMap.to_rgba(val)
@@ -264,7 +264,7 @@ class FlightPlot(object):
 		plt.draw()
 
 		''' timeseries '''
-		fig, ax1 = plt.subplots()
+		fig, ax1 = plt.subplots(figsize=(8,7))
 		ln1=ax1.plot(data_extract,'bo',label='raw synthesis wind')
 		ln2=ax1.plot(data_extract2,'rs',label='synthesis wind interpolated')
 		ln3=ax1.plot(flgt_mean,'g',label='flight wind')
@@ -286,8 +286,9 @@ class FlightPlot(object):
 
 
 		''' scatter '''
-		# fig,ax=plt.subplots(figsize=(8.5,8.5))
-		fig,ax=plt.subplots()
+		# with sns.axes_style("darkgrid"):
+		fig,ax=plt.subplots(figsize=(8,7))
+		# fig,ax=plt.subplots()
 		x=np.asarray(flgt_mean)
 		y=np.asarray(data_extract2)
 		ax.scatter(x,y)
@@ -308,7 +309,6 @@ class FlightPlot(object):
 		#=============
 		xs = x[~np.isnan(y)]
 		ys = y[~np.isnan(y)]
-		# xs = sm.add_constant(xs) # add intercept, otherwise is zero
 		model=sm.OLS(ys,xs)
 		result=model.fit()
 		c=0
@@ -325,13 +325,13 @@ class FlightPlot(object):
 		ax.text(0.5, 0.05, textstr, transform=ax.transAxes, fontsize=14,
 				verticalalignment='bottom')
 		ax.set_aspect(1)
-		ax.grid(which='major')
 		ax.set_xlim([mmin*0.95, mmax*1.05])
 		ax.set_ylim([mmin*0.95, mmax*1.05])
-		plt.suptitle(title2)
-		plt.xlabel('flight')
-		plt.ylabel('synthesis')
 
+		plt.suptitle(title2)
+		plt.xlabel('Flight wind speed [m s-1]')
+		plt.ylabel('Synthesis wind speed [m s-1]')
+		plt.grid(which='major')
 		plt.draw()
 
 	def print_covariance_matrix(self,data):
