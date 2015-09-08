@@ -20,8 +20,6 @@ import seaborn as sns
 
 import numpy as np
 
-sns.set_style("white")
-
 class SynthPlot(object):
 
 	def __init__(self):
@@ -51,6 +49,7 @@ class SynthPlot(object):
 		self.verticalGridMajorOn=False
 		self.verticalGridMinorOn=False		
 		self.horizontal={'xminor':None,'xmajor':None,'yminor':None,'ymajor':None}
+		self.locations=None
 		self.lats=None 
 		self.lons=None
 		self.panel=None
@@ -487,16 +486,16 @@ class SynthPlot(object):
 
 		self.slice_type='horizontal'
 
-		fig = plt.figure(figsize=figsize)
-
-		plot_grids=ImageGrid( fig,111,
-								nrows_ncols = self.rows_cols,
-								axes_pad = 0.0,
-								add_all = True,
-								share_all=False,
-								label_mode = "L",
-								cbar_location = "top",
-								cbar_mode="single")
+		with sns.axes_style("white"):
+			fig = plt.figure(figsize=figsize)
+			plot_grids=ImageGrid( fig,111,
+									nrows_ncols = self.rows_cols,
+									axes_pad = 0.0,
+									add_all = True,
+									share_all=False,
+									label_mode = "L",
+									cbar_location = "top",
+									cbar_mode="single")
 	
 		''' field extent '''
 		extent1=self.get_extent()
@@ -536,12 +535,11 @@ class SynthPlot(object):
 			g.set_xlim(extent2[0], extent2[1])
 			g.set_ylim(extent2[2], extent2[3])				
 
-			''' BBY '''
-			# lon=-123.07; lat=38.31
-			lon=-123.09;lat=38.3
-			lat_idx=cm.find_index_recursively(array=self.lats,value=lat,decimals=2)
-			lon_idx=cm.find_index_recursively(array=self.lons,value=lon,decimals=2)			
-			g.plot(self.lons[lon_idx],self.lats[lat_idx],'o')
+			if self.locations:
+				for loc in self.locations:
+					lat_idx=cm.find_index_recursively(array=self.lats,value=loc.lat,decimals=2)
+					lon_idx=cm.find_index_recursively(array=self.lons,value=loc.lon,decimals=2)			
+					g.plot(self.lons[lon_idx],self.lats[lat_idx],'s',color='black')
 
 			if self.horizontalGridMajorOn:
 				g.grid(True, which = 'major',linewidth=1)
@@ -557,6 +555,12 @@ class SynthPlot(object):
 					horizontalalignment='left',
 					verticalalignment='center',
 					transform=g.transAxes)
+			g.text(	0.9, 0.03,
+					self.file,
+					fontsize=12,
+					horizontalalignment='right',
+					verticalalignment='center',
+					transform=g.transAxes)
 
 			self.horizontal['ymajor'] = g.get_yticks(minor=False)
 			self.horizontal['yminor'] = g.get_yticks(minor=True)
@@ -567,10 +571,14 @@ class SynthPlot(object):
 
 		''' add color bar '''
 		plot_grids.cbar_axes[0].colorbar(im,cmap=cmap, norm=norm)
-		titext='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)+'\n'
-		line_start='\nStart time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC'
-		line_end='\nEnd time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'
-		fig.suptitle(titext+self.file+line_start+line_end)
+
+		''' add title '''
+		st=self.synth_start
+		en=self.synth_end
+		t1='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)
+		t2='\nDate: '+st.strftime('%Y-%m-%d')
+		t3= '\nTime: '+st.strftime('%H:%M')+'-'+en.strftime('%H:%M UTC')
+		fig.suptitle(t1+t2+t3)
 
 		# plt.tight_layout()
 		plt.draw()
