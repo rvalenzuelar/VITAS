@@ -172,8 +172,8 @@ class SynthPlot(object):
 
 		elif option == 'multi':
 			self.rows_cols=(3,2)
-			self.windv_jump['x']=self.windv_jump['x']+3
-			self.windv_jump['y']=self.windv_jump['y']+3
+			# self.windv_jump['x']=self.windv_jump['x']+3
+			# self.windv_jump['y']=self.windv_jump['y']+3
 			self.zlevel_textsize=12
 
 		elif option == 'vertical':
@@ -555,12 +555,6 @@ class SynthPlot(object):
 					horizontalalignment='left',
 					verticalalignment='center',
 					transform=g.transAxes)
-			g.text(	0.9, 0.03,
-					self.file,
-					fontsize=12,
-					horizontalalignment='right',
-					verticalalignment='center',
-					transform=g.transAxes)
 
 			self.horizontal['ymajor'] = g.get_yticks(minor=False)
 			self.horizontal['yminor'] = g.get_yticks(minor=True)
@@ -568,6 +562,13 @@ class SynthPlot(object):
 			self.horizontal['xminor'] = g.get_xticks(minor=True)			
 
 			# g.subplots_adjust(bottom=0.04,top=0.95)
+
+		# plt.text(	0.9, 0.03,
+		# 		self.file,
+		# 		fontsize=12,
+		# 		horizontalalignment='right',
+		# 		verticalalignment='center',
+		# 		transform=g.transAxes)
 
 		''' add color bar '''
 		plot_grids.cbar_axes[0].colorbar(im,cmap=cmap, norm=norm)
@@ -578,7 +579,8 @@ class SynthPlot(object):
 		t1='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)
 		t2='\nDate: '+st.strftime('%Y-%m-%d')
 		t3= '\nTime: '+st.strftime('%H:%M')+'-'+en.strftime('%H:%M UTC')
-		fig.suptitle(t1+t2+t3)
+		t4='\n'+self.file
+		fig.suptitle(t1+t2+t3+t4)
 
 		# plt.tight_layout()
 		plt.draw()
