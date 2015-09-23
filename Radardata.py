@@ -49,7 +49,6 @@ class SynthPlot(object):
 		self.verticalGridMajorOn=False
 		self.verticalGridMinorOn=False		
 		self.horizontal={'xminor':None,'xmajor':None,'yminor':None,'ymajor':None}
-		self.locations=None
 		self.lats=None 
 		self.lons=None
 		self.panel=None
@@ -99,6 +98,7 @@ class SynthPlot(object):
 			self.flightDotSize=config['flight_dot_size']
 			self.flightStyle=config['flight_line_style']				
 			self.flightWidth=config['flight_line_width']
+			self.markersLocations=config['markers_locations']
 			self.horizontalGridMajorOn=config['synthesis_horizontal_gridmajor_on']
 			self.horizontalGridMinorOn=config['synthesis_horizontal_gridminor_on']
 			self.sliceLineColor=config['section_slice_line_color']
@@ -516,7 +516,7 @@ class SynthPlot(object):
 		''' creates iterator group '''
 		group=zip(plot_grids,self.zlevels,field_group,ucomp,vcomp)
 
-		# make gridded plot
+		''' make gridded plot '''
 		for g,k,field,u,v in group:
 
 			self.add_coastline(g)
@@ -535,11 +535,13 @@ class SynthPlot(object):
 			g.set_xlim(extent2[0], extent2[1])
 			g.set_ylim(extent2[2], extent2[3])				
 
-			if self.locations:
-				for loc in self.locations:
-					lat_idx=cm.find_index_recursively(array=self.lats,value=loc.lat,decimals=2)
-					lon_idx=cm.find_index_recursively(array=self.lons,value=loc.lon,decimals=2)			
-					g.plot(self.lons[lon_idx],self.lats[lat_idx],'s',color='black')
+			if self.markersLocations:
+				for name, val in self.markersLocations.iteritems():
+					''' find indices of coordinates '''
+					lat_idx=cm.find_index_recursively(array=self.lats,value=val['lat'],decimals=2)
+					lon_idx=cm.find_index_recursively(array=self.lons,value=val['lon'],decimals=2)
+					''' add marker '''
+					g.plot(self.lons[lon_idx],self.lats[lat_idx],val['type'],color=val['color'])
 
 			if self.horizontalGridMajorOn:
 				g.grid(True, which = 'major',linewidth=1)
@@ -561,14 +563,6 @@ class SynthPlot(object):
 			self.horizontal['xmajor'] = g.get_xticks(minor=False)
 			self.horizontal['xminor'] = g.get_xticks(minor=True)			
 
-			# g.subplots_adjust(bottom=0.04,top=0.95)
-
-		# plt.text(	0.9, 0.03,
-		# 		self.file,
-		# 		fontsize=12,
-		# 		horizontalalignment='right',
-		# 		verticalalignment='center',
-		# 		transform=g.transAxes)
 
 		''' add color bar '''
 		plot_grids.cbar_axes[0].colorbar(im,cmap=cmap, norm=norm)
@@ -582,7 +576,6 @@ class SynthPlot(object):
 		t4='\n'+self.file
 		fig.suptitle(t1+t2+t3+t4)
 
-		# plt.tight_layout()
 		plt.draw()
 
 	def vertical_plane(self,**kwargs):
@@ -730,10 +723,5 @@ class SynthPlot(object):
 
 		# show figure
 		plt.draw()
-	
-
-	# def profile_field(self , **kwargs):
-
-
 
 

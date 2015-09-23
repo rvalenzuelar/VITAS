@@ -77,9 +77,6 @@ def main( config, args ):
 	print "Synthesis start time :%s" % SYNTH.start
 	print "Synthesis end time :%s\n" % SYNTH.end
 
-	""" add some locations """
-	bby=geolocation(lat=38.32,lon=-123.05,name='BBY')
-	czd=geolocation(lat=38.53,lon=-123.08,name='CZD')
 
 	""" make synthesis plots """
 	if plotFields:
@@ -92,8 +89,7 @@ def main( config, args ):
 								slicez = args.slicez,
 								zoomIn=args.zoomin,
 								mask = args.mask,
-								config=config,
-								locations=[bby,czd])
+								config=config)
 
 	""" make terrain plots """
 	if terrain or slope:
@@ -110,14 +106,17 @@ def main( config, args ):
 	# if turbulence:
 	# Plotter.print_covariance(SYNTH,FLIGHT)
 	# Plotter.print_correlation(SYNTH,FLIGHT)
-	
 	# Plotter.plot_wind_comp_var(SYNTH,FLIGHT)
-
 	# Plotter.plot_tke(SYNTH,FLIGHT)
-
 	# Plotter.plot_vertical_heat_flux(SYNTH,FLIGHT)
 
-	Plotter.make_profile_from_field(SYNTH,field='DBZ',location=bby)
+	if config['wind_profiler']:
+		Plotter.compare_with_windprof(SYNTH,	location=config['wind_profiler'])
+
+	if config['profile_field']:
+		# example {'DBZ': {'lat':38.53,'lon':-123.08}}
+		Plotter.make_profile_from_field(SYNTH,field='DBZ',
+											location=config['wind_profiler'])
 
 
 	''' use this one with ipython '''
@@ -126,11 +125,6 @@ def main( config, args ):
 	''' use this one with the shell '''
 	# plt.show()
 
-class geolocation(object):
-	def __init__(self,lat=None,lon=None,name=None):
-		self.lat=lat
-		self.lon=lon
-		self.name=name
 
 """call main function """
 if __name__ == "__main__":

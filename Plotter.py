@@ -110,9 +110,9 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 	flight.compare_with_synth(array=Synth.WUP,met='wvert',x=lon,y=lat,z=z,level=z[level])
 
 
-def make_profile_from_field(SYNTH,**kwargs):
+def compare_with_windprof(SYNTH,**kwargs):
 
-	field = kwargs['field']
+	# field = kwargs['field']
 	loc=kwargs['location']
 	U = SYNTH.U
 	V = SYNTH.V
@@ -123,15 +123,15 @@ def make_profile_from_field(SYNTH,**kwargs):
 	en=SYNTH.end
 
 	''' synthesis '''
-	lat_idx=cm.find_index_recursively(array=LAT,value=loc.lat,decimals=2)
-	lon_idx=cm.find_index_recursively(array=LON,value=loc.lon,decimals=2)
+	lat_idx=cm.find_index_recursively(array=LAT,value=loc['lat'],decimals=2)
+	lon_idx=cm.find_index_recursively(array=LON,value=loc['lon'],decimals=2)
 	uprof = U[lon_idx,lat_idx,:]
 	vprof = V[lon_idx,lat_idx,:]
 	sprofspd=np.sqrt(uprof**2+vprof**2)
 	sprofdir=270. - ( np.arctan2(vprof,uprof) * 180./np.pi )
 
 	''' wind profiler '''
-	case='3'
+	case=loc['case']
 	wpfiles = get_filenames(case)
 	wspd,wdir,time,hgt = make_arrays(files= wpfiles, resolution='coarse',surface=False)
 	idx = time.index(datetime.datetime(st.year, st.month, st.day, st.hour, 0))
@@ -157,7 +157,7 @@ def make_profile_from_field(SYNTH,**kwargs):
 		ax[n].plot(wprofdir,hgt,'-o',label='WPROF')
 		ax[n].set_xlabel('wind direction [deg]')
 		ax[n].invert_xaxis()
-		t1='Comparison between P3-synthesis and BBY wind profiler'
+		t1='Comparison between P3-synthesis and ' +loc['name']+' wind profiler'
 		t2='\nDate: ' + st.strftime('%Y-%m-%d')
 		t3='\nSynthesis time: ' + st.strftime('%H:%M') + ' to ' + en.strftime('%H:%M UTC') 
 		t4='\nWind profiler time: ' + time[idx].strftime('%H:%M') + ' to ' + time[idx+1].strftime('%H:%M UTC') 
@@ -183,9 +183,6 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 
 	""" terrain array """
 	P.terrain = DTM
-
-	""" geographic locations """
-	P.locations=kwargs['locations']
 
 	try:
 		P.slicem=sorted(kwargs['slicem'],reverse=True)
