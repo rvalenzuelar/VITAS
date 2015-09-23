@@ -515,6 +515,7 @@ class SynthPlot(object):
 
 		''' creates iterator group '''
 		group=zip(plot_grids,self.zlevels,field_group,ucomp,vcomp)
+		gn=0
 
 		''' make gridded plot '''
 		for g,k,field,u,v in group:
@@ -541,7 +542,16 @@ class SynthPlot(object):
 					lat_idx=cm.find_index_recursively(array=self.lats,value=val['lat'],decimals=2)
 					lon_idx=cm.find_index_recursively(array=self.lons,value=val['lon'],decimals=2)
 					''' add marker '''
-					g.plot(self.lons[lon_idx],self.lats[lat_idx],val['type'],color=val['color'])
+					g.plot(self.lons[lon_idx],self.lats[lat_idx],val['type'],
+							color=val['color'],
+							markersize=5)
+					''' add label '''
+					if gn == 0:
+						g.text(self.lons[lon_idx],self.lats[lat_idx],name, 
+								color=val['color'],
+								horizontalalignment='center',
+								verticalalignment='bottom',
+								weight='normal')
 
 			if self.horizontalGridMajorOn:
 				g.grid(True, which = 'major',linewidth=1)
@@ -562,7 +572,7 @@ class SynthPlot(object):
 			self.horizontal['yminor'] = g.get_yticks(minor=True)
 			self.horizontal['xmajor'] = g.get_xticks(minor=False)
 			self.horizontal['xminor'] = g.get_xticks(minor=True)			
-
+			gn+=1
 
 		''' add color bar '''
 		plot_grids.cbar_axes[0].colorbar(im,cmap=cmap, norm=norm)
