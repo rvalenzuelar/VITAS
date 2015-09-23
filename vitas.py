@@ -102,6 +102,8 @@ def main( config, args ):
 	""" compare synth and flight level """
 	if valid:
 		Plotter.compare_synth_flight(SYNTH,FLIGHT,level=valid,zoomin=args.zoomin)
+		if config['wind_profiler']:
+			Plotter.compare_with_windprof(SYNTH,	location=config['wind_profiler'])
 
 	# if turbulence:
 	# Plotter.print_covariance(SYNTH,FLIGHT)
@@ -110,13 +112,11 @@ def main( config, args ):
 	# Plotter.plot_tke(SYNTH,FLIGHT)
 	# Plotter.plot_vertical_heat_flux(SYNTH,FLIGHT)
 
-	if config['wind_profiler']:
-		Plotter.compare_with_windprof(SYNTH,	location=config['wind_profiler'])
 
 	if config['profile_field']:
 		# example {'DBZ': {'lat':38.53,'lon':-123.08}}
 		Plotter.make_profile_from_field(SYNTH,field='DBZ',
-											location=config['wind_profiler'])
+											location=config['profile_field'])
 
 
 	''' use this one with ipython '''
