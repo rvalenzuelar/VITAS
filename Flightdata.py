@@ -135,7 +135,6 @@ class FlightPlot(object):
 		synth_lats=kwargs['y']
 		synth_z=kwargs['z']
 		zlevel=kwargs['level']
-		zoom=kwargs['zoom']
 		flightmet = kwargs['met'] # flight level meteo field used for comparison
 
 		idx = np.where(synth_z==zlevel)
@@ -251,10 +250,6 @@ class FlightPlot(object):
 		for p,val in zip(line_center,data_extract2):
 			colorVal=scalarMap.to_rgba(val)
 			plt.plot(p[0],p[1],color=colorVal,marker='s',markersize=6,linestyle='none')
-		if zoom=='onshore':
-			plt.xlim([30,100]), plt.ylim([30,110])
-		elif zoom=='offshore':
-			plt.xlim([20,90]), plt.ylim([10,90])
 		plt.xlabel('X')
 		plt.ylabel('Y')
 		plt.colorbar(im)
