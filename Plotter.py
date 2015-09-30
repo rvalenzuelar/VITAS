@@ -203,8 +203,8 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	P.synth_end=SYNTH.end
 
 	""" set common variables """
-	P.axesval['x']=SYNTH.X
-	P.axesval['y']=SYNTH.Y
+	P.axesval['x']=SYNTH.Y
+	P.axesval['y']=SYNTH.X
 	P.axesval['z']=SYNTH.Z
 	P.u_array=SYNTH.U
 	P.v_array=SYNTH.V

@@ -11,17 +11,25 @@ import sys
 
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import ImageGrid
+
 from matplotlib.patches import Polygon
 from matplotlib import colors
+import matplotlib.pyplot as plt
 
 import Common as cm  
-import matplotlib.pyplot as plt
 import seaborn as sns
 
 import numpy as np
 
 from geographiclib.geodesic import Geodesic
+
 import scipy.ndimage
+from scipy.interpolate import Rbf
+from scipy.interpolate import RegularGridInterpolator
+from scipy.interpolate import NearestNDInterpolator
+
+from itertools import product
+from scipy.spatial import cKDTree
 
 
 class SynthPlot(object):
@@ -401,6 +409,37 @@ class SynthPlot(object):
 			self.flight_track_distance=dist_from_p0
 			self.flight_dot_index=idxs
 
+	def add_flight_path2(self,axis):
+
+		""" plot line """
+		x=self.flight['lon']
+		y= self.flight['lat']
+		axis.plot( x, y,	color=self.flightColor,
+						linewidth=self.flightWidth,
+						linestyle=self.flightStyle)
+		axis.plot( x[0], y[0],		color=self.flightColor,
+								marker='o')
+
+		if self.flightDotOn:		
+			""" add dots and text """
+			frequency=10 # [km]
+			[dist_from_p0,idxs] = cm.get_distance_along_flight_track(lon=x, lat=y, 
+																ticks_every=frequency)
+			
+			xx=x[idxs[-2]]
+			yy=y[idxs[-2]]
+			
+			dx=x[idxs[-1]]-x[idxs[-2]]
+			dy=y[idxs[-1]]-y[idxs[-2]]
+			axis.arrow(xx,yy,dx,dy,head_width=0.05,
+									 facecolor=self.flightColor, 
+									 edgecolor=self.flightColor)
+				# print x[i]
+				# print y[i]
+
+			self.flight_track_distance=dist_from_p0
+			self.flight_dot_index=idxs
+
 	def add_flight_dot(self,axis,lat,lon,position):
 
 		if not self.panel:
@@ -482,6 +521,24 @@ class SynthPlot(object):
 		axis.set_xticks(major_ticks)                                                       
 		axis.set_xticks(minor_ticks, minor=True) 
 
+	def add_location_markers(self,axis, grid_idx):
+
+		for name, val in self.markersLocations.iteritems():
+			''' find indices of coordinates '''
+			lat_idx=cm.find_index_recursively(array=self.lats,value=val['lat'],decimals=2)
+			lon_idx=cm.find_index_recursively(array=self.lons,value=val['lon'],decimals=2)
+			''' add marker '''
+			axis.plot(self.lons[lon_idx],self.lats[lat_idx],val['type'],
+					color=val['color'],
+					markersize=5)
+			if grid_idx == 0:
+				''' add label '''		
+				axis.text(self.lons[lon_idx],self.lats[lat_idx],name, 
+						color=val['color'],
+						horizontalalignment='center',
+						verticalalignment='bottom',
+						weight='normal')
+
 	def horizontal_plane(self , **kwargs):
 
 		field_array=kwargs['field']
@@ -538,7 +595,9 @@ class SynthPlot(object):
 		for g,k,field,u,v in group:
 
 			self.add_coastline(g)
-			self.add_flight_path(g)
+
+			self.add_flight_path2(g)
+			
 			im, cmap, norm = self.add_field(g,array=field.T,field=self.var,ext=extent1)
 
 			if self.terrain.file:
@@ -550,25 +609,12 @@ class SynthPlot(object):
 			if self.slice:
 				self.add_slice_line(g)
 
+			if self.markersLocations:
+				self.add_location_markers(g, gn)
+
 			g.set_xlim(extent2[0], extent2[1])
 			g.set_ylim(extent2[2], extent2[3])				
 
-			if self.markersLocations:
-				for name, val in self.markersLocations.iteritems():
-					''' find indices of coordinates '''
-					lat_idx=cm.find_index_recursively(array=self.lats,value=val['lat'],decimals=2)
-					lon_idx=cm.find_index_recursively(array=self.lons,value=val['lon'],decimals=2)
-					''' add marker '''
-					g.plot(self.lons[lon_idx],self.lats[lat_idx],val['type'],
-							color=val['color'],
-							markersize=5)
-					''' add label '''
-					if gn == 0:
-						g.text(self.lons[lon_idx],self.lats[lat_idx],name, 
-								color=val['color'],
-								horizontalalignment='center',
-								verticalalignment='bottom',
-								weight='normal')
 
 			if self.horizontalGridMajorOn:
 				g.grid(True, which = 'major',linewidth=1)
@@ -771,16 +817,6 @@ class SynthPlot(object):
 		self.set_panel(option=self.slice_type,wind=isWind)		
 
 		figsize=self.figure_size['vertical']
-		# fig = plt.figure(figsize=figsize)
-		# plot_grids=ImageGrid( fig,111,
-		# 						nrows_ncols = self.rows_cols,
-		# 						axes_pad = 0.0,
-		# 						add_all = True,
-		# 						share_all=False,
-		# 						label_mode = "L",
-		# 						cbar_location = "top",
-		# 						cbar_mode="single",
-		# 						aspect=True)
 
 		coords = self.slice
 		gd = Geodesic.WGS84.Inverse(coords[0][0], coords[0][1], 
@@ -789,58 +825,60 @@ class SynthPlot(object):
 
 		wx = u_array*np.sin(wind_dir_section*np.pi/180.)
 		wy = v_array*np.cos(wind_dir_section*np.pi/180.)
-		wspd = -(wx+wy)
+		# wspd = -(wx+wy)
+		wspd = field_array
 
 		latix_0=cm.find_index_recursively(array=self.lats,value=coords[0][0],decimals=2)
 		lonix_0=cm.find_index_recursively(array=self.lons,value=coords[0][1],decimals=2)
 		latix_1=cm.find_index_recursively(array=self.lats,value=coords[1][0],decimals=2)
 		lonix_1=cm.find_index_recursively(array=self.lons,value=coords[1][1],decimals=2)
 
-		print latix_0
-		print lonix_0
-		print latix_1
-		print lonix_1
 
-		# print self.zlevels
-		# print self.lons
-		# print self.lats
+		xx = np.arange(0,self.axesval['x'].size)
+		yy = np.arange(0,self.axesval['y'].size)
+		zz = np.arange(0,self.axesval['z'].size)
 
+		xm,ym,zm = np.meshgrid(xx,yy,zz)
+
+		xd=np.reshape(xm,[1,xm.size]).tolist()
+		yd=np.reshape(ym,[1,ym.size]).tolist()
+		zd=np.reshape(zm,[1,zm.size]).tolist()
+		kd=np.reshape(wspd,[wspd.size,1])
+
+		xd=xd[0]
+		yd=yd[0]
+		zd=zd[0]
+
+		coords=zip(xd,yd,zd)
+		tree = cKDTree(coords)
+		neigh = 8
 		hres = 100
 		xi = np.linspace(lonix_0, lonix_1, hres)
 		yi = np.linspace(latix_0, latix_1, hres)
 		vres = 44
 		zi = np.linspace(0, 43, vres)
-		zz=np.array([zi,]*hres)
-
+		zi=np.array([zi,]*hres)
 		vi=np.ma.empty([vres,hres])
-
+		fillv = wspd.fill_value
+		kd = np.asarray(kd)
+		kd[kd == -fillv[0]] = np.nan
+		kd[kd == fillv[0]] = np.nan
 		for k in range(vres):
 			xis = xi
 			yis = yi
-			zis = zz[:,k]
-			foo = scipy.ndimage.map_coordinates(wspd, [yis,xis,zis])
-			vi[k,:]=foo
-
-		fillv = wspd.fill_value[0]
-
+			zis = zi[:,k]
+			coords = zip(yis,xis,zis)
+			dist, idx = tree.query( coords, k=neigh, eps=0, p=1, distance_upper_bound=10)		
+			foo = np.nanmean(kd[idx],axis=1)
+			vi[k,:]=foo.T
+			
 		with sns.axes_style("white"):
 			fig,ax = plt.subplots()
-			# im = ax.imshow(wspd[:,:,6],interpolation='none',origin='lower',cmap='jet')
-			im=ax.imshow(vi,interpolation='none',origin='lower',cmap='jet')
+			im=ax.imshow(vi,interpolation='none',origin='lower',cmap='jet',vmin=0,vmax=40)
 			plt.colorbar(im)
 
 
-		# print xi
-		# print yi
-		# print zi
 
-		print wspd[:,:,6]
-		asd = np.asarray(wspd)
-		print fillv
-		asd[asd==-fillv]=np.nan
-		print asd[:,:,6]
-		print scipy.ndimage.map_coordinates(wspd, [[50,50],[80,95],[6,6]])
-		print scipy.ndimage.map_coordinates(wspd, [[50.1],[95.1],[6.0]])
 
 		# """ get list with slices """
 		# uComp  = self.get_slices(u_array)
