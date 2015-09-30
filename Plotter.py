@@ -193,6 +193,11 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 	except TypeError:
 		P.slicez=None
 
+	try:
+		P.slice=kwargs['slice']
+	except TypeError:
+		P.slice=None
+
 	""" synthesis time """
 	P.synth_start=SYNTH.start
 	P.synth_end=SYNTH.end
@@ -227,7 +232,7 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 
 
 	""" make horizontal plane plot """
-	P.horizontal_plane(field=array)
+	P.horizontal_plane(field=array)	
 	
 	""" make vertical plane plots """
 	velocity_fields=['SPD','WVA','WUP']
@@ -246,6 +251,9 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 			P.vertical_plane(spd='u',sliceo='zonal')
 			P.vertical_plane(spd='v',sliceo='zonal')
 			P.vertical_plane(spd='w',sliceo='zonal')
+
+	if P.slice:
+		P.cross_section(field=array)
 
 	return P
 

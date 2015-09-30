@@ -18,6 +18,14 @@ from CEDRIC.
 """
 	print desc
 
+def coords(s):
+    try:
+    	s=s.translate(None,'()')
+        x, y = map(float, s.split(','))
+        return x, y
+    except:
+        raise argparse.ArgumentTypeError("Coordinates must be (lat,lon)")
+
 def start():
 
 
@@ -107,6 +115,12 @@ def start():
 							nargs='+',
 							required=False,
 							help="longitude coordinates for zonal slices")
+	slice_options.add_argument('--slice', '-sl',
+							metavar='lon (float)',
+							type=coords, 
+							nargs=2,
+							required=False,
+							help="coordinates (lag,lon) for cross section")
 
 	""" Terrain options """
 	terrain_options=parser.add_argument_group('Terrain options')
@@ -133,4 +147,4 @@ def start():
 							help="plot validation info for a given level between 0 and max num of vertical levels")
 
 
-	return parser.parse_args()	
+	return parser.parse_args()

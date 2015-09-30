@@ -20,6 +20,10 @@ import seaborn as sns
 
 import numpy as np
 
+from geographiclib.geodesic import Geodesic
+import scipy.ndimage
+
+
 class SynthPlot(object):
 
 	def __init__(self):
@@ -78,7 +82,7 @@ class SynthPlot(object):
 		self.windv_linewidth=None
 		self.windv_magnitude=None
 		self.zlevel_textsize=None
-		self.zlevels=[]
+		self.zlevels=None
 		self.zoomCenter=None
 		self.zoomDelta=None
 		self.zoomOpt=None
@@ -172,19 +176,23 @@ class SynthPlot(object):
 
 		elif option == 'multi':
 			self.rows_cols=(3,2)
-			# self.windv_jump['x']=self.windv_jump['x']+3
-			# self.windv_jump['y']=self.windv_jump['y']+3
 			self.zlevel_textsize=12
 
 		elif option == 'vertical':
+			
 			if self.var == 'SPD' and not isWind:
 				cols=2 #(U,V)
 			else:
 				cols=1
+
 			if self.sliceo=='meridional':
 				rows=len(self.slicem)
 			elif self.sliceo=='zonal':
 				rows=len(self.slicez)
+			else:
+				rows=1
+				cols=1
+
 			self.rows_cols=(rows,cols)
 			self.geo_textsize=12
 
@@ -251,22 +259,31 @@ class SynthPlot(object):
 	def add_slice_line(self,axis):
 
 		if self.slice_type =='horizontal':
-			x0 = y0 = None
-			if self.slicem:
-				y0=min(self.lats)
-				y1=max(self.lats)
-				for value in self.slicem:
-					x0 = x1 = -value
-					line=axis.plot([x0,x1],[y0,y1])
-					self.sliceLine_setup(line)
+			
+			if self.slice:
+				y,x = zip(*self.slice)
+				line = axis.plot(x,y)
+				self.line_setup(line)
+				axis.plot(x[0],y[0],marker='o',color='green')
+				axis.plot(x[1],y[1],marker='o',color='red')
+			# x0 = y0 = None
+			# if self.slicem:
+			# 	y0=min(self.lats)
+			# 	y1=max(self.lats)
+			# 	for value in self.slicem:
+			# 		x0 = x1 = -value
+			# 		line=axis.plot([x0,x1],[y0,y1])
+			# 		self.sliceLine_setup(line)
 
-			if self.slicez:
-				x0=min(self.lons)
-				x1=max(self.lons)
-				for value in self.slicez:
-					y0 = y1 = value
-					line=axis.plot([x0,x1],[y0,y1])
-					self.sliceLine_setup(line)
+			# if self.slicez:
+			# 	x0=min(self.lons)
+			# 	x1=max(self.lons)
+			# 	for value in self.slicez:
+			# 		y0 = y1 = value
+			# 		line=axis.plot([x0,x1],[y0,y1])
+			# 		self.sliceLine_setup(line)
+
+
 
 		elif self.slice_type =='vertical':
 			x0=x1=y0=y1=None			
@@ -282,14 +299,14 @@ class SynthPlot(object):
 			if cm.all_same(self.zlevels):
 				y0 = y1 = self.zlevels[0]
 				line=axis.plot([x0,x1],[y0,y1])
-				self.sliceLine_setup(line)
+				self.line_setup(line)
 			else:
 				for value in self.zlevels:
 					y0 = y1 = value
 					line=axis.plot([x0,x1],[y0,y1])
-					self.sliceLine_setup(line)
+					self.line_setup(line)
 
-	def sliceLine_setup(self,line):
+	def line_setup(self,line):
 
 		plt.setp(line,	color=self.sliceLineColor,
 						linewidth=self.sliceLineWidth,
@@ -530,8 +547,8 @@ class SynthPlot(object):
 			if self.wind:
 				self.add_windvector(g,u.T,v.T)
 
-			# if self.slicem or self.slicez:
-			self.add_slice_line(g)
+			if self.slice:
+				self.add_slice_line(g)
 
 			g.set_xlim(extent2[0], extent2[1])
 			g.set_ylim(extent2[2], extent2[3])				
@@ -730,6 +747,209 @@ class SynthPlot(object):
 		line_start='\nStart time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC'
 		line_end='\nEnd time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'		
 		fig.suptitle(titext+self.file+line_start+line_end)
+
+		# show figure
+		plt.draw()
+
+	def cross_section(self,**kwargs):
+
+		field_array=None
+		for key,value in kwargs.iteritems():
+			if key == 'field':
+				isWind=False			
+				field_array=value
+			if key == 'spd':
+				isWind=True
+				windname=value
+			elif key == 'sliceo':
+				self.sliceo=value
+
+		u_array=self.u_array
+		v_array=self.v_array
+
+		self.slice_type='cross_section'
+		self.set_panel(option=self.slice_type,wind=isWind)		
+
+		figsize=self.figure_size['vertical']
+		# fig = plt.figure(figsize=figsize)
+		# plot_grids=ImageGrid( fig,111,
+		# 						nrows_ncols = self.rows_cols,
+		# 						axes_pad = 0.0,
+		# 						add_all = True,
+		# 						share_all=False,
+		# 						label_mode = "L",
+		# 						cbar_location = "top",
+		# 						cbar_mode="single",
+		# 						aspect=True)
+
+		coords = self.slice
+		gd = Geodesic.WGS84.Inverse(coords[0][0], coords[0][1], 
+									coords[1][0], coords[1][1])
+		wind_dir_section = gd['azi1'] + 180.
+
+		wx = u_array*np.sin(wind_dir_section*np.pi/180.)
+		wy = v_array*np.cos(wind_dir_section*np.pi/180.)
+		wspd = -(wx+wy)
+
+		latix_0=cm.find_index_recursively(array=self.lats,value=coords[0][0],decimals=2)
+		lonix_0=cm.find_index_recursively(array=self.lons,value=coords[0][1],decimals=2)
+		latix_1=cm.find_index_recursively(array=self.lats,value=coords[1][0],decimals=2)
+		lonix_1=cm.find_index_recursively(array=self.lons,value=coords[1][1],decimals=2)
+
+		print latix_0
+		print lonix_0
+		print latix_1
+		print lonix_1
+
+		# print self.zlevels
+		# print self.lons
+		# print self.lats
+
+		hres = 100
+		xi = np.linspace(lonix_0, lonix_1, hres)
+		yi = np.linspace(latix_0, latix_1, hres)
+		vres = 44
+		zi = np.linspace(0, 43, vres)
+		zz=np.array([zi,]*hres)
+
+		vi=np.ma.empty([vres,hres])
+
+		for k in range(vres):
+			xis = xi
+			yis = yi
+			zis = zz[:,k]
+			foo = scipy.ndimage.map_coordinates(wspd, [yis,xis,zis])
+			vi[k,:]=foo
+
+		fillv = wspd.fill_value[0]
+
+		with sns.axes_style("white"):
+			fig,ax = plt.subplots()
+			# im = ax.imshow(wspd[:,:,6],interpolation='none',origin='lower',cmap='jet')
+			im=ax.imshow(vi,interpolation='none',origin='lower',cmap='jet')
+			plt.colorbar(im)
+
+
+		# print xi
+		# print yi
+		# print zi
+
+		print wspd[:,:,6]
+		asd = np.asarray(wspd)
+		print fillv
+		asd[asd==-fillv]=np.nan
+		print asd[:,:,6]
+		print scipy.ndimage.map_coordinates(wspd, [[50,50],[80,95],[6,6]])
+		print scipy.ndimage.map_coordinates(wspd, [[50.1],[95.1],[6.0]])
+
+		# """ get list with slices """
+		# uComp  = self.get_slices(u_array)
+		# vComp  = self.get_slices(v_array)
+		# profiles = Terrain.get_altitude_profile(self)
+
+		# if isWind:
+		# 	if windname == 'u':
+		# 		field_group = uComp
+		# 		colorName='U'
+		# 		varName=colorName
+		# 	elif windname == 'v':
+		# 		field_group = vComp
+		# 		colorName='V'
+		# 		varName=colorName
+		# 	elif windname == 'w':
+		# 		field_group = wComp
+		# 		colorName='WVA'
+		# 		varName=colorName
+		# else:
+		# 	field_group = self.get_slices(field_array)
+		# 	varName=self.var
+
+		# ''' field extent '''
+		# extent1=self.get_extent()
+
+		# ''' if zoomOpt is false then extent1=extent2 '''			
+		# if self.zoomOpt:
+		# 	opt=self.zoomOpt[0]
+		# 	extent2=cm.zoom_in(self,extent1,self.zoomCenter[opt])
+		# else:
+		# 	extent2=extent1
+
+		# ''' scale for horizontal axis'''
+		# self.scale=20
+
+		# ''' adjust vertical extent '''
+		# if self.sliceo=='meridional':
+		# 	extent3=cm.adjust_extent(self,extent1,'meridional','data')
+		# 	extent4=cm.adjust_extent(self,extent2,'meridional','detail')
+		# 	horizontalComp=vComp
+		# 	geo_axis='Lon: '
+		# elif self.sliceo=='zonal':
+		# 	extent3=cm.adjust_extent(self,extent1,'zonal','data')
+		# 	extent4=cm.adjust_extent(self,extent2,'zonal','detail')			
+		# 	horizontalComp=uComp
+		# 	geo_axis='Lat: '
+
+
+		# """creates iterator group """
+		# group=zip(plot_grids,
+		# 			field_group,
+		# 			horizontalComp,
+		# 			wComp,
+		# 			profiles['altitude'],profiles['axis'])
+
+		# """make gridded plot """
+		# p=0
+
+		# for g,field,h_comp,w_comp,prof,profax in group:
+
+		# 	if isWind:
+		# 		im, cmap, norm = self.add_field(g,array=field.T,field=varName,name=colorName,ext=extent3)
+		# 	else:
+		# 		im, cmap, norm = self.add_field(g,array=field.T,field=varName,name=self.var,ext=extent3)
+
+		# 	self.add_terrain_profile(g,prof,profax)
+
+		# 	if self.wind and not isWind:
+		# 		self.add_windvector(g,h_comp.T,w_comp.T)
+
+		# 	self.add_slice_line(g)
+
+		# 	g.set_xlim(extent4[0], extent4[1])
+		# 	g.set_ylim(extent4[2], extent4[3])	
+
+		# 	if p == 0:
+		# 		self.match_horizontal_grid(g)
+
+		# 	self.adjust_ticklabels(g)
+
+		# 	if self.verticalGridMajorOn:
+		# 		g.grid(True, which = 'major',linewidth=1)
+
+		# 	if self.verticalGridMinorOn:
+		# 		g.grid(True, which = 'minor',alpha=0.5)
+		# 		g.minorticks_on()
+
+		# 	if self.sliceo=='meridional':
+		# 		geotext=geo_axis+str(self.slicem[p])
+		# 	elif self.sliceo=='zonal':
+		# 		geotext=geo_axis+str(self.slicez[p])
+
+		# 	g.text(	0.03, 0.9,
+		# 			geotext,
+		# 			fontsize=self.zlevel_textsize,
+		# 			horizontalalignment='left',
+		# 			verticalalignment='center',
+		# 			transform=g.transAxes)
+		# 	p+=1
+
+		# # add color bar
+		# plot_grids.cbar_axes[0].colorbar(im,cmap=cmap, norm=norm)
+
+		# # add title
+		# titext='Dual-Doppler Synthesis: '+ self.get_var_title(varName)+'\n'
+		# line_start='\nStart time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC'
+		# line_end='\nEnd time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'		
+		# fig.suptitle(titext+self.file+line_start+line_end)
 
 		# show figure
 		plt.draw()

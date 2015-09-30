@@ -77,7 +77,6 @@ def main( config, args ):
 	print "Synthesis start time :%s" % SYNTH.start
 	print "Synthesis end time :%s\n" % SYNTH.end
 
-
 	""" make synthesis plots """
 	if plotFields:
 		for f in plotFields:
@@ -87,6 +86,7 @@ def main( config, args ):
 								panel=args.panel,
 								slicem = args.slicem,
 								slicez = args.slicez,
+								slice = args.slice,
 								zoomIn=args.zoomin,
 								mask = args.mask,
 								config=config)
