@@ -45,14 +45,14 @@ $./vitas.py -h
 ```
 which prints
 ```code
-usage: vitas.py [--help] [--ced file] [--std file] [--panel num]
-                         [--zoomin str] [--wind] [--mask]
-                         [--all | --field STR [STR ...]] [--print_shapes]
-                         [--print_global_atts] [--print_axis STR [STR ...]]
-                         [--slicez lat float) [lat (float) ...]]
-                         [--slicem lon (float) [lon (float ...]] [--terrain]
-                         [--slope] [--meteo]
-                         [--valid level (int) [level (int ...]]
+usage: vitas.py [--help] [--ced file] [--std file] [--print_list_synth]
+                [--panel num] [--zoomin str] [--wind] [--mask]
+                [--all | --field STR [STR ...]] [--print_shapes]
+                [--print_global_atts] [--print_axis STR [STR ...]]
+                [--slicez float) [(float) ...]]
+                [--slicem (float) [(float) ...]] [--slice (lat,lon)]
+                [--azimuth (float)] [--distance (float)] [--terrain] [--slope]
+                [--meteo] [--valid level (int) [level (int ...]]
 
 Help:
   --help, -h            shows this help message and exit
@@ -62,10 +62,11 @@ Input files:
                         Example: c03/leg01.cdf
   --std file, -s file   netCDF NOAA-P3 standard tape file using RAF format.
                         Example: 010123I.nc
+  --print_list_synth    print list with synthesis availables
 
 Plot options:
   --panel num, -p num   choose a panel (1-6); otherwise plots a figure with 6 panles
-  --zoomin str, -z str  zoom-in over a offshore|onshore flight leg
+  --zoomin str, -z str  zoom-in over an area specified in vitas.config zoom_center
   --wind, -w            include wind vectors
   --mask, -m            mask pixels with NaN vertical velocity 
   --all, -a             [default] plot all fields (DBZ,SPD,CON,VOR)
@@ -79,10 +80,16 @@ Print options:
                          print axis values (X,Y,Z)
 
 Slice options:
-  --slicez lat (float) [lat (float) ...], -slz lat (float) [lat (float) ...]
+  --slicez (float) [(float) ...], -slz (float) [(float) ...]
                         latitude coordinates for zonal slices
-  --slicem lon (float) [lon (float) ...], -slm lon (float) [lon (float) ...]
-                        longitude coordinates for zonal slices
+  --slicem (float) [(float) ...], -slm (float) [(float) ...]
+                        longitude coordinates for meridional slices
+  --slice (lat,lon), -sl (lat,lon)
+                         initial coordinate for cross section
+  --azimuth (float), -az (float)
+                         slice azimuth [degrees]
+  --distance (float), -di (float)
+                         slice distance [km]
 
 Terrain options:
   --terrain             plot a terrain map
@@ -93,8 +100,7 @@ Flight level options:
 
 Validation options:
   --valid level (int) [level (int) ...], -v level (int) [level (int) ...]
-                        plot validation info for a given level between 0 and max num 
-                        of vertical levels
+                        plot validation info for a given level between 0 and max num of vertical levels
 
 ```
 Config file
