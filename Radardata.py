@@ -647,11 +647,11 @@ class SynthPlot(object):
 		''' add title '''
 		st=self.synth_start
 		en=self.synth_end
-		t1='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)
-		t2='\nDate: '+st.strftime('%Y-%m-%d')
-		t3= '\nTime: '+st.strftime('%H:%M')+'-'+en.strftime('%H:%M UTC')
-		t4='\n'+self.file
-		fig.suptitle(t1+t2+t3+t4)
+		t1='Dual-Doppler Synthesis: '+ self.get_var_title(self.var) +'\n'
+		t2='Date: '+st.strftime('%Y-%m-%d') + '\n'
+		t3= 'Time: '+st.strftime('%H:%M')+'-'+en.strftime('%H:%M UTC') + '\n'		
+		# fig.suptitle(t1+t2+t3+self.file)
+		fig.suptitle(t1+t2+t3)
 
 		plt.draw()
 
