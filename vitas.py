@@ -87,6 +87,8 @@ def main( config, args ):
 								slicem = args.slicem,
 								slicez = args.slicez,
 								slice = args.slice,
+								azimuth = args.azimuth,
+								distance = args.distance,
 								zoomIn=args.zoomin,
 								mask = args.mask,
 								config=config)

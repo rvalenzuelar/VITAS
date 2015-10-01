@@ -19,6 +19,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from geographiclib.geodesic import Geodesic
+
+
 class Terrain(object):
 	def __init__(self,filepath):
 		if filepath:
@@ -81,12 +84,12 @@ def plot_slope_map(SynthPlot):
 	out_file=tempfile.gettempdir()+'/terrain_slope.tmp'
 
 	if isfile(out_file):
-		data=get_data(out_file)
+		data,_,_=get_data(out_file)
 	else:
 		input_param = (dem_file, out_file)
 		run_gdal = 'gdaldem slope %s %s -p -s 111120 -q' % input_param
 		os.system(run_gdal)
-		data=get_data(out_file)
+		data,_,_=get_data(out_file)
 
 	data['cmap']='jet'
 	data['vmin']=0
@@ -98,7 +101,7 @@ def plot_slope_map(SynthPlot):
 def plot_altitude_map(SynthPlot):
 
 	dem_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
-	data=get_data(dem_file)
+	data,_,_=get_data(dem_file)
 	data['cmap']='terrain'
 	data['vmin']=0
 	data['vmax']=1000
@@ -154,7 +157,6 @@ def get_data(dtmfile):
 	rows=datafile.RasterYSize
 	band=datafile.GetRasterBand(1)		
 	array=band.ReadAsArray(0,0,cols,rows)
-	datafile=None
 
 	''' geographic axes '''
 	originX=geotransform[0]
@@ -181,7 +183,7 @@ def get_data(dtmfile):
 	data['xg']=xg
 	data['yg']=yg
 
-	return data
+	return data,datafile, geotransform
 
 def make_3d_mask(data,levels,res):
 
@@ -238,7 +240,7 @@ def make_array(dem_file, Plot):
 	resampy_to=len(yvalues)*1
 
 	if isfile(out_file):
-		data=get_data(out_file)
+		data,_,_=get_data(out_file)
 	else:
 		''' clip original dtm '''
 		input_param = (ulx, uly, lrx, lry, dem_file, temp_file)
@@ -250,7 +252,7 @@ def make_array(dem_file, Plot):
 		run_gdal = 'gdalwarp -q -ts %s %s -r near -co "TFW=YES" %s %s' % input_param
 		os.system(run_gdal)
 
-		data=get_data(out_file)
+		data,_,_=get_data(out_file)
 
 	# mask=make_3d_mask(data,levels,res)
 	mask=[]
@@ -269,7 +271,7 @@ def make_array(dem_file, Plot):
 def get_altitude_profile(Plot):
 
 	dem_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
-	dtm=get_data(dem_file)
+	dtm,dtmfile,gt = get_data(dem_file)
 	data=dtm['array']
 	altitude=[]
 	if Plot.sliceo=='zonal':		
@@ -284,6 +286,14 @@ def get_altitude_profile(Plot):
 		for coord in Plot.slicem:
 			idx=find_nearest(geoax,-coord)
 			altitude.append(data[:,idx])
+	else:
+		c0=Plot.slice[0]
+		c1=Plot.slice[1]
+		npoints=100
+		line = interpolateLine(c0,c1,npoints)
+		altitude = getAltitudeProfile(line,dtmfile,gt)
+		return altitude 
+
 	axis=[]
 	for a in altitude:
 		axis.append(plotax)
@@ -297,7 +307,7 @@ def get_topo(**kwargs):
 	lons=kwargs['lons']
 
 	dem_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
-	dtm=get_data(dem_file)
+	dtm,_,_=get_data(dem_file)
 
 	data=dtm['array']
 	yg=dtm['yg']
@@ -332,3 +342,38 @@ def find_nearest(array,value):
 
 	idx = (np.abs(array-value)).argmin()
 	return idx
+
+
+""" following functions were taken from pythonx/make_dtm_profile 
+     ============================================
+"""
+
+def interpolateLine(start_point,finish_point,number_points):
+	gd = Geodesic.WGS84.Inverse(start_point[0], start_point[1], 
+					finish_point[0], finish_point[1])
+	line = Geodesic.WGS84.Line(gd['lat1'], gd['lon1'], gd['azi1'])
+	line_points=[];
+	for i in range(number_points):
+		point = line.Position(gd['s12'] / number_points * i)
+		line_points.append((point['lat2'], point['lon2']))
+
+	return line_points
+
+def getDtmElevation(x,y,layer,gt):	
+	col=[]
+	px = int((x - gt[0]) / gt[1])
+	py =int((y - gt[3]) / gt[5])
+	win_xsize=1
+	win_ysize=1
+	band = layer.GetRasterBand(1)
+	data = band.ReadAsArray(px,py, win_xsize, win_ysize)
+	col.append(data[0][0])
+	col.append(0)
+	return col[0]
+
+def getAltitudeProfile(line,layer,gt):
+	altitude=[]
+	for point in line:
+		altitude.append( getDtmElevation(point[1],point[0],layer,gt) )
+
+	return altitude	

@@ -7,6 +7,7 @@
 
 
 import argparse
+import sys
 
 def usage():
 
@@ -104,23 +105,35 @@ def start():
 	""" Slice options """
 	slice_options=parser.add_argument_group('Slice options')
 	slice_options.add_argument('--slicez', '-slz',
-							metavar='lat (float)',
+							metavar='(float)',
 							type=float, 
 							nargs='+',
 							required=False,
 							help="latitude coordinates for zonal slices")
 	slice_options.add_argument('--slicem', '-slm',
-							metavar='lon (float)',
+							metavar='(float)',
 							type=float, 
 							nargs='+',
 							required=False,
-							help="longitude coordinates for zonal slices")
+							help="longitude coordinates for meridional slices")
 	slice_options.add_argument('--slice', '-sl',
-							metavar='lon (float)',
+							metavar='(lat,lon)',
 							type=coords, 
-							nargs=2,
+							nargs=1,
 							required=False,
-							help="coordinates (lag,lon) for cross section")
+							help=" initial coordinate for cross section")
+	slice_options.add_argument('--azimuth', '-az',
+							metavar='(float)',
+							type=float, 
+							nargs=1,
+							required=False,
+							help=" slice azimuth [degrees]")
+	slice_options.add_argument('--distance', '-di',
+							metavar='(float)',
+							type=float, 
+							nargs=1,
+							required=False,
+							help=" slice distance [km]")
 
 	""" Terrain options """
 	terrain_options=parser.add_argument_group('Terrain options')
@@ -146,5 +159,11 @@ def start():
 							required=False,
 							help="plot validation info for a given level between 0 and max num of vertical levels")
 
+	sl = parser.parse_args().slice
+	az = parser.parse_args().azimuth
+	di = parser.parse_args().distance
+
+	if sl and not az and not di:
+		parser.error('--slice option needs --azimuth and --distance values\n')
 
 	return parser.parse_args()

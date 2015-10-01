@@ -19,6 +19,8 @@ import datetime
 from plotWindprof import get_filenames,make_arrays
 
 import seaborn as sns
+from geographiclib.geodesic import Geodesic
+
 
 def plot_terrain(SynthPlot,**kwargs):
 
@@ -192,9 +194,16 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 		P.slicez=sorted(kwargs['slicez'],reverse=True)
 	except TypeError:
 		P.slicez=None
-
 	try:
-		P.slice=kwargs['slice']
+		coord0 = kwargs['slice'][0]
+		azim = kwargs['azimuth'][0] #[deg]
+		dist = kwargs['distance'][0] * 1000. #[m]
+		gd = Geodesic.WGS84.Direct(coord0[0], coord0[1], 
+										azim, dist)
+		coord1 = (gd['lat2'], gd['lon2'])
+		P.slice=[coord0,coord1]
+		P.azimuth=azim
+		P.distance=dist /1000. #[km]
 	except TypeError:
 		P.slice=None
 
@@ -253,7 +262,11 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 			P.vertical_plane(spd='w',sliceo='zonal')
 
 	if P.slice:
-		P.cross_section(field=array)
+		# if P.var not in velocity_fields:
+		# 	P.cross_section(field=array)
+		# else:
+		# 	P.cross_section(spd=array)
+		P.cross_section(field=array)			
 
 	return P
 
