@@ -50,7 +50,7 @@ def main( config, args ):
 	""" retrieves synthesis and flight instances
 		from AircraftAnalysis
 	"""
-	SYNTH,FLIGHT,TERRAIN=fh.set_working_files(cedfile=cedfile,
+	SYNTH,FLIGHT, TERRAIN=fh.set_working_files(cedfile=cedfile,
 											stdfile=stdfile,
 											config=config)
 
@@ -95,7 +95,7 @@ def main( config, args ):
 
 	""" make terrain plots """
 	if terrain or slope:
-		Plotter.plot_terrain(P,terrain=terrain,slope=slope)
+		Plotter.plot_terrain(P,terrain=terrain,slope=slope,terrain_file=config['filepath_dtm'])
 
 	""" make flight level meteo plot """
 	if meteo:
@@ -104,8 +104,8 @@ def main( config, args ):
 	""" compare synth and flight level """
 	if valid:
 		Plotter.compare_synth_flight(SYNTH,FLIGHT,level=valid,zoomin=args.zoomin)
-		if config['wind_profiler']:
-			Plotter.compare_with_windprof(SYNTH,	location=config['wind_profiler'])
+		# if config['wind_profiler']:
+			# Plotter.compare_with_windprof(SYNTH,	location=config['wind_profiler'])
 
 	# if turbulence:
 	# Plotter.print_covariance(SYNTH,FLIGHT)
@@ -113,6 +113,7 @@ def main( config, args ):
 	# Plotter.plot_wind_comp_var(SYNTH,FLIGHT)
 	# Plotter.plot_tke(SYNTH,FLIGHT)
 	# Plotter.plot_vertical_heat_flux(SYNTH,FLIGHT)
+	Plotter.plot_vertical_momentum_flux(SYNTH,FLIGHT,config['filepath_dtm'])
 
 
 	if config['profile_field']:
