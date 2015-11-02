@@ -22,6 +22,7 @@ import seaborn as sns
 from itertools import product
 from scipy.spatial import cKDTree
 import statsmodels.api as sm
+from scipy.interpolate import UnivariateSpline
 
 ''' set color codes in seaborn '''
 sns.set_color_codes()
@@ -415,6 +416,36 @@ class FlightPlot(object):
 		ax.set_xlabel('Distance from flight start [km]',fontsize=15)
 		add_second_y_in(ax,topo,xaxis=xdata, color='r',label='Topography [m]')
 		plt.draw()
+
+	def plot_vertical_momentum_flux(self,data,xdata,terrain):
+
+		met=data[['wdir','wspd','wvert','lats','lons']]
+		# topo=np.asarray(Terrain.get_topo(lats=met['lats'], lons=met['lons']))
+		topo2=np.asarray(Terrain.get_topo2(lats=met['lats'], lons=met['lons'],terrain=terrain))
+
+		u_comp,v_comp = get_wind_components(met.wspd,met.wdir)
+		w_comp=met.wvert
+
+		u_moflux = pd.rolling_cov(u_comp, w_comp, 60, center=True)
+		v_moflux = pd.rolling_cov(v_comp, w_comp, 60, center=True)
+
+		fig, ax = plt.subplots(2,1, sharex=True)
+		l1=ax[0].plot(xdata,u_moflux,label='U-moment')
+		l2=ax[0].plot(xdata,v_moflux,label='V-moment')
+		ax[0].set_ylim([-1.0,1.0])
+		ax[0].set_ylabel('Vertical momentum flux [ m2 s-2]',color='b',fontsize=15)
+		# plt.legend(handles=[l1,l2])
+		ax[0].legend()
+
+		spl=UnivariateSpline(xdata[::5],topo2[::5],k=5)
+		xsmooth=np.linspace(0.,xdata[-1],int(len(xdata)))
+		ysmooth=spl(xsmooth)
+		ysmooth[ysmooth<0]=0
+		ax[1].plot(xsmooth, ysmooth,color='black')
+		ax[1].set_xlabel('Distance from flight start [km]',fontsize=15)
+
+		plt.draw()
+
 
 def add_text_to(ax,x,y,text,**kwargs):
 
