@@ -194,12 +194,12 @@ class Synthesis(object):
 
 		# parse start and end datetime
 		if int(sd[0:2]) > 4:
-			yy=int('19'+sd[0:2])
+			yy=int('19'+sd[6:8])
 		else:
-			yy=int('20'+sd[0:2])
+			yy=int('20'+sd[6:8])
 		yr=[yy,yy]
 		dy= [int(sd[3:5]),int(ed[3:5])]
-		mo= [int(sd[6:8]),int(ed[6:8])]
+		mo= [int(sd[0:2]),int(ed[0:2])]
 		hr = [int(st[0:2]),int(et[0:2])]
 		mn = [int(st[3:5]),int(et[3:5])]
 		sc = [int(st[6:8]),int(et[6:8])]
