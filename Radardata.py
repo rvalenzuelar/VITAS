@@ -8,6 +8,7 @@ June, 2015
 
 import Terrain 
 import sys
+import os
 
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import ImageGrid
@@ -21,13 +22,6 @@ import seaborn as sns
 
 import numpy as np
 
-
-import scipy.ndimage
-from scipy.interpolate import Rbf
-from scipy.interpolate import RegularGridInterpolator
-from scipy.interpolate import NearestNDInterpolator
-
-from itertools import product
 from scipy.spatial import cKDTree
 
 
@@ -160,9 +154,13 @@ class SynthPlot(object):
 	
 	def set_flight_path(self,stdtape):
 
-		fp = zip(*stdtape)
-		self.flight['lat']=fp[0]
-		self.flight['lon']=fp[1]
+		try:
+			fp = zip(*stdtape)
+			self.flight['lat']=fp[0]
+			self.flight['lon']=fp[1]
+		except IndexError:
+			print "Error: Check REORDER synth time and input standard tape file"
+			sys.exit(1)
 
 	def set_panel(self,**kwargs):
 
@@ -263,7 +261,7 @@ class SynthPlot(object):
 		new_yticklabel[-1]=' '
 		g.set_yticklabels(new_yticklabel)		
 
-	def add_slice_line(self,axis):
+	def add_slice_line(self,axis,gn):
 
 		if self.slice_type =='horizontal':
 			
@@ -273,6 +271,23 @@ class SynthPlot(object):
 				self.line_setup(line)
 				axis.plot(x[0],y[0],marker='o',color='green')
 				axis.plot(x[1],y[1],marker='o',color='red')
+				if gn==0:
+					stlat='{:3.2f}'.format(y[0])
+					stlon='{:3.2f}'.format(x[0])
+					axis.text(x[0],y[0], '('+stlat+','+stlon+')',
+								horizontalalignment='left',
+								verticalalignment='top')
+					staz='{:3.1f}'.format(self.azimuth)
+					axis.text(0.98, 0.03, 'az: '+staz,
+						horizontalalignment='right',
+						verticalalignment='center',
+						transform=axis.transAxes)
+					stdi='{:3.1f}'.format(self.distance)
+					axis.text(0.5, 0.03, 'dist[km]: '+stdi,
+						horizontalalignment='center',
+						verticalalignment='center',
+						transform=axis.transAxes)
+
 			# x0 = y0 = None
 			# if self.slicem:
 			# 	y0=min(self.lats)
@@ -319,7 +334,7 @@ class SynthPlot(object):
 						linewidth=self.sliceLineWidth,
 						linestyle=self.sliceLineStyle)
 
-	def add_windvector(self,grid_ax,comp1,comp2):
+	def add_windvector(self,grid_ax,comp1,comp2,gn):
 
 		if self.slice_type == 'horizontal':
 
@@ -342,9 +357,10 @@ class SynthPlot(object):
 								edgecolor=self.windv_edgecolor,
 								headwidth=3,
 								headlength=5)
-			symbol = '$'+str(self.windv_magnitude)+r'\frac{m}{s}$'
-			qk=grid_ax.quiverkey(Q, 0.15, 0.1, self.windv_magnitude, symbol, labelpos='W',
-				 					fontproperties={'weight': 'bold'})
+			if gn==0:
+				symbol = '$'+str(self.windv_magnitude)+r'\frac{m}{s}$'
+				qk=grid_ax.quiverkey(Q, 0.15, 0.1, self.windv_magnitude, symbol, labelpos='W',
+					 					fontproperties={'weight': 'bold'})
 			grid_ax.set_xlim(self.extent['lx'],self.extent['rx'])
 			grid_ax.set_ylim(self.extent['by'], self.extent['ty'])			
 
@@ -413,28 +429,26 @@ class SynthPlot(object):
 		""" plot line """
 		x=self.flight['lon']
 		y= self.flight['lat']
-		axis.plot( x, y,	color=self.flightColor,
-						linewidth=self.flightWidth,
-						linestyle=self.flightStyle)
 		axis.plot( x[0], y[0],		color=self.flightColor,
 								marker='o')
+
+		xx=x[0]
+		yy=y[0]
+		dx=x[-1]-x[0]
+		dy=y[-1]-y[0]
+		axis.arrow(xx,yy,dx,dy,
+					width=0.005*self.flightWidth,
+					head_width=0.05,
+					length_includes_head=True,
+					facecolor=self.flightColor, 
+					edgecolor=self.flightColor)
+
 
 		if self.flightDotOn:		
 			""" add dots and text """
 			frequency=10 # [km]
 			[dist_from_p0,idxs] = cm.get_distance_along_flight_track(lon=x, lat=y, 
 																ticks_every=frequency)
-			
-			xx=x[idxs[-2]]
-			yy=y[idxs[-2]]
-			
-			dx=x[idxs[-1]]-x[idxs[-2]]
-			dy=y[idxs[-1]]-y[idxs[-2]]
-			axis.arrow(xx,yy,dx,dy,head_width=0.05,
-									 facecolor=self.flightColor, 
-									 edgecolor=self.flightColor)
-				# print x[i]
-				# print y[i]
 
 			self.flight_track_distance=dist_from_p0
 			self.flight_dot_index=idxs
@@ -541,7 +555,7 @@ class SynthPlot(object):
 						color=val['color'],
 						horizontalalignment='center',
 						verticalalignment='bottom',
-						weight='normal')
+						weight='bold')
 
 	def horizontal_plane(self , **kwargs):
 
@@ -599,19 +613,17 @@ class SynthPlot(object):
 		for g,k,field,u,v in group:
 
 			self.add_coastline(g)
-
 			self.add_flight_path2(g)
-			
 			im, cmap, norm = self.add_field(g,array=field.T,field=self.var,extent=extent1)
 
 			if self.terrain.file:
 				Terrain.add_contour(g,k,self)
 
 			if self.wind:
-				self.add_windvector(g,u.T,v.T)
+				self.add_windvector(g,u.T,v.T,gn)
 
 			if self.slice:
-				self.add_slice_line(g)
+				self.add_slice_line(g,gn)
 
 			if self.markersLocations:
 				self.add_location_markers(g, gn)
@@ -619,6 +631,10 @@ class SynthPlot(object):
 			g.set_xlim(extent2[0], extent2[1])
 			g.set_ylim(extent2[2], extent2[3])				
 
+			if gn == 0:
+				legname = os.path.basename(self.file)
+				g.text(0.02,0.15, legname[:3].upper() + " " + legname[3:5], horizontalalignment='left',
+						transform = g.transAxes,weight='bold')
 
 			if self.horizontalGridMajorOn:
 				g.grid(True, which = 'major',linewidth=1)
@@ -628,7 +644,7 @@ class SynthPlot(object):
 				g.minorticks_on()
 
 			ztext=str(k)+'km MSL'
-			g.text(	0.05, 0.03,
+			g.text(	0.02, 0.03,
 					ztext,
 					fontsize=self.zlevel_textsize,
 					horizontalalignment='left',
@@ -746,7 +762,6 @@ class SynthPlot(object):
 
 		"""make gridded plot """
 		p=0
-
 		for g,field,h_comp,w_comp,prof,profax in group:
 
 			if isWind:
@@ -802,19 +817,7 @@ class SynthPlot(object):
 		plt.draw()
 
 	def cross_section(self,**kwargs):
-
-		# field_array=None
-		# for key,value in kwargs.iteritems():
-		# 	if key == 'field':
-		# 		field_array=value
-		# 	elif key == 'spd':
-		# 		u_array=self.u_array
-		# 		v_array=self.v_array				
-		# 		wind_dir_section = self.azimuth -180.
-		# 		wx = u_array*np.sin(wind_dir_section*np.pi/180.)
-		# 		wy = v_array*np.cos(wind_dir_section*np.pi/180.)
-		# 		field_array = -(wx+wy)				
-
+	
 		field_array=kwargs['field']
 
 		''' calculate wind components'''
@@ -899,104 +902,123 @@ class SynthPlot(object):
 			wi[k,:]=wd_mean.T
 			qi[k,:]=qd_mean.T
 		
-		"""make plot with wind speed along cross section """
-		with sns.axes_style("white"):
-			fig,ax = plt.subplots(figsize=(8,11*0.5))
+		component = [wi, qi]
+		comptitle = ['Wind speed along cross section [m s-1] (contours)\n',
+					'Wind speed perpendicular to cross section [m s-1] (contours)\n']
+		for n in range(2):
+			"""make plot with wind speed along cross section """
+			with sns.axes_style("white"):
+				fig,ax = plt.subplots(figsize=(8,11*0.5))
 
-		''' add field as image '''
-		zsynth = self.axesval['z']
-		gate_hgt=0.25 #[km]
-		extent = [0, self.distance, zsynth[0]-gate_hgt/2., zsynth[-1]+gate_hgt/2.]
-		im, cmap, norm = self.add_field(ax,array=ki,field=self.var, extent=extent)
+			''' add field as image '''
+			zsynth = self.axesval['z']
+			gate_hgt=0.25 #[km]
+			extent = [0, self.distance, zsynth[0]-gate_hgt/2., zsynth[-1]+gate_hgt/2.]
+			im, cmap, norm = self.add_field(ax,array=ki,field=self.var, extent=extent)
 
-		''' add terrain profiel '''
-		prof = Terrain.get_altitude_profile(self)
-		prof = np.asarray(prof)
-		self.add_terrain_profile(ax, prof ,None)
+			''' add terrain profiel '''
+			prof = Terrain.get_altitude_profile(self)
+			prof = np.asarray(prof)
+			self.add_terrain_profile(ax, prof ,None)
 
-		''' add contour of wind along cross section '''
-		X,Y = np.meshgrid(np.linspace(0, self.distance, hres), zsynth)
-		cs = ax.contour(X,Y,wi,colors='k',linewidths=0.5, levels=range(-4,26,2))			
-		ax.clabel(cs, fontsize=12,	fmt='%1.0f',)
+			''' add contour of wind along cross section '''
+			X,Y = np.meshgrid(np.linspace(0, self.distance, hres), zsynth)
+			cs = ax.contour(X,Y,component[n],colors='k',linewidths=0.5, levels=range(-4,26,2))			
+			ax.clabel(cs, fontsize=12,	fmt='%1.0f',)
 
-		ax.set_yticks(zsynth[1::2])
-		ytlabels = ["{:3.1f}".format(z) for z in zsynth[1::2]]
-		ax.set_yticklabels(ytlabels)
-		ax.set_ylim(0. , 7.5)
-		ax.set_xlim(0. , self.distance)
+			ax.set_yticks(zsynth[1::2])
+			ytlabels = ["{:3.1f}".format(z) for z in zsynth[1::2]]
+			ax.set_yticklabels(ytlabels)
+			ax.set_ylim(0. , 7.5)
+			ax.set_xlim(0. , self.distance)
 
-		ax.set_xlabel('Distance along cross section [km]')
-		ax.set_ylabel('Altitude [km]')
+			legname = os.path.basename(self.file)
+			ta=ax.transAxes
+			ax.text(0.05,0.9, legname[:3].upper() + " " + legname[3:5], transform = ta,weight='bold')
+			y,x = zip(*self.slice)
+			stlat='{:3.2f}'.format(y[0])
+			stlon='{:3.2f}'.format(x[0])
+			ax.text(0.05,0.85, 'start: ('+stlat+','+stlon+')', transform = ta)
+			enlat='{:3.2f}'.format(y[-1])
+			enlon='{:3.2f}'.format(x[-1])
+			ax.text(0.05,0.8, 'end: ('+enlat+','+enlon+')', transform = ta)			
+			staz='{:3.1f}'.format(self.azimuth)
+			ax.text(0.05, 0.75, 'az: '+staz, transform=ta)
 
-		if self.verticalGridMajorOn:
-			ax.grid(True, which = 'major',linewidth=1)
+			ax.set_xlabel('Distance along cross section [km]')
+			ax.set_ylabel('Altitude [km]')
 
-		if self.verticalGridMinorOn:
-			ax.grid(True, which = 'minor',alpha=0.5)
-			ax.minorticks_on()
+			if self.verticalGridMajorOn:
+				ax.grid(True, which = 'major',linewidth=1)
 
-		''' add color bar '''
-		fig.colorbar(im,cmap=cmap, norm=norm)
+			if self.verticalGridMinorOn:
+				ax.grid(True, which = 'minor',alpha=0.5)
+				ax.minorticks_on()
 
-		''' add title '''
-		titext='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)+' (color coded)\n'
-		titext=titext+'Wind speed along cross section [m s-1] (contours)\n'
-		line_start='Start time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC\n'
-		line_end='End time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'		
-		fig.suptitle(titext+line_start+line_end)
+			''' add color bar '''
+			fig.colorbar(im,cmap=cmap, norm=norm)
 
-		plt.subplots_adjust(top=0.85,right=1.0)
-		plt.draw()
+			''' add title '''
+			titext='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)+' (color coded)\n'
+			titext=titext+comptitle[n]
+			line_start='Start time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC\n'
+			line_end='End time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'		
+			fig.suptitle(titext+line_start+line_end)
+
+			plt.subplots_adjust(top=0.85,right=1.0)
+			plt.draw()
 
 
-		"""make plot with wind speed perpendicular to cross section """
-		with sns.axes_style("white"):
-			fig,ax = plt.subplots(figsize=(8,11*0.5))
+		# """make plot with wind speed perpendicular to cross section """
+		# with sns.axes_style("white"):
+		# 	fig,ax = plt.subplots(figsize=(8,11*0.5))
 
-		''' add field as image '''
-		zsynth = self.axesval['z']
-		gate_hgt=0.25 #[km]
-		extent = [0, self.distance, zsynth[0]-gate_hgt/2., zsynth[-1]+gate_hgt/2.]
-		im, cmap, norm = self.add_field(ax,array=ki,field=self.var, extent=extent)
+		# ''' add field as image '''
+		# zsynth = self.axesval['z']
+		# gate_hgt=0.25 #[km]
+		# extent = [0, self.distance, zsynth[0]-gate_hgt/2., zsynth[-1]+gate_hgt/2.]
+		# im, cmap, norm = self.add_field(ax,array=ki,field=self.var, extent=extent)
 
-		''' add terrain profiel '''
-		prof = Terrain.get_altitude_profile(self)
-		prof = np.asarray(prof)
-		self.add_terrain_profile(ax, prof ,None)
+		# ''' add terrain profiel '''
+		# prof = Terrain.get_altitude_profile(self)
+		# prof = np.asarray(prof)
+		# self.add_terrain_profile(ax, prof ,None)
 
-		''' add contour of wind along cross section '''
-		X,Y = np.meshgrid(np.linspace(0, self.distance, hres), zsynth)
-		cs = ax.contour(X,Y,qi,colors='k',linewidths=0.5, levels=range(-4,26,2))			
-		ax.clabel(cs, fontsize=12,	fmt='%1.0f',)
+		# ''' add contour of wind along cross section '''
+		# X,Y = np.meshgrid(np.linspace(0, self.distance, hres), zsynth)
+		# cs = ax.contour(X,Y,qi,colors='k',linewidths=0.5, levels=range(-4,26,2))			
+		# ax.clabel(cs, fontsize=12,	fmt='%1.0f',)
 
-		ax.set_yticks(zsynth[1::2])
-		ytlabels = ["{:3.1f}".format(z) for z in zsynth[1::2]]
-		ax.set_yticklabels(ytlabels)
-		ax.set_ylim(0. , 7.5)
-		ax.set_xlim(0. , self.distance)
+		# ax.set_yticks(zsynth[1::2])
+		# ytlabels = ["{:3.1f}".format(z) for z in zsynth[1::2]]
+		# ax.set_yticklabels(ytlabels)
+		# ax.set_ylim(0. , 7.5)
+		# ax.set_xlim(0. , self.distance)
 
-		ax.set_xlabel('Distance along cross section [km]')
-		ax.set_ylabel('Altitude [km]')
 
-		if self.verticalGridMajorOn:
-			ax.grid(True, which = 'major',linewidth=1)
 
-		if self.verticalGridMinorOn:
-			ax.grid(True, which = 'minor',alpha=0.5)
-			ax.minorticks_on()
+		# ax.set_xlabel('Distance along cross section [km]')
+		# ax.set_ylabel('Altitude [km]')
 
-		''' add color bar '''
-		fig.colorbar(im,cmap=cmap, norm=norm)
+		# if self.verticalGridMajorOn:
+		# 	ax.grid(True, which = 'major',linewidth=1)
 
-		''' add title '''
-		titext='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)+' (color coded)\n'
-		titext=titext+'Wind speed perpendicular to cross section [m s-1] (contours)\n'
-		line_start='Start time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC\n'
-		line_end='End time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'	
-		fig.suptitle(titext+line_start+line_end)
+		# if self.verticalGridMinorOn:
+		# 	ax.grid(True, which = 'minor',alpha=0.5)
+		# 	ax.minorticks_on()
 
-		plt.subplots_adjust(top=0.85,right=1.0)
-		plt.draw()
+		# ''' add color bar '''
+		# fig.colorbar(im,cmap=cmap, norm=norm)
+
+		# ''' add title '''
+		# titext='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)+' (color coded)\n'
+		# titext=titext+'Wind speed perpendicular to cross section [m s-1] (contours)\n'
+		# line_start='Start time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC\n'
+		# line_end='End time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'	
+		# fig.suptitle(titext+line_start+line_end)
+
+		# plt.subplots_adjust(top=0.85,right=1.0)
+		# plt.draw()
 
 	
-		
+		# 
