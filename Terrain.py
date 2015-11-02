@@ -14,7 +14,9 @@ import Common as cm
 
 import tempfile
 import os
+import glob
 import gdal
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -98,15 +100,42 @@ def plot_slope_map(SynthPlot):
 	plot_map(SynthPlot,data)
 
 
-def plot_altitude_map(SynthPlot):
+def plot_altitude_map(SynthPlot,terrain):
 
-	dem_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
-	data,_,_=get_data(dem_file)
+	# if terrain:
+	# 	dem_file=terrain
+	# else:
+	# 	dem_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
+
+	for f in glob.glob('/tmp/terrain_*'):
+		os.remove(f)
+
+	extent=SynthPlot.get_extent()
+
+	lx=extent[0]
+	uy=extent[3]
+	rx=extent[1]
+	ly=extent[2]
+	clip_file=tempfile.gettempdir()+'/terrain_clipped.tmp'
+	input_param = (lx, uy, rx, ly, terrain, clip_file)
+	clip_dem(input_param)
+
+	data,_,_=get_data(clip_file)
+	resampx_to=int(data['xg'].size*0.1)
+	resampy_to=int(data['yg'].size*0.1)
+
+	res_file=tempfile.gettempdir()+'/terrain_resampled.tmp'	
+	input_param = (resampy_to,resampx_to,clip_file, res_file)	
+	resample_dem(input_param)
+
+
+	data,_,_=get_data(res_file)
 	data['cmap']='terrain'
 	data['vmin']=0
 	data['vmax']=1000
 	data['title']='Terrain altitude [m]'
 	plot_map(SynthPlot,data)
+
 
 
 def plot_map(SynthPlot,data):
@@ -125,25 +154,53 @@ def plot_map(SynthPlot,data):
 							label_mode = "L",
 							cbar_location = "top",
 							cbar_mode="single")
-	
-	pg[0].plot(SynthPlot.coast['lon'], SynthPlot.coast['lat'], color='r')
-	pg[0].plot(SynthPlot.flight['lon'], SynthPlot.flight['lat'],color='r')		
-	im=pg[0].imshow(data['array'],
+	ax=pg[0]
+
+	''' coast line '''
+	clons=SynthPlot.coast['lon']
+	clats=SynthPlot.coast['lat']
+	ax.plot(clons, clats, color='red')
+
+	''' flight path '''
+	flons=SynthPlot.flight['lon']
+	flats=SynthPlot.flight['lat']
+
+	''' start flight '''
+	ax.plot(flons[0],flats[0],marker='o',color='black')
+
+	''' end flight at arrow tip '''
+	x=flons[0]
+	y=flats[0]
+	dx=flons[-1]-flons[0]
+	dy=flats[-1]-flats[0]
+	ax.arrow(x,y,dx,dy,color='black',
+						width=0.005,
+						head_width=0.05,
+						length_includes_head=True)
+
+	''' add locations (coordinates from ESRL/PSD web)'''	
+	loc={'BBY': {'lat': 38.32, 'lon': -123.07,'color':'magenta', 'mark':'s'}, 
+		'CZD': {'lat': 38.61, 'lon': -123.22,'color':'magenta', 'mark':'s'}}
+
+	ax.plot(loc['BBY']['lon'], loc['BBY']['lat'],color=loc['BBY']['color'],marker=loc['BBY']['mark'])
+	ax.plot(loc['CZD']['lon'], loc['CZD']['lat'],color=loc['CZD']['color'],marker=loc['CZD']['mark'])
+	ax.text(loc['BBY']['lon'], loc['BBY']['lat'], 'BBY')
+	ax.text(loc['CZD']['lon'], loc['CZD']['lat'], 'CZD')
+
+	''' add terrain '''
+	im=ax.imshow(data['array'],
 					interpolation='none',
 					vmin=data['vmin'],
 					vmax=data['vmax'],
 					cmap=data['cmap'],
 					extent=data['extent'])
-	pg[0].set_xlim(extent[0], extent[1])
-	pg[0].set_ylim(extent[2], extent[3])	
-	pg[0].grid(True, which = 'major',linewidth=1)
-	pg[0].grid(True, which = 'minor',alpha=0.5)
-	pg[0].minorticks_on()
+	ax.set_xlim(extent[0], extent[1])
+	ax.set_ylim(extent[2], extent[3])	
+	ax.grid(False, which = 'major')
 
 	pg.cbar_axes[0].colorbar(im)
 
 	fig.suptitle(data['title'])	
-	plt.tight_layout()
 	plt.draw()
 
 
@@ -217,6 +274,9 @@ def make_array(dem_file, Plot):
 	temp_file=tempfile.gettempdir()+'/terrain_clipped.tmp'
 	out_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
 
+	for f in glob.glob('/tmp/terrain_*'):
+		os.remove(f)
+
 	''' same boundaries as synthesis'''
 	ulx = min(Plot.lons)
 	uly = max(Plot.lats)		
@@ -234,25 +294,21 @@ def make_array(dem_file, Plot):
 	xvalues=Plot.axesval['x']
 	yvalues=Plot.axesval['y']
 
-	''' output terrian data has same 
-	horizontal resolution as synthesis'''
-	resampx_to=len(xvalues)*1
-	resampy_to=len(yvalues)*1
+	''' apply smooth factor (the smaller the smoother)'''
+	factor = 0.6
+	resampx_to=int(len(xvalues)*0.6)
+	resampy_to=int(len(yvalues)*0.6)
 
-	if isfile(out_file):
-		data,_,_=get_data(out_file)
-	else:
-		''' clip original dtm '''
-		input_param = (ulx, uly, lrx, lry, dem_file, temp_file)
-		run_gdal = 'gdal_translate -q -projwin %s %s %s %s %s %s' % input_param
-		os.system(run_gdal)
+	# if isfile(out_file):
+	# 	data,_,_=get_data(out_file)
+	# else:
+	input_param = (ulx, uly, lrx, lry, dem_file, temp_file)
+	clip_dem(input_param)
 
-		''' resample clipped dtm '''
-		input_param = (resampy_to,resampx_to,temp_file, out_file)
-		run_gdal = 'gdalwarp -q -ts %s %s -r near -co "TFW=YES" %s %s' % input_param
-		os.system(run_gdal)
+	input_param = (resampy_to,resampx_to,temp_file, out_file)	
+	resample_dem(input_param)
 
-		data,_,_=get_data(out_file)
+	data,_,_=get_data(out_file)
 
 	# mask=make_3d_mask(data,levels,res)
 	mask=[]
@@ -303,6 +359,7 @@ def get_altitude_profile(Plot):
 	return prof
 
 def get_topo(**kwargs):
+
 	lats=kwargs['lats']
 	lons=kwargs['lons']
 
@@ -338,11 +395,74 @@ def get_topo(**kwargs):
 	
 	return altitude
 
+def get_topo2(**kwargs):
+
+	lats=kwargs['lats']
+	lons=kwargs['lons']
+	terrain=kwargs['terrain']
+
+	for f in glob.glob('/tmp/terrain_*'):
+		os.remove(f)
+
+	lx=min(lons)
+	uy=max(lats)
+	rx=max(lons)
+	ly=min(lats)
+	clip_file=tempfile.gettempdir()+'/terrain_clipped.tmp'
+	input_param = (lx, uy, rx, ly, terrain, clip_file)
+	clip_dem(input_param)
+
+	resampx_to=lons.size
+	resampy_to=lats.size
+
+	res_file=tempfile.gettempdir()+'/terrain_resampled.tmp'	
+	input_param = (resampy_to,resampx_to,clip_file, res_file)	
+	resample_dem(input_param)
+
+	dtm,_,_=get_data(res_file)
+	data=dtm['array']
+	xg=dtm['xg']
+	yg=dtm['yg']
+
+	xm,ym = np.meshgrid(xg,yg)
+	xd=np.reshape(xm,[1,xm.size]).tolist()[0]
+	yd=np.reshape(ym,[1,ym.size]).tolist()[0]
+	kd=np.reshape(data,[data.size,1])
+
+	''' create kdTree with entire domain'''
+	coords=zip(xd,yd)
+	tree = cKDTree(coords)
+	topo=[]
+	neigh=8
+	for c in zip(lons,lats):
+		dist , idx = tree.query( c, k=neigh, eps=0, p=1, distance_upper_bound=1)
+		# print idx
+		# print dist
+		# print kd[idx]
+		# sys.exit()
+		kd_mean = np.nanmean(kd[idx],axis=0)
+		topo.append(kd_mean[0])
+
+	return topo
+
+
 def find_nearest(array,value):
 
 	idx = (np.abs(array-value)).argmin()
 	return idx
 
+
+def clip_dem(input_param):
+	
+	''' clip original dtm '''
+	run_gdal = 'gdal_translate -q -projwin %s %s %s %s %s %s' % input_param
+	os.system(run_gdal)
+
+def resample_dem(input_param):
+
+	''' resample clipped dtm '''
+	run_gdal = 'gdalwarp -q -ts %s %s -r near -co "TFW=YES" %s %s' % input_param
+	os.system(run_gdal)
 
 """ following functions were taken from pythonx/make_dtm_profile 
      ============================================
