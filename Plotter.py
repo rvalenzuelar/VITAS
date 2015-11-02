@@ -26,9 +26,10 @@ def plot_terrain(SynthPlot,**kwargs):
 
 	terrain=kwargs['terrain']
 	slope=kwargs['slope']
+	terrain_file=kwargs['terrain_file']
 
 	if terrain:
-	 	Terrain.plot_altitude_map(SynthPlot)
+	 	Terrain.plot_altitude_map(SynthPlot,terrain_file)
 
 	if slope:
 	 	Terrain.plot_slope_map(SynthPlot)
@@ -79,6 +80,14 @@ def plot_vertical_heat_flux(SYNTH,FLIGHT):
 	data = FLIGHT.get_meteo(SYNTH.start, SYNTH.end)
 	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
 	flight.plot_vertical_heat_flux(data,flight_xaxis)	
+
+def plot_vertical_momentum_flux(SYNTH,FLIGHT,terrain):
+
+	flight_xaxis, _ =get_xaxis(SYNTH,FLIGHT)
+	flight_name = SYNTH.file[-13:]
+	data = FLIGHT.get_meteo(SYNTH.start, SYNTH.end)
+	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
+	flight.plot_vertical_momentum_flux(data,flight_xaxis,terrain)	
 
 def get_xaxis(SYNTH,FLIGHT):
 	""" flight path from standard tape """
@@ -135,7 +144,9 @@ def compare_with_windprof(SYNTH,**kwargs):
 	''' wind profiler '''
 	case=loc['case']
 	wpfiles = get_filenames(case)
+	print case
 	wspd,wdir,time,hgt = make_arrays(files= wpfiles, resolution='coarse',surface=False)
+	print time
 	idx = time.index(datetime.datetime(st.year, st.month, st.day, st.hour, 0))
 	wprofspd = wspd[:,idx]
 	wprofdir = wdir[:,idx]
