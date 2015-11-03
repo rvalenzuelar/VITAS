@@ -23,6 +23,7 @@ import seaborn as sns
 import numpy as np
 
 from scipy.spatial import cKDTree
+from scipy.ndimage.filters import gaussian_filter
 
 
 class SynthPlot(object):
@@ -872,18 +873,14 @@ class SynthPlot(object):
 		
 		''' convert to standard numpy array (not masked)
 		and replace fill values for nans '''
-		kd=np.reshape(field_array,[field_array.size,1])
-		wd=np.reshape(wind_array,[wind_array.size,1])		
-		qd=np.reshape(orth_array,[orth_array.size,1])		
-		kd = np.asarray(kd)
-		wd = np.asarray(wd)
-		qd = np.asarray(qd)
-		kd[kd == -fillv[0] ] = np.nan
-		kd[kd == fillv[0] ] = np.nan
-		wd[wd == -fillv[0]] = np.nan
-		wd[wd == fillv[0]] = np.nan
-		qd[qd == -fillv[0]] = np.nan
-		qd[qd == fillv[0]] = np.nan
+		kd=np.ma.filled(field_array, fill_value=np.nan)
+		wd=np.ma.filled(wind_array, fill_value=np.nan)
+		qd=np.ma.filled(orth_array, fill_value=np.nan)
+
+		''' convert to 1 column array '''
+		kd=np.reshape(kd,[kd.size,1])
+		wd=np.reshape(wd,[wd.size,1])
+		qd=np.reshape(qd,[qd.size,1])
 
 		''' create kdTree with entire domain'''
 		coords=zip(xd,yd,zd)
@@ -903,8 +900,8 @@ class SynthPlot(object):
 			qi[k,:]=qd_mean.T
 		
 		component = [wi, qi]
-		comptitle = ['Wind speed along cross section [m s-1] (contours)\n',
-					'Wind speed perpendicular to cross section [m s-1] (contours)\n']
+		comptitle = ['Along-section wind speed [m s-1] (contours)\n',
+					'Cross-section wind speed [m s-1] (contours)\n']
 		for n in range(2):
 			"""make plot with wind speed along cross section """
 			with sns.axes_style("white"):
@@ -921,9 +918,12 @@ class SynthPlot(object):
 			prof = np.asarray(prof)
 			self.add_terrain_profile(ax, prof ,None)
 
-			''' add contour of wind along cross section '''
+			''' add contour of wind section '''
 			X,Y = np.meshgrid(np.linspace(0, self.distance, hres), zsynth)
-			cs = ax.contour(X,Y,component[n],colors='k',linewidths=0.5, levels=range(-4,26,2))			
+			sigma=0.5
+			section = gaussian_filter(component[n], sigma,mode='nearest')	
+			cs = ax.contour(X,Y,section,colors='k',linewidths=0.5, levels=range(-4,26,2))	
+			# cs = ax.contour(X,Y,component[n],colors='k',linewidths=0.5, levels=range(-4,26,2))			
 			ax.clabel(cs, fontsize=12,	fmt='%1.0f',)
 
 			ax.set_yticks(zsynth[1::2])
@@ -967,58 +967,3 @@ class SynthPlot(object):
 
 			plt.subplots_adjust(top=0.85,right=1.0)
 			plt.draw()
-
-
-		# """make plot with wind speed perpendicular to cross section """
-		# with sns.axes_style("white"):
-		# 	fig,ax = plt.subplots(figsize=(8,11*0.5))
-
-		# ''' add field as image '''
-		# zsynth = self.axesval['z']
-		# gate_hgt=0.25 #[km]
-		# extent = [0, self.distance, zsynth[0]-gate_hgt/2., zsynth[-1]+gate_hgt/2.]
-		# im, cmap, norm = self.add_field(ax,array=ki,field=self.var, extent=extent)
-
-		# ''' add terrain profiel '''
-		# prof = Terrain.get_altitude_profile(self)
-		# prof = np.asarray(prof)
-		# self.add_terrain_profile(ax, prof ,None)
-
-		# ''' add contour of wind along cross section '''
-		# X,Y = np.meshgrid(np.linspace(0, self.distance, hres), zsynth)
-		# cs = ax.contour(X,Y,qi,colors='k',linewidths=0.5, levels=range(-4,26,2))			
-		# ax.clabel(cs, fontsize=12,	fmt='%1.0f',)
-
-		# ax.set_yticks(zsynth[1::2])
-		# ytlabels = ["{:3.1f}".format(z) for z in zsynth[1::2]]
-		# ax.set_yticklabels(ytlabels)
-		# ax.set_ylim(0. , 7.5)
-		# ax.set_xlim(0. , self.distance)
-
-
-
-		# ax.set_xlabel('Distance along cross section [km]')
-		# ax.set_ylabel('Altitude [km]')
-
-		# if self.verticalGridMajorOn:
-		# 	ax.grid(True, which = 'major',linewidth=1)
-
-		# if self.verticalGridMinorOn:
-		# 	ax.grid(True, which = 'minor',alpha=0.5)
-		# 	ax.minorticks_on()
-
-		# ''' add color bar '''
-		# fig.colorbar(im,cmap=cmap, norm=norm)
-
-		# ''' add title '''
-		# titext='Dual-Doppler Synthesis: '+ self.get_var_title(self.var)+' (color coded)\n'
-		# titext=titext+'Wind speed perpendicular to cross section [m s-1] (contours)\n'
-		# line_start='Start time: '+self.synth_start.strftime('%Y-%m-%d %H:%M')+' UTC\n'
-		# line_end='End time: '+self.synth_end.strftime('%Y-%m-%d %H:%M')+' UTC'	
-		# fig.suptitle(titext+line_start+line_end)
-
-		# plt.subplots_adjust(top=0.85,right=1.0)
-		# plt.draw()
-
-	
-		# 
