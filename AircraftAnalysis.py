@@ -56,6 +56,12 @@ class Flight(object):
 		dict_stdtape['wdir']=self.WDIR
 		dict_stdtape['wvert']=self.WVERT
 
+		dict_stdtape['grdspeed'] = self.read_stdtape('GRD_SPEED')
+		dict_stdtape['track'] = self.read_stdtape('TRACK')
+		dict_stdtape['heading'] = self.read_stdtape('HEADING')
+		dict_stdtape['pitch'] = self.read_stdtape('PITCH')
+		dict_stdtape['roll'] = self.read_stdtape('ROLL')
+
 		''' package standard tape into a pandas DataFrame instance'''
 		self.df=pd.DataFrame(data=dict_stdtape,index=self.DATETIME)
 
@@ -89,8 +95,10 @@ class Flight(object):
 
 		start = self.df.index.searchsorted(start_time)
 		end = self.df.index.searchsorted(end_time)
-		meteo=self.df[start:end].copy()
-
+		# print meteo.columns.tolist()
+		cols=[0,1,2,3,6,7,8,9,13,14,15]
+		meteo=self.df.ix[start:end,cols].copy()
+		
 		''' add relative humidity '''
 		temp = meteo.atemp.values
 		dewp = meteo.dewp.values
@@ -114,6 +122,14 @@ class Flight(object):
 		
 		return meteo
 
+	def get_aircraft(self,start_time, end_time):
+
+		start = self.df.index.searchsorted(start_time)
+		end = self.df.index.searchsorted(end_time)
+		cols=[4,5,10,11,12]
+		aircraft=self.df.ix[start:end,cols].copy()
+
+		return aircraft
 
 class Synthesis(object):
 	def __init__(self,*args):
