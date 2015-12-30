@@ -95,6 +95,7 @@ class FlightPlot(object):
 					ax2.set_ylabel('topography [m]', color='r')
 					for tl in ax2.get_yticklabels():
 						tl.set_color('r')
+					ax2.grid(False)
 				if ylim: ax.set_ylim(ylim)
 				ax.grid(True)
 				ax.annotate(name, fontsize=16,
@@ -446,6 +447,54 @@ class FlightPlot(object):
 
 		plt.draw()
 
+	def plot_turbulence_spectra(self,data):
+		
+		from scipy import fftpack
+
+		array=np.squeeze(data[['wvert']].values)
+		galt=np.squeeze(data[['galt']].values)
+		acft_alt=np.mean(galt)
+		variance=np.var(array)
+
+		print array.size
+		F = fftpack.fft(array)
+		cut_half = int(len(array)/2)
+		ps = 2*np.abs( F[:cut_half] )**2
+		freq=np.linspace(1,len(ps),len(ps))/len(F)
+		
+		' power density '
+		fig,ax=plt.subplots(2,1,figsize=(8,10))
+		ax[0].plot(array)
+		ax[1].loglog(freq, ps)
+
+		' intertial subrange '
+		x=np.linspace(0.005, 0.5, 1000)
+		inertial = x**(-5/3.)
+		ln=ax[1].loglog(x,inertial,linestyle='--',color='k',linewidth=3,label='-5/3')
+
+		' set spectrum label to seconds '
+		xSeconds=[]
+		for x in ax[1].get_xticks():
+			xSeconds.append(int(1/x))
+		ax[1].set_xticklabels(xSeconds)
+
+		ax[0].text(0.1,0.15,'Variance:' + '{:2.1f}'.format(variance),transform=ax[0].transAxes,weight='bold')
+		ax[0].text(0.1,0.1,'Acft altitude: '+ '{:2.1f}'.format(acft_alt)+' m MSL',transform=ax[0].transAxes,weight='bold')
+		ax[0].set_ylabel('vvel [m s^-1]')
+		ax[0].set_xlabel('seconds from beg of leg')
+		ax[0].set_ylim([-3,3])
+		ax[1].set_ylim([1e-2,1e7])
+		ax[1].set_xlabel('seconds')
+		ax[1].set_ylabel('2|F|^2')
+		ax[1].legend(handles=ln)
+
+		ax[1].xaxis.grid(b=True, which='minor')
+
+		plt.subplots_adjust(top=0.95,bottom=0.08,hspace=0.15)
+
+		time_title=self.time[0].strftime('%dT%H:%M:%S')+' - '+self.time[1].strftime('%dT%H:%M:%S')+' UTC'
+		plt.suptitle('P3 Flight level '+self.time[0].strftime('%Y-%b')+'\n'+time_title)
+		plt.draw()		
 
 def add_text_to(ax,x,y,text,**kwargs):
 
