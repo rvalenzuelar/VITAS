@@ -89,6 +89,14 @@ def plot_vertical_momentum_flux(SYNTH,FLIGHT,terrain):
 	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
 	flight.plot_vertical_momentum_flux(data,flight_xaxis,terrain)	
 
+def plot_turbulence_spectra(SYNTH,FLIGHT):
+
+	# flight_xaxis, _ =get_xaxis(SYNTH,FLIGHT)
+	flight_name = SYNTH.file[-13:]
+	data = FLIGHT.get_meteo(SYNTH.start, SYNTH.end)
+	flight = fd.FlightPlot(name=flight_name, time=[SYNTH.start, SYNTH.end])
+	flight.plot_turbulence_spectra(data)	
+
 def get_xaxis(SYNTH,FLIGHT):
 	""" flight path from standard tape """
 	fpath=FLIGHT.get_path(SYNTH.start, SYNTH.end)
