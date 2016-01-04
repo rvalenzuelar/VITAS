@@ -285,9 +285,11 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 		# 	P.cross_section(field=array)
 		# else:
 		# 	P.cross_section(spd=array)
-		P.cross_section(field=array)			
+		cross = P.cross_section(field=array)			
 
-	return P
+	return cross
+
+	# return P
 
 def get_TotalWindSpeed(U,V,W):
 

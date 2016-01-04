@@ -46,7 +46,7 @@ $./vitas.py -h
 which prints
 ```code
 usage: vitas.py [--help] [--ced file] [--std file] [--print_list_synth]
-                [--panel num] [--zoomin str] [--wind] [--mask]
+                [--panel num] [--zoomin str] [--wind] [--mask] [--multi]
                 [--all | --field STR [STR ...]] [--print_shapes]
                 [--print_global_atts] [--print_axis STR [STR ...]]
                 [--slicez float) [(float) ...]]
@@ -69,6 +69,7 @@ Plot options:
   --zoomin str, -z str  zoom-in over an area specified in vitas.config zoom_center
   --wind, -w            include wind vectors
   --mask, -m            mask pixels with NaN vertical velocity 
+  --multi, -ml          disable plotting functions and return an array; used for processing multiple legs
   --all, -a             [default] plot all fields (DBZ,SPD,CON,VOR)
   --field STR [STR ...], -f STR [STR ...]
                         specify radar field(s) to be plotted

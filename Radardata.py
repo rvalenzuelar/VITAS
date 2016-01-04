@@ -967,3 +967,5 @@ class SynthPlot(object):
 
 			plt.subplots_adjust(top=0.85,right=1.0)
 			plt.draw()
+
+		return ki

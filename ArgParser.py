@@ -71,10 +71,13 @@ def start():
 	plot_options.add_argument('--wind', '-w',
 							action='store_true',
 							help="include wind vectors")	
-
 	plot_options.add_argument('--mask','-m',
 							action='store_true',
-							help="mask pixels with NaN vertical velocity ")	
+							help="mask pixels with NaN vertical velocity ")
+	plot_options.add_argument('--multi','-ml',
+							action='store_true',
+							default=False,
+							help="disable plotting functions and return an array; used for processing multiple legs")		
 
 	""" Field Arguments """
 	group_fields = plot_options.add_mutually_exclusive_group()

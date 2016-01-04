@@ -12,15 +12,20 @@ import sys
 import matplotlib.pyplot as plt
 import Filehandler as fh 
 import ArgParser as parser
-import ConfigParser as config
+import ConfigParser as configp
 import os
 import glob
 
-def main( config, args ):
-	
+def main(args=None):
+
+	config = configp.start()
+	if args is None:
+		args = 	parser.start()
+
 	cedfile = args.ced
 	stdfile = args.std
 	plotFields = args.field 
+	multi = args.multi
 	print_shapes = args.print_shapes
 	print_global_atts = args.print_global_atts
 	print_axis = args.print_axis
@@ -116,25 +121,22 @@ def main( config, args ):
 	# Plotter.plot_vertical_momentum_flux(SYNTH,FLIGHT,config['filepath_dtm'])
 	# Plotter.plot_turbulence_spectra(SYNTH,FLIGHT)
 
+	if multi:
+		plt.close('all')
+		return P
+	else:		
+		''' use this one with ipython '''
+		plt.show(block=False)	
+		''' use this one with the shell '''
+		# plt.show()
 
-	if config['profile_field']:
-		# example {'DBZ': {'lat':38.53,'lon':-123.08}}
-		Plotter.make_profile_from_field(SYNTH,field='DBZ',
-											location=config['profile_field'])
 
-
-	''' use this one with ipython '''
-	plt.show(block=False)	
-
-	''' use this one with the shell '''
-	# plt.show()
 
 
 """call main function """
 if __name__ == "__main__":
 
 	args = parser.start()
+	p=main(args)
 
-	config = config.start()
 
-	main(config,args)
