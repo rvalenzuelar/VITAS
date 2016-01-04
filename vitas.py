@@ -114,7 +114,7 @@ def main( config, args ):
 	# Plotter.plot_tke(SYNTH,FLIGHT)
 	# Plotter.plot_vertical_heat_flux(SYNTH,FLIGHT)
 	# Plotter.plot_vertical_momentum_flux(SYNTH,FLIGHT,config['filepath_dtm'])
-	Plotter.plot_turbulence_spectra(SYNTH,FLIGHT)
+	# Plotter.plot_turbulence_spectra(SYNTH,FLIGHT)
 
 
 	if config['profile_field']:
