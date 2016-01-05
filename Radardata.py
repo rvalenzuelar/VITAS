@@ -917,7 +917,8 @@ class SynthPlot(object):
 			prof = Terrain.get_altitude_profile(self)
 			prof = np.asarray(prof)
 			self.add_terrain_profile(ax, prof ,None)
-
+			self.terrain.array['profile']=prof
+			
 			''' add contour of wind section '''
 			X,Y = np.meshgrid(np.linspace(0, self.distance, hres), zsynth)
 			sigma=0.5
