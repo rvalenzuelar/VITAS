@@ -100,7 +100,7 @@ def main(args=None):
 
 	""" make terrain plots """
 	if terrain or slope:
-		Plotter.plot_terrain(P,terrain=terrain,slope=slope,terrain_file=config['filepath_dtm'])
+		Plotter.plot_terrain(P[0],terrain=terrain,slope=slope,terrain_file=config['filepath_dtm'])
 
 	""" make flight level meteo plot """
 	if meteo:
