@@ -321,7 +321,8 @@ def make_array(dem_file, Plot):
 	dtm['extent']=data['extent']
 	dtm['xg']=data['xg']
 	dtm['yg']=data['yg']
-
+	dtm['profile']=None
+	
 	return dtm
 
 def get_altitude_profile(Plot):
