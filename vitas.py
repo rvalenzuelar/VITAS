@@ -100,6 +100,7 @@ def main(args=None):
 
 	""" make terrain plots """
 	if terrain or slope:
+		# P[0] might produce error is P is not a list, check in ploth_synth.cross_section
 		Plotter.plot_terrain(P[0],terrain=terrain,slope=slope,terrain_file=config['filepath_dtm'])
 
 	""" make flight level meteo plot """
