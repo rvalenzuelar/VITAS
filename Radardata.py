@@ -30,6 +30,7 @@ class SynthPlot(object):
 
 	def __init__(self):
 
+		self.haxis=None # axis instance of horizontal plane
 		self.axesval={'x':None,'y':None,'z':None}
 		self.cmapName=None
 		self.cmapRange=None
@@ -671,6 +672,7 @@ class SynthPlot(object):
 		fig.suptitle(t1+t2+t3)
 
 		plt.draw()
+		self.haxis=g
 
 	def vertical_plane(self,**kwargs):
 

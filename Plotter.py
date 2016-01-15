@@ -15,12 +15,11 @@ import Common as cm
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import datetime
-
-from plotWindprof import get_filenames,make_arrays
-
+import plotWindprof2 as wp
 import seaborn as sns
-from geographiclib.geodesic import Geodesic
 
+from geographiclib.geodesic import Geodesic
+from scipy.interpolate import interp1d
 
 def plot_terrain(SynthPlot,**kwargs):
 
@@ -128,10 +127,68 @@ def compare_synth_flight(Synth,StdTape,**kwargs):
 	flight.compare_with_synth(array=array,met='wspd',x=lon,y=lat,z=z,level=z[level])
 	flight.compare_with_synth(array=Synth.WUP,met='wvert',x=lon,y=lat,z=z,level=z[level])
 
+def make_synth_profile(SYNTH,coords,markers):
+
+	U = SYNTH.U
+	V = SYNTH.V
+	LAT=SYNTH.LAT
+	LON=SYNTH.LON
+	Z=SYNTH.Z
+	st=SYNTH.start
+	en=SYNTH.end
+
+	sprofspd=[]
+	sprofdir=[]
+	sprofU=[]
+	for c in coords:
+
+		f=interp1d(LAT,range(len(LAT)))
+		latx=int(np.ceil(f(c[0])))
+		f=interp1d(LON,range(len(LON)))
+		lonx=int(np.ceil(f(c[1])))
+
+		uprof = U[lonx,latx,:]
+		vprof = V[lonx,latx,:]
+		wspd=np.sqrt(uprof**2+vprof**2)
+		sprofspd.append(wspd)
+		wdir=270. - ( np.arctan2(vprof,uprof) * 180./np.pi )
+		sprofdir.append(wdir)
+		dirU=np.radians(230)
+		cross_barrier=uprof*np.sin(dirU)+vprof*np.cos(dirU)
+		sprofU.append(-cross_barrier)
+
+
+	''' profile '''
+	with sns.axes_style("darkgrid"):
+		fig,ax=plt.subplots(1,3, figsize=(9,9), sharey=True)
+		
+		n=0
+		for i,s in enumerate(sprofspd):
+			hl1=ax[n].plot(s,Z,marker=markers[i])
+		ax[n].set_xlabel('wind speed [m s-1]')
+		ax[n].set_ylabel('height AGL [km]')
+
+		n=1
+		for i,s in enumerate(sprofdir):
+			ax[n].plot(s,Z,marker=markers[i])
+		ax[n].set_xlabel('wind direction [deg]')
+		ax[n].invert_xaxis()
+
+		n=2
+		for i,s in enumerate(sprofU):
+			ax[n].plot(s,Z,marker=markers[i])
+		ax[n].set_xlabel('upslope component (50deg) [m s-1]')
+
+		t1='P3-synthesis horizontal wind profile'
+		t2='\nDate: ' + st.strftime('%Y-%m-%d')
+		t3='\nSynthesis time: ' + st.strftime('%H:%M') + ' to ' + en.strftime('%H:%M UTC') 
+	
+		fig.suptitle(t1+t2+t3)
+		plt.ylim([0,5])
+		plt.draw()
 
 def compare_with_windprof(SYNTH,**kwargs):
 
-	# field = kwargs['field']
 	loc=kwargs['location']
 	U = SYNTH.U
 	V = SYNTH.V
@@ -142,23 +199,25 @@ def compare_with_windprof(SYNTH,**kwargs):
 	en=SYNTH.end
 
 	''' synthesis '''
-	lat_idx=cm.find_index_recursively(array=LAT,value=loc['lat'],decimals=2)
-	lon_idx=cm.find_index_recursively(array=LON,value=loc['lon'],decimals=2)
-	uprof = U[lon_idx,lat_idx,:]
-	vprof = V[lon_idx,lat_idx,:]
+	# lat_idx=cm.find_index_recursively(array=LAT,value=loc['lat'],decimals=2)
+	# lon_idx=cm.find_index_recursively(array=LON,value=loc['lon'],decimals=2)
+
+	f=interp1d(LAT,range(len(LAT)))
+	latx=int(np.ceil(f(loc['lat'])))
+	f=interp1d(LON,range(len(LON)))
+	lonx=int(np.ceil(f(loc['lon'])))
+
+	uprof = U[lonx,latx,:]
+	vprof = V[lonx,latx,:]
 	sprofspd=np.sqrt(uprof**2+vprof**2)
 	sprofdir=270. - ( np.arctan2(vprof,uprof) * 180./np.pi )
 
 	''' wind profiler '''
-	case=loc['case']
-	wpfiles = get_filenames(case)
-	print case
-	wspd,wdir,time,hgt = make_arrays(files= wpfiles, resolution='coarse',surface=False)
-	print time
+	case=kwargs['case']
+	wspd,wdir,time,hgt = wp.make_arrays(case= str(case), resolution='coarse',surface=False)
 	idx = time.index(datetime.datetime(st.year, st.month, st.day, st.hour, 0))
 	wprofspd = wspd[:,idx]
 	wprofdir = wdir[:,idx]
-
 
 	''' profile '''
 	with sns.axes_style("darkgrid"):
@@ -184,7 +243,6 @@ def compare_with_windprof(SYNTH,**kwargs):
 		t4='\nWind profiler time: ' + time[idx].strftime('%H:%M') + ' to ' + time[idx+1].strftime('%H:%M UTC') 
 		fig.suptitle(t1+t2+t3+t4)
 		plt.ylim([0,5])
-		
 		plt.draw()
 
 def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
@@ -260,7 +318,7 @@ def plot_synth(SYNTH , FLIGHT, DTM,**kwargs):
 
 
 	""" make horizontal plane plot """
-	P.horizontal_plane(field=array)	
+	axis = P.horizontal_plane(field=array)	
 	
 	""" make vertical plane plots """
 	velocity_fields=['SPD','WVA','WUP']

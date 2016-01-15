@@ -160,7 +160,15 @@ def start():
 							type=int, 
 							nargs='+',
 							required=False,
-							help="plot validation info for a given level between 0 and max num of vertical levels")
+							help="plot validation info for a given level between 0 \
+									and max num of vertical levels")
+	flight_options.add_argument('--prof',
+							metavar='(lat,lon)',
+							type=coords, 
+							nargs='+',
+							required=False,
+							help="plot wind profile at given coordinates")
+
 
 	sl = parser.parse_args().slice
 	az = parser.parse_args().azimuth

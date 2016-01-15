@@ -34,6 +34,7 @@ def main(args=None):
 	slope=args.slope
 	meteo=args.meteo
 	valid=args.valid
+	prof = args.prof
 
 	""" print synhesis availables """
 	if print_list_synth:
@@ -110,8 +111,16 @@ def main(args=None):
 	""" compare synth and flight level """
 	if valid:
 		Plotter.compare_synth_flight(SYNTH,FLIGHT,level=valid,zoomin=args.zoomin)
-		# if config['wind_profiler']:
-			# Plotter.compare_with_windprof(SYNTH,	location=config['wind_profiler'])
+		if 'wind_profiler' in config:
+			case=int(cedfile[1:3])
+			Plotter.compare_with_windprof(SYNTH,	location=config['wind_profiler'], case=case)
+
+	if prof:
+		markers=['o','s','D','*']
+		Plotter.make_synth_profile(SYNTH,coords=prof,markers=markers)
+		for i,p in enumerate(prof):
+			lat,lon=p
+			P.haxis.plot(lon,lat,marker=markers[i],markersize=12,color='k')
 
 	# if turbulence:
 	# Plotter.print_covariance(SYNTH,FLIGHT)

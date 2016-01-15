@@ -20,10 +20,9 @@ def main(plot=True):
 
 		stats = get_stats(legcomp)
 
-		map_section(synthinfo)
-
-		plot_using(stats,'dbz', synthinfo)
-		plot_using(stats,'along', synthinfo)
+		# map_section(synthinfo)
+		# plot_using(stats,'dbz', synthinfo)
+		# plot_using(stats,'along', synthinfo)
 		plot_using(stats,'orthog', synthinfo)
 
 
@@ -54,7 +53,6 @@ def map_section(synth):
 def plot_using(stats, field, synthinfo):
 
 	data=stats[field]
-
 	tcolor=['r', 'r','r', 'r','r','r']
 	if field == 'dbz':
 		vmin=[15, 10,50, 5,25, 0]
@@ -63,8 +61,10 @@ def plot_using(stats, field, synthinfo):
 		vmin=[5, 40, 0, 5, 15, 0]
 		vmax=[25, 120,10, 10, 30, 19]
 	elif field == 'orthog':
-		vmin=[-18,10, -120,     2, -10, 0]
-		vmax=[0,   80,       0,  16,  10, 19]
+		# vmin=[-18,10, -120,     2, -10, 0]
+		# vmax=[0,   80,       0,  16,  10, 19]
+		vmin=[5,	10, 0,     2,  15, 0]
+		vmax=[10,   80, 10,  16,  25, 19]
 
 	c1=plt.cm.BuPu(0)
 	c2=plt.cm.BuPu(128)
@@ -73,7 +73,9 @@ def plot_using(stats, field, synthinfo):
 	
 	cmaps={ 'dbz':['viridis','jet','viridis','jet','viridis',custom_cmap],
 			   'along':['viridis','jet','viridis','jet','viridis',custom_cmap], 
-			   'orthog':['viridis_r','jet','viridis_r','jet','viridis',custom_cmap]}
+			   # 'orthog':['viridis_r','jet','viridis_r','jet','viridis',custom_cmap]
+			   'orthog':['viridis','jet','viridis','jet','viridis',custom_cmap]
+			   }
 	zaxis=synthinfo.axesval['z']
 	origin=str(synthinfo.slice[0])
 	az=str(synthinfo.azimuth)
@@ -206,4 +208,4 @@ def custom_div_cmap(ncolors=11, name='custom_div_cmap',
                                              N=ncolors)
     return cmap
 
-out=main()
+stats,synthinfo=main()
