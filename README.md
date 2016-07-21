@@ -47,12 +47,13 @@ which prints
 ```code
 usage: vitas.py [--help] [--ced file] [--std file] [--print_list_synth]
                 [--panel num] [--zoomin str] [--wind] [--mask] [--multi]
-                [--all | --field STR [STR ...]] [--print_shapes]
+                [--no_plot] [--all | --field STR [STR ...]] [--print_shapes]
                 [--print_global_atts] [--print_axis STR [STR ...]]
                 [--slicez float) [(float) ...]]
-                [--slicem (float) [(float) ...]] [--slice (lat,lon)]
-                [--azimuth (float)] [--distance (float)] [--terrain] [--slope]
-                [--meteo] [--valid level (int) [level (int ...]]
+                [--slicem (float) [(float) ...]] [--slice (lat,lon,az,dist)]
+                [--terrain] [--slope] [--meteo]
+                [--valid level (int) [level (int) ...]]
+                [--prof (lat,lon) [(lat,lon ...]]
 
 Help:
   --help, -h            shows this help message and exit
@@ -70,6 +71,7 @@ Plot options:
   --wind, -w            include wind vectors
   --mask, -m            mask pixels with NaN vertical velocity 
   --multi, -ml          disable plotting functions and return an array; used for processing multiple legs
+  --no_plot, -np        disable plotting profile
   --all, -a             [default] plot all fields (DBZ,SPD,CON,VOR)
   --field STR [STR ...], -f STR [STR ...]
                         specify radar field(s) to be plotted
@@ -85,12 +87,8 @@ Slice options:
                         latitude coordinates for zonal slices
   --slicem (float) [(float) ...], -slm (float) [(float) ...]
                         longitude coordinates for meridional slices
-  --slice (lat,lon), -sl (lat,lon)
-                         initial coordinate for cross section
-  --azimuth (float), -az (float)
-                         slice azimuth [degrees]
-  --distance (float), -di (float)
-                         slice distance [km]
+  --slice (lat,lon,az,dist), -sl (lat,lon,az,dist)
+                         initial coordinate, azimuth [degrees], and distance [km] for cross section
 
 Terrain options:
   --terrain             plot a terrain map
@@ -102,8 +100,10 @@ Flight level options:
 Validation options:
   --valid level (int) [level (int) ...], -v level (int) [level (int) ...]
                         plot validation info for a given level between 0 and max num of vertical levels
-
+  --prof (lat,lon) [(lat,lon) ...]
+                        plot wind profile at given coordinates
 ```
+
 Config file
 --------
 

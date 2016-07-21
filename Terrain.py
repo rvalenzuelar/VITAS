@@ -8,21 +8,23 @@
 from os.path import isfile
 from mpl_toolkits.axes_grid1 import ImageGrid
 from scipy.spatial import cKDTree
-from itertools import product
-import Radardata as rd
+#from itertools import product
+#import Radardata as rd
 import Common as cm 
 
 import tempfile
 import os
 import glob
 import gdal
-import sys
+#import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 from geographiclib.geodesic import Geodesic
 
+gdal_translate = '/home/raul/miniconda3/envs/py27/bin/gdal_translate'
+gdal_warp = '/home/raul/miniconda3/envs/py27/bin/gdalwarp'
 
 class Terrain(object):
 	def __init__(self,filepath):
@@ -208,6 +210,7 @@ def plot_map(SynthPlot,data):
 def get_data(dtmfile):
 
 	''' store dtm in data '''
+#	print dtmfile
 	datafile = gdal.Open(dtmfile)
 	geotransform=datafile.GetGeoTransform()
 	cols=datafile.RasterXSize
@@ -270,7 +273,7 @@ def make_3d_mask(data,levels,res):
 	return mask
 
 def make_array(dem_file, Plot):
-
+	
 	temp_file=tempfile.gettempdir()+'/terrain_clipped.tmp'
 	out_file=tempfile.gettempdir()+'/terrain_resampled.tmp'
 
@@ -296,8 +299,8 @@ def make_array(dem_file, Plot):
 
 	''' apply smooth factor (the smaller the smoother)'''
 	factor = 0.6
-	resampx_to=int(len(xvalues)*0.6)
-	resampy_to=int(len(yvalues)*0.6)
+	resampx_to=int(len(xvalues)*factor)
+	resampy_to=int(len(yvalues)*factor)
 
 	# if isfile(out_file):
 	# 	data,_,_=get_data(out_file)
@@ -307,7 +310,7 @@ def make_array(dem_file, Plot):
 
 	input_param = (resampy_to,resampx_to,temp_file, out_file)	
 	resample_dem(input_param)
-
+#	print out_file
 	data,_,_=get_data(out_file)
 
 	# mask=make_3d_mask(data,levels,res)
@@ -456,13 +459,13 @@ def find_nearest(array,value):
 def clip_dem(input_param):
 	
 	''' clip original dtm '''
-	run_gdal = 'gdal_translate -q -projwin %s %s %s %s %s %s' % input_param
+	run_gdal = gdal_translate+' -q -projwin %s %s %s %s %s %s' % input_param
 	os.system(run_gdal)
 
 def resample_dem(input_param):
 
 	''' resample clipped dtm '''
-	run_gdal = 'gdalwarp -q -ts %s %s -r near -co "TFW=YES" %s %s' % input_param
+	run_gdal = gdal_warp+' -q -ts %s %s -r near -co "TFW=YES" %s %s' % input_param
 	os.system(run_gdal)
 
 """ following functions were taken from pythonx/make_dtm_profile 
