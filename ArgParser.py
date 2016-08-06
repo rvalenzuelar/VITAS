@@ -170,6 +170,14 @@ def start(params=None):
                             nargs='+',
                             required=False,
                             help="plot wind profile at given coordinates")
+    flight_options.add_argument('--nearest',
+                            metavar='(max_dist,n_neighs)',
+                            type=coords_prof, 
+                            nargs='+',
+                            required=False,
+                            default=None,
+                            help="returns mean profile using nearest neighbors; \
+                                  need specify prof coordinates first")
 
 
 #    sl = parser.parse_args().slice

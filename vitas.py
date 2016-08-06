@@ -45,6 +45,7 @@ def main(args=None):
     meteo = args.meteo
     valid = args.valid
     prof = args.prof
+    nearest = args.nearest
     noplot = args.no_plot
 
     """ print synhesis availables """
@@ -67,9 +68,9 @@ def main(args=None):
     """ retrieves synthesis and flight instances
         from AircraftAnalysis
     """
-    SYNTH, FLIGHT, TERRAIN=fh.set_working_files(cedfile=cedfile,
-                                            stdfile=stdfile,
-                                            config=config)
+    SYNTH, FLIGHT, TERRAIN = fh.set_working_files(cedfile=cedfile,
+                                                stdfile=stdfile,
+                                                config=config)
     
     """ print shape of attribute arrays """
     if print_shapes:
@@ -112,7 +113,8 @@ def main(args=None):
 
     """ make terrain plots """
     if terrain or slope:
-        # P[0] might produce error if P is not a list, check in ploth_synth.cross_section
+        # P[0] might produce error if P is not a list, 
+        # check in ploth_synth.cross_section
         Plotter.plot_terrain(P[0],
                              terrain=terrain,
                              slope=slope,
@@ -136,11 +138,20 @@ def main(args=None):
 #                                          case=case)
         return out
         
+    """ make profile from synthesis """
     if prof:
-        markers=['o','s','D','*']
-        out = Plotter.make_synth_profile(SYNTH,coords=prof,
-                                         markers=markers,
-                                         noplot=noplot)
+        if nearest is None:
+            markers=['o','s','D','*']
+            out = Plotter.make_synth_profile(SYNTH,coords=prof,
+                                             markers=markers,
+                                             noplot=noplot)
+        else:
+            ' (4.5km,n=12) or (7.0km,n=30) seem good choices '
+            out = Plotter.make_synth_profile_withnearest(SYNTH,
+                                                         target_latlon=prof,
+                                                         max_dist=nearest[0][0], # [km]
+                                                         n_neigh =nearest[0][1])        
+        
         try:        
             ' if P exists '
             for i,p in enumerate(prof):
@@ -154,6 +165,7 @@ def main(args=None):
             ' if P does not exist just pass '
             pass
         return out
+        
         
     # if turbulence:
     # Plotter.print_covariance(SYNTH,FLIGHT)
@@ -180,6 +192,6 @@ def main(args=None):
 if __name__ == "__main__":
 
     args = parser.start()
-    p=main(args)
+    p = main(args)
 
 

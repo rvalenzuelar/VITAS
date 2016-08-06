@@ -342,13 +342,13 @@ class SynthPlot(object):
 
             xjump=self.windv_jump['x']
             yjump=self.windv_jump['y']
-
+    
             x=cm.resample(self.lons,res=xjump)
             y=cm.resample(self.lats,res=yjump)
 
             uu=cm.resample(comp1,xres=xjump,yres=yjump)
             vv=cm.resample(comp2,xres=xjump,yres=yjump)
-
+            
             Q=grid_ax.quiver(x,y,uu,vv, 
                                 units='dots', 
                                 scale=self.windv_scale, 
@@ -359,6 +359,7 @@ class SynthPlot(object):
                                 edgecolor=self.windv_edgecolor,
                                 headwidth=3,
                                 headlength=5)
+            
             if gn==0:
                 symbol = '$'+str(self.windv_magnitude)+r'\frac{m}{s}$'
                 qk=grid_ax.quiverkey(Q, 0.15, 0.1, self.windv_magnitude, symbol, labelpos='W',
@@ -671,10 +672,7 @@ class SynthPlot(object):
 
             self.add_coastline(g)
             self.add_flight_path2(g)
-#            im, cmap, norm = self.add_field(g,
-#                                            array=field.T,
-#                                            field=self.var,
-#                                            extent=extent1)
+
             im, cmap, norm = self.add_field2(g,
                                             array=field.T,
                                             field=self.var)
@@ -696,8 +694,9 @@ class SynthPlot(object):
 
             if gn == 0:
                 legname = os.path.basename(self.file)
-                g.text(0.02,0.15, legname[:3].upper() + " " + legname[3:5], horizontalalignment='left',
-                        transform = g.transAxes,weight='bold')
+                g.text(0.02,0.15, legname[:3].upper() + " " + legname[3:5],
+                       horizontalalignment='left',
+                       transform = g.transAxes,weight='bold')
 
             if self.horizontalGridMajorOn:
                 g.grid(True, which = 'major',linewidth=1)

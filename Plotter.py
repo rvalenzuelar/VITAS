@@ -161,6 +161,7 @@ def make_synth_profile(SYNTH,coords,markers,noplot):
     sprofspd=[]
     sprofdir=[]
     sprofU=[]
+    
     for c in coords:
 
         f=interp1d(LAT,range(len(LAT)))
@@ -170,12 +171,12 @@ def make_synth_profile(SYNTH,coords,markers,noplot):
 
         uprof = U[lonx,latx,:]
         vprof = V[lonx,latx,:]
-        wspd=np.sqrt(uprof**2+vprof**2)
+        wspd = np.sqrt(uprof**2+vprof**2)
         sprofspd.append(wspd)
-        wdir=270. - ( np.arctan2(vprof,uprof) * 180./np.pi )
+        wdir = 270. - ( np.arctan2(vprof,uprof) * 180./np.pi )
         sprofdir.append(wdir)
-        dirU=np.radians(230)
-        cross_barrier=uprof*np.sin(dirU)+vprof*np.cos(dirU)
+        dirU = np.radians(230)
+        cross_barrier = uprof*np.sin(dirU)+vprof*np.cos(dirU)
         sprofU.append(-cross_barrier)
 
 
@@ -210,7 +211,74 @@ def make_synth_profile(SYNTH,coords,markers,noplot):
             fig.suptitle(t1+t2+t3)
             plt.ylim([0,5])
         
-    return sprofspd, sprofdir, sprofU, Z
+#    return sprofspd, sprofdir, sprofU, Z
+    return uprof, vprof, sprofU, Z
+
+def make_synth_profile_withnearest(SYNTH,target_latlon,max_dist,n_neigh):
+    
+    from scipy.spatial import cKDTree
+    
+    
+    U = SYNTH.U.data  #(lons, lats, alts)
+    V = SYNTH.V.data  #(lons, lats, alts)
+    LAT = SYNTH.LAT
+    LON = SYNTH.LON
+    x = SYNTH.X
+    y = SYNTH.Y
+    z = SYNTH.Z
+    
+    U[U==-32768.] = np.nan
+    V[V==-32768.] = np.nan
+   
+    ''' kdTree with entire cartesian domain in km '''
+    Y,X = np.meshgrid(y,x)
+    coords_domain = zip(X.flatten(),Y.flatten())
+    tree = cKDTree(coords_domain)     
+
+    ''' map lat/lon target to cartesian target with grid 
+        centered at radar '''    
+    f=interp1d(LAT,range(len(LAT)))
+    lat_idx=int(np.ceil(f(target_latlon[0][0])))
+    f=interp1d(LON,range(len(LON)))
+    lon_idx=int(np.ceil(f(target_latlon[0][1])))
+    target_cart = (x[lon_idx],y[lat_idx])
+
+    ''' query indices of neighs using euclidean distance'''
+    dist, idx = tree.query(target_cart,k=n_neigh,eps=0,p=2,
+                           distance_upper_bound=max_dist)
+
+    ''' index in grid space '''
+    Yg,Xg = np.meshgrid(range(len(LAT)),range(len(LON)))
+    grid_domain = zip(Xg.flatten(),Yg.flatten())
+    neigh_idx = [grid_domain[i] for i in idx]
+    
+    ''' check if everything is ok '''
+#    plt.pcolormesh(range(len(y)),range(len(x)),U[:,:,2],cmap='jet')
+#    plt.xlim([0,130])
+#    plt.ylim([0,120])
+#    plt.scatter(*zip(*neigh_idx))
+#    plt.show()        
+    
+    uprof = list()
+    vprof = list()    
+    for n in neigh_idx:
+        uprof.append(U[n[0],n[1],:])
+        vprof.append(V[n[0],n[1],:])
+
+    uprof = np.array(uprof)
+    vprof = np.array(vprof)
+    
+    uprof_mean = np.nanmean(uprof,axis=0)    
+    vprof_mean = np.nanmean(vprof,axis=0)
+    
+    dirU = np.radians(230)
+    cross_barrier = uprof_mean*np.sin(dirU)+vprof_mean*np.cos(dirU)
+    sprofU_mean = -cross_barrier
+
+    return uprof_mean, vprof_mean, sprofU_mean, z
+    
+    
+    
 
 def compare_with_windprof(SYNTH,**kwargs):
 
